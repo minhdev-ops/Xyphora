@@ -4,7 +4,7 @@ import '../../config/api_config.dart';
 
 class DashboardService {
   static const String baseUrl = ApiConfig.baseUrl;
-  static const _storage = FlutterSecureStorage();
+  static final _storage = FlutterSecureStorage();
 
   Future<String?> _getToken() async {
     return await _storage.read(key: 'auth_token');
