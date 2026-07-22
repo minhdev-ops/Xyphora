@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../config/api_config.dart';
 
 
 class AuthService {
-  // Web browser: dùng localhost
-  // Emulator Android: dùng 10.0.2.2
-  // Điện thoại thật (WiFi): dùng IP máy tính (vd: 192.168.1.16)
-  static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = ApiConfig.baseUrl;
+  static const _storage = FlutterSecureStorage();
 
   Future<Map<String, dynamic>> register(String name, String email, String password) async {
     try {
@@ -81,13 +80,11 @@ class AuthService {
   }
 
   Future<void> _saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
+    await _storage.write(key: 'auth_token', value: token);
   }
 
   Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return await _storage.read(key: 'auth_token');
   }
 
   Future<void> logout() async {
@@ -102,8 +99,7 @@ class AuthService {
             'Authorization': 'Bearer $token',
           },
         );
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove('auth_token');
+        await _storage.delete(key: 'auth_token');
       }
     } catch (e) {
       // Bỏ qua lỗi kết nối khi logout

@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../config/api_config.dart';
 
 class ProfileService {
-  static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = ApiConfig.baseUrl;
+  static const _storage = FlutterSecureStorage();
 
   Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return await _storage.read(key: 'auth_token');
   }
 
   Future<Map<String, dynamic>> getProfile() async {
@@ -51,8 +52,7 @@ class ProfileService {
             'Authorization': 'Bearer $token',
           },
         );
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove('auth_token');
+        await _storage.delete(key: 'auth_token');
       }
     } catch (e) {
       debugPrint('Logout error: $e');
