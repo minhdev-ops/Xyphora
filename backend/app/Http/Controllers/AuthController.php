@@ -86,7 +86,17 @@ class AuthController extends Controller
             'email.email' => 'Định dạng email không hợp lệ.',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $email = strtolower($request->email);
+        $rateLimitKey = 'otp_send:' . $email;
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            return response()->json([
+                'message' => 'Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau ' . $seconds . ' giây.'
+            ], 429);
+        }
+
+        $user = User::where('email', $email)->first();
 
         if (!$user) {
             return response()->json([
@@ -98,14 +108,16 @@ class AuthController extends Controller
         $expiresAt = now()->addMinutes(5);
 
         DB::table('password_resets')->updateOrInsert(
-            ['email' => $request->email],
+            ['email' => $email],
             [
                 'token' => Str::random(60),
-                'otp' => $otp,
+                'otp' => Hash::make($otp),
                 'expires_at' => $expiresAt,
                 'created_at' => now(),
             ]
         );
+
+        RateLimiter::hit($rateLimitKey, 60);
 
         try {
             Mail::to($user->email)->send(new OtpMail($otp));
@@ -150,7 +162,7 @@ class AuthController extends Controller
             ->where('email', $request->email)
             ->first();
 
-        if (!$resetRecord || $resetRecord->otp !== $request->otp) {
+        if (!$resetRecord || !Hash::check($request->otp, $resetRecord->otp)) {
             RateLimiter::hit($rateLimitKey, 300);
             return response()->json([
                 'message' => 'Mã OTP không đúng.'
