@@ -127,7 +127,11 @@ class HomeDashboardPage extends StatelessWidget {
         _buildHeaderIcon(
           icon: Icons.notifications_none_rounded,
           onTap: () {
-            Get.to(() => const NotificationPage());
+            Get.to(
+              () => const NotificationPage(),
+              transition: Transition.upToDown,
+              duration: const Duration(milliseconds: 350),
+            );
           },
         ),
         const SizedBox(width: 12),
@@ -341,7 +345,11 @@ class HomeDashboardPage extends StatelessWidget {
       itemBuilder: (context, index) {
         final SpendingModel item = list[index];
         return GestureDetector(
-          onTap: () => Get.to(() => SpendingDetailPage(spending: item)),
+          onTap: () => Get.to(
+            () => SpendingDetailPage(spending: item),
+            transition: Transition.rightToLeft,
+            duration: const Duration(milliseconds: 300),
+          ),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

@@ -26,7 +26,11 @@ class _LoginPagesState extends State<LoginPages> {
 
   void _handleLogin() async {
     // Đăng nhập nhanh để test giao diện
-    Get.offAll(() => const HomeDashboardPage());
+    Get.offAll(
+      () => const HomeDashboardPage(),
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 400),
+    );
 
     /*
     final email = _emailController.text.trim();
@@ -43,7 +47,11 @@ class _LoginPagesState extends State<LoginPages> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      Get.offAll(() => const HomeDashboardPage());
+      Get.offAll(
+        () => const HomeDashboardPage(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 400),
+      );
     } else {
       Get.snackbar(
         'Đăng nhập thất bại',

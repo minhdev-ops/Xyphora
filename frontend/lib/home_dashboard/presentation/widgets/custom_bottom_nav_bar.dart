@@ -26,9 +26,17 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     if (index == _selectedIndex) return;
 
     if (index == 0) {
-      Get.offAll(() => const HomeDashboardPage());
+      Get.offAll(
+        () => const HomeDashboardPage(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
+      );
     } else if (index == 3) {
-      Get.offAll(() => const ProfilePage());
+      Get.offAll(
+        () => const ProfilePage(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
+      );
     } else {
       setState(() => _selectedIndex = index);
       Get.snackbar(
@@ -36,7 +44,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         'Tính năng đang được phát triển',
         backgroundColor: const Color(0xFF0C3D2B).withValues(alpha: 0.8),
         colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 1),
       );
     }
@@ -45,7 +53,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 6, bottom: 2),
+      padding: const EdgeInsets.only(top: 10, bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(
@@ -60,7 +68,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         ],
       ),
       child: SizedBox(
-        height: 52,
+        height: 56,
         child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,

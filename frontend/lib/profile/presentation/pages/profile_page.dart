@@ -24,7 +24,11 @@ class ProfilePage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1D1D1D), size: 20),
-          onPressed: () => Get.offAll(() => const HomeDashboardPage()),
+          onPressed: () => Get.offAll(
+            () => const HomeDashboardPage(),
+            transition: Transition.fadeIn,
+            duration: const Duration(milliseconds: 300),
+          ),
         ),
         centerTitle: true,
         title: Text(
@@ -57,7 +61,11 @@ class ProfilePage extends StatelessWidget {
               onTap: () async {
                 final authService = AuthService();
                 await authService.logout();
-                Get.offAll(() => const LoginPages());
+                Get.offAll(
+                  () => const LoginPages(),
+                  transition: Transition.fadeIn,
+                  duration: const Duration(milliseconds: 400),
+                );
               },
             ),
             const SizedBox(height: 24),
