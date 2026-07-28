@@ -1,0 +1,8 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Caches and machine-specific files
+/caches/
+/deviceManager.xml
+# Auto-generated library files
+/libraries/
