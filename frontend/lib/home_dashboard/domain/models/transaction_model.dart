@@ -1,21 +1,19 @@
+enum TransactionStatus { borrow, receive, done }
+
 class TransactionModel {
   final String title;
-  final String subtitle;
-  final String amount;
-  final String? extraInfo;
-  final TransactionType type;
+  final String date;
+  final int memberCount;
+  final List<String> memberInitials;
+  final double amount;
+  final TransactionStatus status;
 
   TransactionModel({
     required this.title,
-    required this.subtitle,
+    required this.date,
+    required this.memberCount,
+    required this.memberInitials,
     required this.amount,
-    this.extraInfo,
-    required this.type,
+    required this.status,
   });
-}
-
-enum TransactionType {
-  shopping,
-  dining,
-  utility,
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:device_preview/device_preview.dart';
 import 'auth/presentation/pages/home_page.dart';
 
 void main() {
@@ -19,7 +20,12 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  runApp(const MyApp());
+  runApp(
+    DevicePreview(
+      enabled: true,
+      builder: (context) => const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -30,6 +36,8 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Xyphora',
       debugShowCheckedModeBanner: false,
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFE4F5E5),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),

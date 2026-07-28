@@ -18,7 +18,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6),
-      bottomNavigationBar: const CustomBottomNavBar(initialIndex: 4),
+      bottomNavigationBar: const CustomBottomNavBar(initialIndex: 3),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF4FAF6),
         elevation: 0,

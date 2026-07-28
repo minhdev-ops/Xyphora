@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field, prefer_final_fields
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
@@ -23,6 +25,10 @@ class _LoginPagesState extends State<LoginPages> {
   final AuthService _authService = AuthService();
 
   void _handleLogin() async {
+    // Đăng nhập nhanh để test giao diện
+    Get.offAll(() => const HomeDashboardPage());
+
+    /*
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
@@ -50,6 +56,7 @@ class _LoginPagesState extends State<LoginPages> {
         duration: const Duration(seconds: 3),
       );
     }
+    */
   }
 
   @override

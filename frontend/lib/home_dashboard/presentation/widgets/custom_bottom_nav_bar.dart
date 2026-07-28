@@ -27,17 +27,25 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
 
     if (index == 0) {
       Get.offAll(() => const HomeDashboardPage());
-    } else if (index == 4) {
+    } else if (index == 3) {
       Get.offAll(() => const ProfilePage());
     } else {
       setState(() => _selectedIndex = index);
+      Get.snackbar(
+        'Chức năng',
+        'Tính năng đang được phát triển',
+        backgroundColor: const Color(0xFF0C3D2B).withValues(alpha: 0.8),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 1),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: 6, bottom: 2),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(
@@ -45,47 +53,43 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 20,
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
             offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 70,
-          child: Row(
+      child: SizedBox(
+        height: 52,
+        child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _buildNavItem(
-                icon: Icons.home_rounded,
+                icon: _selectedIndex == 0 ? Icons.home_rounded : Icons.home_outlined,
                 label: 'Trang chủ',
                 index: 0,
               ),
               _buildNavItem(
-                icon: Icons.group_outlined,
-                label: 'Nhóm',
-                index: 1,
-              ),
-              _buildCenterButton(),
-              _buildNavItem(
                 icon: Icons.bar_chart_rounded,
                 label: 'Thống kê',
-                index: 3,
+                index: 1,
               ),
               _buildNavItem(
-                icon: Icons.person_outline_rounded,
-                label: 'Hồ sơ',
-                index: 4,
+                icon: Icons.group_outlined,
+                label: 'Sự kiện',
+                index: 2,
+              ),
+              _buildNavItem(
+                icon: _selectedIndex == 3 ? Icons.settings_rounded : Icons.settings_outlined,
+                label: 'Cài đặt',
+                index: 3,
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
   Widget _buildNavItem({
     required IconData icon,
@@ -93,60 +97,33 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     required int index,
   }) {
     final isSelected = _selectedIndex == index;
+    final activeColor = const Color(0xFF0C3D2B); // Premium Dark Green
+    final inactiveColor = const Color(0xFF8A8A8A); // Slate Grey
+
     return GestureDetector(
       onTap: () => _onTap(index),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 60,
+        width: 80,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              color: isSelected
-                  ? const Color(0xFF0F5C43)
-                  : const Color(0xFF8A8A8A),
+              color: isSelected ? activeColor : inactiveColor,
               size: 24,
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected
-                    ? const Color(0xFF0F5C43)
-                    : const Color(0xFF8A8A8A),
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? activeColor : inactiveColor,
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCenterButton() {
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F5C43),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F5C43).withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 28,
         ),
       ),
     );
