@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../domain/models/transaction_model.dart';
+import '../../domain/models/spending_model.dart';
 
 class DashboardController extends GetxController {
   // Navigation state
@@ -19,6 +21,11 @@ class DashboardController extends GetxController {
   // Event transactions list
   var transactions = <TransactionModel>[].obs;
 
+  // My spending summary & list
+  var monthlySpendingTotal = 1135000.0.obs;
+  var spendingCount = 8.obs;
+  var spendings = <SpendingModel>[].obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -26,6 +33,7 @@ class DashboardController extends GetxController {
   }
 
   void loadDashboardData() {
+    // Load event transactions (All tab)
     transactions.assignAll([
       TransactionModel(
         title: 'Du lịch Đà Lạt',
@@ -60,15 +68,46 @@ class DashboardController extends GetxController {
         status: TransactionStatus.borrow,
       ),
     ]);
-  }
 
-  // Reactive getter to filter transactions based on tab
-  List<TransactionModel> get filteredTransactions {
-    if (selectedTab.value == 'my_spending') {
-      // Return only items where the user is spending/borrowing
-      return transactions.where((tx) => tx.status == TransactionStatus.borrow).toList();
-    }
-    return transactions;
+    // Load personal spendings (My Spending tab)
+    spendings.assignAll([
+      const SpendingModel(
+        title: 'Cà phê Highlands',
+        category: 'Ăn uống',
+        date: '27 tháng 7',
+        amount: 55000.0,
+        icon: Icons.local_cafe_outlined,
+        themeColor: Color(0xFF0C3D2B),
+        bgThemeColor: Color(0xFFE2F0E5),
+      ),
+      const SpendingModel(
+        title: 'Mua sắm siêu thị',
+        category: 'Mua sắm',
+        date: '26 tháng 7',
+        amount: 320000.0,
+        icon: Icons.shopping_cart_outlined,
+        themeColor: Color(0xFF5E35B1),
+        bgThemeColor: Color(0xFFEDE7F6),
+      ),
+      const SpendingModel(
+        title: 'Grab đi làm',
+        category: 'Di chuyển',
+        date: '26 tháng 7',
+        amount: 45000.0,
+        icon: Icons.directions_car_filled_outlined,
+        themeColor: Color(0xFF00796B),
+        bgThemeColor: Color(0xFFE0F2F1),
+      ),
+      const SpendingModel(
+        title: 'Thuốc nhà thuốc',
+        category: 'Y tế',
+        date: '25 tháng 7',
+        amount: 85000.0,
+        icon: Icons.medication_outlined,
+        themeColor: Color(0xFFC62828),
+        bgThemeColor: Color(0xFFFFEBEE),
+      ),
+    ]);
   }
 
   void changeTab(String tab) {

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../domain/models/transaction_model.dart';
+import '../../domain/models/spending_model.dart';
 import '../widgets/balance_card.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 
@@ -71,7 +72,21 @@ class HomeDashboardPage extends StatelessWidget {
               const SizedBox(height: 24),
               _buildTabSelector(controller),
               const SizedBox(height: 20),
-              _buildEventList(controller),
+              // Dynamic view switcher based on tab selection
+              Obx(() {
+                if (controller.selectedTab.value == 'my_spending') {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSpendingSummaryCard(controller),
+                      const SizedBox(height: 16),
+                      _buildSpendingList(controller),
+                    ],
+                  );
+                } else {
+                  return _buildEventList(controller);
+                }
+              }),
               const SizedBox(height: 32),
             ],
           ),
@@ -107,7 +122,6 @@ class HomeDashboardPage extends StatelessWidget {
           ],
         ),
         const Spacer(),
-        // Notification Circle Button
         _buildHeaderIcon(
           icon: Icons.notifications_none_rounded,
           onTap: () {
@@ -115,7 +129,6 @@ class HomeDashboardPage extends StatelessWidget {
           },
         ),
         const SizedBox(width: 12),
-        // Settings Circle Button
         _buildHeaderIcon(
           icon: Icons.settings_outlined,
           onTap: () {
@@ -178,7 +191,6 @@ class HomeDashboardPage extends StatelessWidget {
         final currentTab = controller.selectedTab.value;
         return Row(
           children: [
-            // Tab "Tất cả"
             Expanded(
               child: GestureDetector(
                 onTap: () => controller.changeTab('all'),
@@ -203,7 +215,6 @@ class HomeDashboardPage extends StatelessWidget {
                 ),
               ),
             ),
-            // Tab "Chi tiêu của tôi"
             Expanded(
               child: GestureDetector(
                 onTap: () => controller.changeTab('my_spending'),
@@ -234,35 +245,230 @@ class HomeDashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEventList(DashboardController controller) {
-    return Obx(() {
-      final list = controller.filteredTransactions;
-      if (list.isEmpty) {
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 40.0),
-            child: Text(
-              'Không có dữ liệu hiển thị',
-              style: GoogleFonts.nunito(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF5A7563),
+  Widget _buildSpendingSummaryCard(DashboardController controller) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tổng tháng này',
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF5A7563),
+                ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                _formatCurrency(controller.monthlySpendingTotal.value),
+                style: GoogleFonts.nunito(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0C3D2B),
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Số khoản',
+                style: GoogleFonts.nunito(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF5A7563),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${controller.spendingCount.value}',
+                style: GoogleFonts.nunito(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0C3D2B),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpendingList(DashboardController controller) {
+    final list = controller.spendings;
+    if (list.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 40.0),
+          child: Text(
+            'Không có dữ liệu chi tiêu',
+            style: GoogleFonts.nunito(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF5A7563),
             ),
           ),
-        );
-      }
-
-      return ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: list.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          return _buildEventCard(list[index]);
-        },
+        ),
       );
-    });
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: list.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final SpendingModel item = list[index];
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: item.bgThemeColor,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  item.icon,
+                  color: item.themeColor,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: GoogleFonts.nunito(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0C3D2B),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: item.bgThemeColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            item.category,
+                            style: GoogleFonts.nunito(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: item.themeColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          item.date,
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF5A7563),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _formatCurrency(item.amount),
+                    style: GoogleFonts.nunito(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0C3D2B),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: Color(0xFF8A8A8A),
+                    size: 12,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEventList(DashboardController controller) {
+    final list = controller.transactions;
+    if (list.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 40.0),
+          child: Text(
+            'Không có dữ liệu hiển thị',
+            style: GoogleFonts.nunito(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF5A7563),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: list.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 16),
+      itemBuilder: (context, index) {
+        return _buildEventCard(list[index]);
+      },
+    );
   }
 
   Widget _buildEventCard(TransactionModel tx) {
@@ -283,7 +489,6 @@ class HomeDashboardPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Event Title & Member Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,13 +511,11 @@ class HomeDashboardPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Stack of Avatars
                 _buildAvatarRow(tx),
               ],
             ),
           ),
           const SizedBox(width: 12),
-          // Price Info & Arrow
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -404,7 +607,7 @@ class HomeDashboardPage extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFFD9E8DF), // Subtle light green background
+          color: const Color(0xFFD9E8DF),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
