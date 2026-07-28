@@ -52,6 +52,27 @@ class _LoginPagesState extends State<LoginPages> {
     }
   }
 
+  void _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
+    final result = await _authService.googleLogin();
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      Get.offAll(() => const HomeDashboardPage());
+    } else {
+      Get.snackbar(
+        'Đăng nhập Google thất bại',
+        result['message'],
+        backgroundColor: const Color(0xFFE53935),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -163,6 +184,59 @@ class _LoginPagesState extends State<LoginPages> {
                           color: Colors.white,
                         ),
                       ),
+              ),
+              const SizedBox(height: 32),
+
+              // Divider
+              Row(
+                children: [
+                  const Expanded(child: Divider(color: Color(0xFF5A7563), thickness: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Hoặc',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF5A7563),
+                      ),
+                    ),
+                  ),
+                  const Expanded(child: Divider(color: Color(0xFF5A7563), thickness: 1)),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Google Login Button
+              OutlinedButton(
+                onPressed: _isLoading ? null : _handleGoogleLogin,
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 54),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(27),
+                  ),
+                  side: const BorderSide(color: Color(0xFFDADCE0), width: 1),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/google_logo.png',
+                      height: 26,
+                      width: 26,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Đăng nhập bằng Google',
+                      style: GoogleFonts.nunito(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF3C4043),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 32),
 

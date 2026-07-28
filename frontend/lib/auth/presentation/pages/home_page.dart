@@ -2,11 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import '../../data/auth_service.dart';
+import '../../../home_dashboard/presentation/pages/home_dashboard_page.dart';
 import 'login_pages.dart';
 import 'register_pages.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  bool _isLoading = false;
+  final AuthService _authService = AuthService();
+
+  void _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
+    final result = await _authService.googleLogin();
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      Get.offAll(() => const HomeDashboardPage());
+    } else {
+      Get.snackbar(
+        'Đăng nhập Google thất bại',
+        result['message'],
+        backgroundColor: const Color(0xFFE53935),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +96,7 @@ class HomePage extends StatelessWidget {
               const Spacer(),
               // Google Button
               ElevatedButton(
-                onPressed: () {},
+                onPressed: _isLoading ? null : _handleGoogleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4285F4),
                   minimumSize: const Size(double.infinity, 54),
@@ -74,34 +105,39 @@ class HomePage extends StatelessWidget {
                   ),
                   elevation: 0,
                 ),
-                child: Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const FaIcon(
-                        FontAwesomeIcons.google,
-                        color: Color(0xFF4285F4),
-                        size: 18,
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Tiếp tục với Google',
-                        style: GoogleFonts.nunito(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
                           color: Colors.white,
+                          strokeWidth: 2,
                         ),
+                      )
+                    : Stack(
+                        alignment: Alignment.centerLeft,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 6.0),
+                            child: Image.asset(
+                              'assets/images/google_logo.png',
+                              height: 22,
+                              width: 22,
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Tiếp tục với Google',
+                              style: GoogleFonts.nunito(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
               const SizedBox(height: 16),
               // Apple Button
