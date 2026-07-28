@@ -7,6 +7,7 @@ import '../../domain/models/spending_model.dart';
 import '../widgets/balance_card.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import 'spending_detail_page.dart';
+import '../../../notification/presentation/pages/notification_page.dart';
 
 class HomeDashboardPage extends StatelessWidget {
   const HomeDashboardPage({super.key});
@@ -126,7 +127,7 @@ class HomeDashboardPage extends StatelessWidget {
         _buildHeaderIcon(
           icon: Icons.notifications_none_rounded,
           onTap: () {
-            Get.snackbar('Thông báo', 'Bạn không có thông báo mới');
+            Get.to(() => const NotificationPage());
           },
         ),
         const SizedBox(width: 12),
