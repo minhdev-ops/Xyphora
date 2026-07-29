@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:get/get.dart';
+import '../controllers/profile_controller.dart';
 
-class ThemeModeCard extends StatefulWidget {
+class ThemeModeCard extends StatelessWidget {
   const ThemeModeCard({super.key});
 
   @override
-  State<ThemeModeCard> createState() => _ThemeModeCardState();
-}
-
-class _ThemeModeCardState extends State<ThemeModeCard> {
-  bool _isDarkMode = false;
-  int _selectedColor = 0;
-
-  final List<Color> _colors = const [
-    Color(0xFF0F5C43),
-    Color(0xFF1976D2),
-    Color(0xFF424242),
-  ];
-
-  @override
   Widget build(BuildContext context) {
+    final ProfileController controller = Get.find<ProfileController>();
+
+    final List<Color> colors = const [
+      Color(0xFF0F5C43),
+      Color(0xFF1976D2),
+      Color(0xFF424242),
+    ];
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -48,23 +44,23 @@ class _ThemeModeCardState extends State<ThemeModeCard> {
                   color: const Color(0xFF1D1D1D),
                 ),
               ),
-              Transform.scale(
+              Obx(() => Transform.scale(
                 scale: 0.85,
                 child: Switch(
-                  value: _isDarkMode,
+                  value: controller.isDarkMode.value,
                   onChanged: (value) {
-                    setState(() => _isDarkMode = value);
+                    controller.isDarkMode.value = value;
                   },
                   activeThumbColor: Colors.white,
                   activeTrackColor: const Color(0xFF0F5C43),
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: const Color(0xFFD0D0D0),
                 ),
-              ),
+              )),
             ],
           ),
           const SizedBox(height: 16),
-          Wrap(
+          Obx(() => Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
@@ -90,40 +86,41 @@ class _ThemeModeCardState extends State<ThemeModeCard> {
                   ),
                 ),
               ),
-              ...List.generate(_colors.length, (index) {
+              ...List.generate(colors.length, (index) {
+                final isSelected = controller.selectedColor.value == index;
                 return GestureDetector(
                   onTap: () {
-                    setState(() => _selectedColor = index);
+                    controller.selectedColor.value = index;
                   },
                   child: Container(
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: _colors[index],
+                      color: colors[index],
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: _selectedColor == index
+                        color: isSelected
                             ? const Color(0xFF1D1D1D)
                             : Colors.transparent,
                         width: 2,
                       ),
                       boxShadow: [
-                        if (_selectedColor == index)
+                        if (isSelected)
                           BoxShadow(
-                            color: _colors[index].withValues(alpha: 0.3),
+                            color: colors[index].withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                       ],
                     ),
-                    child: _selectedColor == index
+                    child: isSelected
                         ? const Icon(Icons.check, color: Colors.white, size: 14)
                         : null,
                   ),
                 );
               }),
             ],
-          ),
+          )),
         ],
       ),
     );

@@ -1,63 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
-import '../../data/auth_service.dart';
+import '../controllers/auth_controller.dart';
 import 'home_page.dart';
 import 'register_pages.dart';
 import 'forgot_password_page.dart';
-import '../../../home_dashboard/presentation/pages/home_dashboard_page.dart';
 
-class LoginPages extends StatefulWidget {
+class LoginPages extends GetView<AuthController> {
   const LoginPages({super.key});
-
-  @override
-  State<LoginPages> createState() => _LoginPagesState();
-}
-
-class _LoginPagesState extends State<LoginPages> {
-  bool _isPasswordVisible = false;
-  bool _isLoading = false;
-
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
-
-  void _handleLogin() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    if (email.isEmpty || password.isEmpty) {
-      Get.snackbar('Lỗi', 'Vui lòng nhập Email và Mật khẩu',
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    final result = await _authService.login(email, password);
-    setState(() => _isLoading = false);
-
-    if (result['success']) {
-      Get.offAll(() => const HomeDashboardPage());
-    } else {
-      Get.snackbar(
-        'Đăng nhập thất bại',
-        result['message'],
-        backgroundColor: const Color(0xFFE53935),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 3),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +55,7 @@ class _LoginPagesState extends State<LoginPages> {
                 hint: 'Nhập địa chỉ email',
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
-                controller: _emailController,
+                textController: controller.loginEmailController,
               ),
               const SizedBox(height: 20),
 
@@ -115,14 +65,14 @@ class _LoginPagesState extends State<LoginPages> {
                 hint: 'Nhập mật khẩu',
                 icon: Icons.lock_outline,
                 isPassword: true,
-                controller: _passwordController,
+                textController: controller.loginPasswordController,
               ),
               
               // Quên mật khẩu
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () => Get.to(() => const ForgotPasswordPage()),
+                  onPressed: () => Get.to(() => ForgotPasswordPage()),
                   child: Text(
                     'Quên mật khẩu?',
                     style: GoogleFonts.nunito(
@@ -136,8 +86,8 @@ class _LoginPagesState extends State<LoginPages> {
               const SizedBox(height: 20),
 
               // Login Button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
+              Obx(() => ElevatedButton(
+                onPressed: controller.isLoading.value ? null : controller.handleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0C3D2B),
                   minimumSize: const Size(double.infinity, 54),
@@ -146,7 +96,7 @@ class _LoginPagesState extends State<LoginPages> {
                   ),
                   elevation: 0,
                 ),
-                child: _isLoading
+                child: controller.isLoading.value
                     ? const SizedBox(
                         height: 20,
                         width: 20,
@@ -163,7 +113,7 @@ class _LoginPagesState extends State<LoginPages> {
                           color: Colors.white,
                         ),
                       ),
-              ),
+              )),
               const SizedBox(height: 32),
 
               // Register text
@@ -205,7 +155,7 @@ class _LoginPagesState extends State<LoginPages> {
     required IconData icon,
     bool isPassword = false,
     TextInputType keyboardType = TextInputType.text,
-    TextEditingController? controller,
+    TextEditingController? textController,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,9 +181,9 @@ class _LoginPagesState extends State<LoginPages> {
               ),
             ],
           ),
-          child: TextField(
-            controller: controller,
-            obscureText: isPassword && !_isPasswordVisible,
+          child: Obx(() => TextField(
+            controller: textController,
+            obscureText: isPassword && !controller.isPasswordVisible.value,
             keyboardType: keyboardType,
             style: GoogleFonts.nunito(
               color: const Color(0xFF0C3D2B),
@@ -249,17 +199,13 @@ class _LoginPagesState extends State<LoginPages> {
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
-                        _isPasswordVisible
+                        controller.isPasswordVisible.value
                             ? Icons.visibility
                             : Icons.visibility_off,
                         color: const Color(0xFF5A7563),
                         size: 20,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
+                      onPressed: controller.togglePasswordVisibility,
                     )
                   : null,
               border: OutlineInputBorder(
@@ -273,7 +219,7 @@ class _LoginPagesState extends State<LoginPages> {
                 vertical: 16,
               ),
             ),
-          ),
+          )),
         ),
       ],
     );

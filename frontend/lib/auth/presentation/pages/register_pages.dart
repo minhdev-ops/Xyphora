@@ -1,59 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
-import '../../data/auth_service.dart';
+import '../controllers/auth_controller.dart';
 import 'login_pages.dart';
 
-class RegisterPages extends StatefulWidget {
+class RegisterPages extends GetView<AuthController> {
   const RegisterPages({super.key});
-
-  @override
-  State<RegisterPages> createState() => _RegisterPagesState();
-}
-
-class _RegisterPagesState extends State<RegisterPages> {
-  bool _isPasswordVisible = false;
-  bool _isLoading = false;
-
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
-
-  void _handleRegister() async {
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      Get.snackbar('Lỗi', 'Vui lòng điền đầy đủ thông tin',
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    final result = await _authService.register(name, email, password);
-    setState(() => _isLoading = false);
-
-    if (result['success']) {
-      Get.offAll(() => const LoginPages());
-      Future.delayed(const Duration(milliseconds: 500), () {
-        Get.snackbar('Thành công', result['message'],
-            backgroundColor: Colors.green, colorText: Colors.white);
-      });
-    } else {
-      Get.snackbar('Thất bại', result['message'],
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +52,7 @@ class _RegisterPagesState extends State<RegisterPages> {
                 label: 'Họ và tên',
                 hint: 'Nhập họ và tên của bạn',
                 icon: Icons.person_outline,
-                controller: _nameController,
+                textController: controller.registerNameController,
               ),
               const SizedBox(height: 20),
 
@@ -110,7 +62,7 @@ class _RegisterPagesState extends State<RegisterPages> {
                 hint: 'Nhập địa chỉ email',
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
-                controller: _emailController,
+                textController: controller.registerEmailController,
               ),
               const SizedBox(height: 20),
 
@@ -120,13 +72,13 @@ class _RegisterPagesState extends State<RegisterPages> {
                 hint: 'Nhập mật khẩu (ít nhất 8 ký tự)',
                 icon: Icons.lock_outline,
                 isPassword: true,
-                controller: _passwordController,
+                textController: controller.registerPasswordController,
               ),
               const SizedBox(height: 40),
 
               // Register Button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _handleRegister,
+              Obx(() => ElevatedButton(
+                onPressed: controller.isLoading.value ? null : controller.handleRegister,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0C3D2B),
                   minimumSize: const Size(double.infinity, 54),
@@ -135,7 +87,7 @@ class _RegisterPagesState extends State<RegisterPages> {
                   ),
                   elevation: 0,
                 ),
-                child: _isLoading
+                child: controller.isLoading.value
                     ? const SizedBox(
                         height: 20,
                         width: 20,
@@ -152,7 +104,7 @@ class _RegisterPagesState extends State<RegisterPages> {
                           color: Colors.white,
                         ),
                       ),
-              ),
+              )),
               const SizedBox(height: 32),
 
               // Login text
@@ -194,7 +146,7 @@ class _RegisterPagesState extends State<RegisterPages> {
     required IconData icon,
     bool isPassword = false,
     TextInputType keyboardType = TextInputType.text,
-    TextEditingController? controller,
+    TextEditingController? textController,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,9 +172,9 @@ class _RegisterPagesState extends State<RegisterPages> {
               ),
             ],
           ),
-          child: TextField(
-            controller: controller,
-            obscureText: isPassword && !_isPasswordVisible,
+          child: Obx(() => TextField(
+            controller: textController,
+            obscureText: isPassword && !controller.isPasswordVisible.value,
             keyboardType: keyboardType,
             style: GoogleFonts.nunito(
               color: const Color(0xFF0C3D2B),
@@ -238,17 +190,13 @@ class _RegisterPagesState extends State<RegisterPages> {
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
-                        _isPasswordVisible
+                        controller.isPasswordVisible.value
                             ? Icons.visibility
                             : Icons.visibility_off,
                         color: const Color(0xFF5A7563),
                         size: 20,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
+                      onPressed: controller.togglePasswordVisibility,
                     )
                   : null,
               border: OutlineInputBorder(
@@ -262,7 +210,7 @@ class _RegisterPagesState extends State<RegisterPages> {
                 vertical: 16,
               ),
             ),
-          ),
+          )),
         ),
       ],
     );
