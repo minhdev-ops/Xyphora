@@ -107,12 +107,16 @@ class AuthService {
     }
   }
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
+  late final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
+    serverClientId: ApiConfig.googleServerClientId.isNotEmpty
+        ? ApiConfig.googleServerClientId
+        : null,
   );
 
   Future<Map<String, dynamic>> googleLogin() async {
     try {
+      try { await _googleSignIn.disconnect(); } catch (_) { await _googleSignIn.signOut(); }
       final GoogleSignInAccount? account = await _googleSignIn.signIn();
       if (account == null) {
         return {'success': false, 'message': 'Đăng nhập Google đã bị hủy'};

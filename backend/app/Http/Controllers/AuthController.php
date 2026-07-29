@@ -83,12 +83,46 @@ class AuthController extends Controller
         ]);
 
         try {
-            $googleUser = Socialite::driver('google')->stateless()->userFromToken($request->id_token);
+            $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($request->id_token));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $responseBody = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($curlError) {
+                \Log::error('Google tokeninfo curl error: ' . $curlError);
+                return response()->json([
+                    'message' => 'Token Google không hợp lệ',
+                    'error' => 'Lỗi kết nối: ' . $curlError,
+                ], 401);
+            }
+
+            if ($httpCode !== 200) {
+                \Log::error('Google tokeninfo failed: HTTP ' . $httpCode . ' - ' . $responseBody);
+                return response()->json([
+                    'message' => 'Token Google không hợp lệ',
+                    'error' => 'HTTP ' . $httpCode,
+                    'detail' => $responseBody,
+                ], 401);
+            }
+
+            $payload = json_decode($responseBody, true);
+            $expectedAud = config('services.google.client_id');
+
+            if ($payload['aud'] !== $expectedAud) {
+                \Log::warning('Google tokeninfo audience mismatch', ['aud' => $payload['aud'] ?? 'none', 'expected' => $expectedAud]);
+                return response()->json([
+                    'message' => 'Token Google không hợp lệ',
+                ], 401);
+            }
 
             $user = User::updateOrCreate(
-                ['email' => $googleUser->getEmail()],
+                ['email' => $payload['email']],
                 [
-                    'name' => $googleUser->getName() ?? $googleUser->getNickname(),
+                    'name' => $payload['name'] ?? $payload['email'],
                     'password' => Hash::make(Str::random(16)),
                 ]
             );
@@ -102,6 +136,7 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
             ]);
         } catch (\Exception $e) {
+            \Log::error('Google login exception: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Token Google không hợp lệ',
                 'error' => $e->getMessage(),
