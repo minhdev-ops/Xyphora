@@ -9,7 +9,7 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import 'spending_detail_page.dart';
 import '../../../notification/presentation/pages/notification_page.dart';
 
-class HomeDashboardPage extends StatelessWidget {
+class HomeDashboardPage extends GetView<DashboardController> {
   const HomeDashboardPage({super.key});
 
   String _formatCurrency(double amount) {
@@ -37,8 +37,6 @@ class HomeDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DashboardController controller = Get.put(DashboardController());
-
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6), // Pale light-green background
       bottomNavigationBar: const CustomBottomNavBar(initialIndex: 0),

@@ -4,13 +4,11 @@ import 'package:get/get.dart';
 import '../controllers/notification_controller.dart';
 import '../../domain/models/notification_model.dart';
 
-class NotificationPage extends StatelessWidget {
+class NotificationPage extends GetView<NotificationController> {
   const NotificationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final NotificationController controller = Get.put(NotificationController());
-
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6), // Match pale green background
       body: SafeArea(

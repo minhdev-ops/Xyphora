@@ -10,8 +10,9 @@ import '../widgets/theme_mode_card.dart';
 import '../widgets/category_card.dart';
 import '../widgets/mascot_style_card.dart';
 import '../widgets/logout_button.dart';
+import '../controllers/profile_controller.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends GetView<ProfileController> {
   const ProfilePage({super.key});
 
   @override
@@ -45,11 +46,47 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 16),
-            const ProfileAvatar(),
-            const SizedBox(height: 12),
-            _buildPlaceholderBar(width: 120),
-            const SizedBox(height: 8),
-            _buildPlaceholderBar(width: 180),
+            Obx(() {
+              if (controller.isLoading.value) {
+                return Column(
+                  children: [
+                    const ProfileAvatar(),
+                    const SizedBox(height: 12),
+                    _buildPlaceholderBar(width: 120),
+                    const SizedBox(height: 8),
+                    _buildPlaceholderBar(width: 180),
+                  ],
+                );
+              }
+
+              final prof = controller.profile.value;
+              final name = prof?.name ?? 'Nguyễn Văn Minh';
+              final email = prof?.email ?? 'minh.nguyen@xyphora.com';
+
+              return Column(
+                children: [
+                  ProfileAvatar(name: name),
+                  const SizedBox(height: 12),
+                  Text(
+                    name,
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1D1D1D),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    email,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF5A7563),
+                    ),
+                  ),
+                ],
+              );
+            }),
             const SizedBox(height: 28),
             const ThemeModeCard(),
             const SizedBox(height: 16),

@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:device_preview/device_preview.dart';
 import 'auth/presentation/pages/home_page.dart';
+import 'auth/presentation/controllers/auth_controller.dart';
+import 'home_dashboard/presentation/controllers/dashboard_controller.dart';
+import 'profile/presentation/controllers/profile_controller.dart';
+import 'notification/presentation/controllers/notification_controller.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +42,12 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
+      initialBinding: BindingsBuilder(() {
+        Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+        Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+        Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
+        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
+      }),
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFE4F5E5),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
@@ -78,6 +88,12 @@ class MyAppPhone extends StatelessWidget {
     return GetMaterialApp(
       title: 'Xyphora',
       debugShowCheckedModeBanner: false,
+      initialBinding: BindingsBuilder(() {
+        Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+        Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+        Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
+        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
+      }),
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFF4FAF6),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),

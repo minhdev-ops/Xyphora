@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../domain/models/spending_model.dart';
+import '../controllers/dashboard_controller.dart';
 
-class SpendingDetailPage extends StatelessWidget {
+class SpendingDetailPage extends GetView<DashboardController> {
   final SpendingModel spending;
 
   const SpendingDetailPage({super.key, required this.spending});
@@ -273,6 +274,14 @@ class SpendingDetailPage extends StatelessWidget {
                     confirmTextColor: Colors.white,
                     buttonColor: const Color(0xFFD32F2F),
                     onConfirm: () {
+                      controller.spendings.removeWhere((s) => 
+                        s.title == spending.title && 
+                        s.amount == spending.amount && 
+                        s.date == spending.date
+                      );
+                      controller.monthlySpendingTotal.value -= spending.amount;
+                      controller.spendingCount.value = controller.spendings.length;
+
                       Get.back(); // close dialog
                       Get.back(); // return to dashboard
                       Get.snackbar(
