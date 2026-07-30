@@ -5,8 +5,10 @@ import '../controllers/event_controller.dart';
 import '../widgets/summary_card.dart';
 import '../widgets/filter_chip.dart';
 import '../widgets/event_card.dart';
+import 'event_detail_view.dart';
+import '../../../home_dashboard/presentation/widgets/custom_bottom_nav_bar.dart';
 
-class EventPage extends StatelessWidget {
+class EventPage extends GetView<EventController> {
   const EventPage({super.key});
 
   String _formatVND(double amount) {
@@ -22,7 +24,6 @@ class EventPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     EventBinding().dependencies();
-    final ctrl = Get.find<EventController>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F7F4),
@@ -50,46 +51,52 @@ class EventPage extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Obx(() => Row(
-                  children: [
-                    Expanded(
-                      child: SummaryCard(
-                          label: 'Bạn được nhận',
-                          amount: '+${_formatVND(ctrl.getTotalOwed())}',
-                          amountColor: const Color(0xFF1B9B5A)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: SummaryCard(
-                          label: 'Bạn còn nợ',
-                          amount: '-${_formatVND(ctrl.getTotalDebt())}',
-                          amountColor: const Color(0xFFFF3B30)),
-                    ),
-                  ],
-                )),
-            const SizedBox(height: 20),
-            Obx(() => SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                      children: ['Tất cả', 'Đang mở', 'Đã xong']
-                          .map((label) => Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: AppFilterChip(
-                                    label: label,
-                                    isActive: ctrl.currentFilter.value == label,
-                                    onTap: () =>
-                                        ctrl.currentFilter.value = label),
-                              ))
-                          .toList()),
-                )),
-            const SizedBox(height: 20),
-            Obx(() {
-              if (ctrl.isLoading.value) {
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Obx(() => Row(
+                      children: [
+                        Expanded(
+                          child: SummaryCard(
+                              label: 'Bạn được nhận',
+                              amount: '+${_formatVND(controller.getTotalOwed())}',
+                              amountColor: const Color(0xFF1B9B5A)),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: SummaryCard(
+                              label: 'Bạn còn nợ',
+                              amount: '-${_formatVND(controller.getTotalDebt())}',
+                              amountColor: const Color(0xFFFF3B30)),
+                        ),
+                      ],
+                    )),
+                const SizedBox(height: 20),
+                Obx(() => SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                          children: ['Tất cả', 'Đang mở', 'Đã xong']
+                              .map((label) => Padding(
+                                    padding: const EdgeInsets.only(right: 10),
+                                    child: AppFilterChip(
+                                        label: label,
+                                        isActive: controller.currentFilter.value == label,
+                                        onTap: () =>
+                                            controller.currentFilter.value = label),
+                                  ))
+                              .toList()),
+                    )),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) {
                 return const Center(
                     child: Padding(
                   padding: EdgeInsets.all(32),
@@ -97,36 +104,25 @@ class EventPage extends StatelessWidget {
                       color: Color(0xFF0A4226)),
                 ));
               }
-              return Column(
-                  children: ctrl.filteredEvents
-                      .map((e) => EventCard(
-                          event: e,
-                          balance: e.getUserBalance(ctrl.myUserId)))
-                      .toList());
+              return ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                children: controller.filteredEvents
+                    .map((e) => EventCard(
+                        event: e,
+                        balance: e.getUserBalance(controller.myUserId),
+                        onTap: () => Get.to(() => const EventDetailView())))
+                    .toList(),
+              );
             }),
-            const SizedBox(height: 100),
-          ],
-        ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF0A4226),
         onPressed: () {},
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF0A4226),
-        unselectedItemColor: const Color(0xFF9E9E9E),
-        currentIndex: 2,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Trang chủ'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Thống kê'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_alt), label: 'Sự kiện'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'Cài đặt'),
-        ],
-        onTap: (_) {},
-      ),
+      bottomNavigationBar: const CustomBottomNavBar(initialIndex: 2),
     );
   }
 }

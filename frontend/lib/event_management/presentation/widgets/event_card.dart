@@ -5,8 +5,9 @@ import 'overlap_avatars.dart';
 class EventCard extends StatelessWidget {
   final EventModel event;
   final double balance;
+  final VoidCallback? onTap;
 
-  const EventCard({super.key, required this.event, required this.balance});
+  const EventCard({super.key, required this.event, required this.balance, this.onTap});
 
   String _formatVND(double amount) {
     final str = amount.abs().toStringAsFixed(0);
@@ -32,7 +33,9 @@ class EventCard extends StatelessWidget {
     final subtitle =
         '${_formatDate(event.createdAt)} • ${event.participants.length} thành viên';
 
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -122,6 +125,7 @@ class EventCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
