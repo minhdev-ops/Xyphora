@@ -2,26 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../controllers/add_expense_controller.dart';
-import '../widgets/expense_header.dart';
-import '../widgets/expense_card.dart';
-import '../widgets/expense_calculator.dart';
-import '../widgets/receipt_attachment.dart';
+import '../controllers/add_group_expense_controller.dart';
+import '../widgets/group_expense_header.dart';
+import '../widgets/group_expense_card.dart';
+import '../widgets/group_expense_calculator.dart';
+import '../widgets/group_payers_section.dart';
+import '../widgets/group_receipt_attachment.dart';
 
-class ExpensePage extends StatefulWidget {
-  const ExpensePage({super.key});
+class GroupExpensePage extends StatefulWidget {
+  const GroupExpensePage({super.key});
 
   @override
-  State<ExpensePage> createState() => _ExpensePageState();
+  State<GroupExpensePage> createState() => _GroupExpensePageState();
 }
 
-class _ExpensePageState extends State<ExpensePage> {
+class _GroupExpensePageState extends State<GroupExpensePage> {
   final GlobalKey _chipKey = GlobalKey();
   bool _wasPickerVisible = false;
 
   @override
   Widget build(BuildContext context) {
-    final AddExpenseController controller = Get.find<AddExpenseController>();
+    final AddGroupExpenseController controller =
+        Get.find<AddGroupExpenseController>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6),
@@ -48,27 +50,34 @@ class _ExpensePageState extends State<ExpensePage> {
                       Expanded(
                         child: NotificationListener<ScrollNotification>(
                           onNotification: (notification) {
-                            controller.hideCurrencyPicker();
+                            if (notification.depth == 0) {
+                              controller.hideCurrencyPicker();
+                            }
                             return false;
                           },
                           child: SingleChildScrollView(
                             child: Column(
                               children: [
-                                const ExpenseHeader(),
+                                const GroupExpenseHeader(),
                                 const SizedBox(height: 24),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 20,
                                   ),
-                                  child: ExpenseCard(
+                                  child: GroupExpenseCard(
                                     controller: controller,
                                     chipKey: _chipKey,
                                   ),
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 16),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 20),
-                                  child: ReceiptAttachment(),
+                                  child: GroupPayersSection(),
+                                ),
+                                const SizedBox(height: 16),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 20),
+                                  child: GroupReceiptAttachment(),
                                 ),
                                 const SizedBox(height: 24),
                               ],
@@ -88,7 +97,7 @@ class _ExpensePageState extends State<ExpensePage> {
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 20,
                                     ),
-                                    child: ExpenseCalculator(),
+                                    child: GroupExpenseCalculator(),
                                   )
                                 : const SizedBox.shrink(
                                     key: ValueKey('no-keypad'),
@@ -137,7 +146,7 @@ class _ExpensePageState extends State<ExpensePage> {
     );
   }
 
-  Widget _buildCurrencyPicker(AddExpenseController controller) {
+  Widget _buildCurrencyPicker(AddGroupExpenseController controller) {
     return Container(
       width: 110,
       padding: const EdgeInsets.symmetric(vertical: 6),

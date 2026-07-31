@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../../data/repositories/add_expense_repository.dart';
-import '../../domain/models/expense_model.dart';
+import '../../data/repositories/add_group_expense_repository.dart';
+import '../../domain/models/group_expense_model.dart';
 
-class AddExpenseController extends GetxController {
-  final AddExpenseRepository _repository = AddExpenseRepository();
+class AddGroupExpenseController extends GetxController {
+  final AddGroupExpenseRepository _repository = AddGroupExpenseRepository();
 
   static const int maxExpressionLength = 12;
   static const List<String> currencies = ['VND', 'USD', 'EUR', 'JPY'];
+  static const List<(String, String)> splitOptions = [
+    ('equal', 'Chia đều'),
+    ('percent', 'Theo %'),
+    ('amount', 'Theo tiền'),
+  ];
 
   final amount = 0.0.obs;
   final expression = ''.obs;
@@ -16,15 +21,27 @@ class AddExpenseController extends GetxController {
   final selectedCurrency = 'VND'.obs;
   final isKeypadVisible = false.obs;
   final isCurrencyPickerVisible = false.obs;
+  final selectedPayers = <String>[].obs;
+  final selectedSplitMode = 'equal'.obs;
 
   List<String> get sortedCurrencies => [
     selectedCurrency.value,
     ...currencies.where((c) => c != selectedCurrency.value),
   ];
 
+  late final List<GroupMember> members = _repository.getMockMembers();
+
   final TextEditingController descriptionController = TextEditingController();
 
-  List<ExpenseModel> get mockExpenses => _repository.getMockExpenses();
+  List<GroupExpenseModel> get mockExpenses => _repository.getMockExpenses();
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (members.isNotEmpty) {
+      selectedPayers.add(members.first.id);
+    }
+  }
 
   void onKeyPressed(String key) {
     HapticFeedback.lightImpact();
@@ -162,6 +179,21 @@ class AddExpenseController extends GetxController {
     return result;
   }
 
+  void togglePayer(String memberId) {
+    HapticFeedback.lightImpact();
+    hideCurrencyPicker();
+    if (selectedPayers.contains(memberId)) {
+      selectedPayers.remove(memberId);
+    } else {
+      selectedPayers.add(memberId);
+    }
+  }
+
+  void selectSplitMode(String mode) {
+    HapticFeedback.lightImpact();
+    selectedSplitMode.value = mode;
+  }
+
   void saveExpense() {
     if (amount.value <= 0 && expression.value.isNotEmpty) {
       _calculateResult();
@@ -177,13 +209,25 @@ class AddExpenseController extends GetxController {
       return;
     }
 
-    final expense = ExpenseModel(
+    if (selectedPayers.isEmpty) {
+      Get.snackbar(
+        'Lỗi',
+        'Vui lòng chọn ít nhất 1 người trả',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final expense = GroupExpenseModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: description.value.isEmpty ? 'Chi tiêu mới' : description.value,
+      title: description.value.isEmpty ? 'Chi tiêu nhóm' : description.value,
       amount: amount.value,
       currency: selectedCurrency.value,
       description: description.value,
       date: DateTime.now().toIso8601String().split('T')[0],
+      payerIds: selectedPayers.toList(),
+      splitMode: selectedSplitMode.value,
     );
 
     _repository.addMockExpense(expense);
@@ -191,7 +235,7 @@ class AddExpenseController extends GetxController {
     Get.back(result: expense);
     Get.snackbar(
       'Thành công',
-      'Đã thêm chi tiêu',
+      'Đã thêm chi tiêu nhóm',
       backgroundColor: Colors.green,
       colorText: Colors.white,
     );
@@ -236,6 +280,11 @@ class AddExpenseController extends GetxController {
     expression.value = '';
     description.value = '';
     descriptionController.clear();
+    selectedPayers.clear();
+    if (members.isNotEmpty) {
+      selectedPayers.add(members.first.id);
+    }
+    selectedSplitMode.value = 'equal';
   }
 
   @override
