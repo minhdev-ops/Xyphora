@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../pages/home_dashboard_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../event_management/presentation/pages/event_page.dart';
 
 class CustomBottomNavBar extends StatefulWidget {
   final int initialIndex;
@@ -28,6 +29,12 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     if (index == 0) {
       Get.offAll(
         () => const HomeDashboardPage(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
+      );
+    } else if (index == 2) {
+      Get.offAll(
+        () => const EventPage(),
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
@@ -84,7 +91,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
                 index: 1,
               ),
               _buildNavItem(
-                icon: Icons.group_outlined,
+                icon: _selectedIndex == 2 ? Icons.group : Icons.group_outlined,
                 label: 'Sự kiện',
                 index: 2,
               ),

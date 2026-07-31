@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:xyphora_frontend/home_dashboard/presentation/pages/home_dashboard_page.dart';
 import 'auth/presentation/pages/home_page.dart';
 import 'auth/presentation/controllers/auth_controller.dart';
+import 'event_management/presentation/pages/event_page.dart';
 import 'home_dashboard/presentation/controllers/dashboard_controller.dart';
 import 'profile/presentation/controllers/profile_controller.dart';
 import 'notification/presentation/controllers/notification_controller.dart';
@@ -53,7 +55,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const EventPage(),
     );
   }
 }
