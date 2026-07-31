@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../pages/home_dashboard_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../statistics/presentaition/pages/statistics_page.dart';
 
 class CustomBottomNavBar extends StatefulWidget {
   final int initialIndex;
@@ -28,6 +29,12 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     if (index == 0) {
       Get.offAll(
         () => const HomeDashboardPage(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
+      );
+    } else if (index == 1) {
+      Get.offAll(
+        () => const StatisticsPage(),
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
