@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:flutter/gestures.dart';
+import 'package:xyphora_frontend/add_expense/presentaition/controllers/add_expense_controller.dart';
+import 'package:xyphora_frontend/add_expense/presentaition/pages/add_expense_page.dart';
+import 'package:xyphora_frontend/add_group_expense/presentaition/controllers/add_group_expense_controller.dart';
+import 'package:xyphora_frontend/add_group_expense/presentaition/pages/add_group_expense_page.dart';
+import 'package:xyphora_frontend/statistics/presentaition/controllers/statistics_controller.dart';
+import 'package:xyphora_frontend/statistics/presentaition/pages/statistics_page.dart';
 import 'auth/presentation/pages/home_page.dart';
 import 'auth/presentation/controllers/auth_controller.dart';
 import 'home_dashboard/presentation/controllers/dashboard_controller.dart';
@@ -47,13 +54,17 @@ class MyApp extends StatelessWidget {
         Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
         Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
+        Get.lazyPut<AddExpenseController>(() => AddExpenseController(), fenix: true);
+        Get.lazyPut<AddGroupExpenseController>(() => AddGroupExpenseController(), fenix: true);
+        Get.lazyPut<StatisticsController>(() => StatisticsController(), fenix: true);
+
       }),
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFE4F5E5),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const ExpensePage(),
     );
   }
 }
@@ -90,16 +101,42 @@ class MyAppPhone extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialBinding: BindingsBuilder(() {
         Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
-        Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+        Get.lazyPut<DashboardController>(
+          () => DashboardController(),
+          fenix: true,
+        );
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
-        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
+        Get.lazyPut<NotificationController>(
+          () => NotificationController(),
+          fenix: true,
+        );
+        Get.lazyPut<AddExpenseController>(
+          () => AddExpenseController(),
+          fenix: true,
+        );
+        Get.lazyPut<AddGroupExpenseController>(
+          () => AddGroupExpenseController(),
+          fenix: true,
+        );
+        Get.lazyPut<StatisticsController>(
+          () => StatisticsController(),
+          fenix: true,
+        );
       }),
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF4FAF6),
+        scaffoldBackgroundColor: const Color(0xFFE4F5E5),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      scrollBehavior: MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.trackpad,
+        },
+      ),
+      home: const ExpensePage(),
     );
   }
 }

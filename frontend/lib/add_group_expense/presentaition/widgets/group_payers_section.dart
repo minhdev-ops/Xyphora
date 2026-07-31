@@ -14,15 +14,15 @@ class GroupPayersSection extends StatelessWidget {
         Get.find<AddGroupExpenseController>();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -57,7 +57,7 @@ class GroupPayersSection extends StatelessWidget {
         fontSize: 13,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.5,
-        color: const Color(0xFF1D1D1D),
+        color: const Color(0xFF1A4331),
       ),
     );
   }

@@ -32,7 +32,7 @@ class _GroupExpenseKeypadButtonState extends State<GroupExpenseKeypadButton> {
   @override
   Widget build(BuildContext context) {
     Color background = Colors.white;
-    Color foreground = const Color(0xFF1D1D1D);
+    Color foreground = const Color(0xFF1A4331);
     double elevation = 0;
     Color splashColor = Colors.black.withValues(alpha: 0.06);
 
