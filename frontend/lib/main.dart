@@ -7,6 +7,7 @@ import 'auth/presentation/controllers/auth_controller.dart';
 import 'home_dashboard/presentation/controllers/dashboard_controller.dart';
 import 'profile/presentation/controllers/profile_controller.dart';
 import 'notification/presentation/controllers/notification_controller.dart';
+import 'setting/presentation/bindings/settings_binding.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
         Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
         Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
+        SettingsBinding().dependencies();
       }),
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFE4F5E5),
