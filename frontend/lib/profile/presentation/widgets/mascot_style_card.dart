@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:get/get.dart';
+import '../controllers/profile_controller.dart';
 
-class MascotStyleCard extends StatefulWidget {
+class MascotStyleCard extends StatelessWidget {
   const MascotStyleCard({super.key});
 
   @override
-  State<MascotStyleCard> createState() => _MascotStyleCardState();
-}
-
-class _MascotStyleCardState extends State<MascotStyleCard> {
-  bool _isExpanded = true;
-  int _selectedMascot = 1;
-
-  @override
   Widget build(BuildContext context) {
+    final ProfileController controller = Get.find<ProfileController>();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -33,7 +29,7 @@ class _MascotStyleCardState extends State<MascotStyleCard> {
         children: [
           GestureDetector(
             onTap: () {
-              setState(() => _isExpanded = !_isExpanded);
+              controller.isMascotExpanded.value = !controller.isMascotExpanded.value;
             },
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -46,48 +42,48 @@ class _MascotStyleCardState extends State<MascotStyleCard> {
                     color: const Color(0xFF1D1D1D),
                   ),
                 ),
-                AnimatedRotation(
-                  turns: _isExpanded ? 0.5 : 0,
+                Obx(() => AnimatedRotation(
+                  turns: controller.isMascotExpanded.value ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
                   child: const Icon(
                     Icons.keyboard_arrow_down_rounded,
                     color: Color(0xFF8A8A8A),
                     size: 24,
                   ),
-                ),
+                )),
               ],
             ),
           ),
-          AnimatedCrossFade(
+          Obx(() => AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildMascotOption(0, const Color(0xFFFFCA28)),
+                  _buildMascotOption(controller, 0, const Color(0xFFFFCA28)),
                   const SizedBox(width: 16),
-                  _buildMascotOption(1, const Color(0xFF0F5C43)),
+                  _buildMascotOption(controller, 1, const Color(0xFF0F5C43)),
                   const SizedBox(width: 16),
-                  _buildMascotOption(2, const Color(0xFFE53935)),
+                  _buildMascotOption(controller, 2, const Color(0xFFE53935)),
                 ],
               ),
             ),
-            crossFadeState: _isExpanded
+            crossFadeState: controller.isMascotExpanded.value
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 200),
-          ),
+          )),
         ],
       ),
     );
   }
 
-  Widget _buildMascotOption(int index, Color accentColor) {
-    final isSelected = _selectedMascot == index;
+  Widget _buildMascotOption(ProfileController controller, int index, Color accentColor) {
+    final isSelected = controller.selectedMascot.value == index;
     return GestureDetector(
       onTap: () {
-        setState(() => _selectedMascot = index);
+        controller.selectedMascot.value = index;
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
