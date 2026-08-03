@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use App\Mail\OtpMail;
 use Laravel\Socialite\Facades\Socialite;
@@ -83,33 +84,20 @@ class AuthController extends Controller
         ]);
 
         try {
-            $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($request->id_token));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            $responseBody = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
+            $response = Http::timeout(15)->get('https://oauth2.googleapis.com/tokeninfo', [
+                'id_token' => $request->id_token,
+            ]);
 
-            if ($curlError) {
-                \Log::error('Google tokeninfo curl error: ' . $curlError);
+            if ($response->failed()) {
+                \Log::error('Google tokeninfo failed: HTTP ' . $response->status() . ' - ' . $response->body());
                 return response()->json([
                     'message' => 'Token Google không hợp lệ',
-                    'error' => 'Lỗi kết nối: ' . $curlError,
+                    'error' => 'HTTP ' . $response->status(),
+                    'detail' => $response->body(),
                 ], 401);
             }
 
-            if ($httpCode !== 200) {
-                \Log::error('Google tokeninfo failed: HTTP ' . $httpCode . ' - ' . $responseBody);
-                return response()->json([
-                    'message' => 'Token Google không hợp lệ',
-                    'error' => 'HTTP ' . $httpCode,
-                    'detail' => $responseBody,
-                ], 401);
-            }
-
-            $payload = json_decode($responseBody, true);
+            $payload = $response->json();
             $expectedAud = config('services.google.client_id');
 
             if ($payload['aud'] !== $expectedAud) {
