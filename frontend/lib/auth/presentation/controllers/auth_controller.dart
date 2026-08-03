@@ -73,19 +73,11 @@ class AuthController extends GetxController {
         duration: const Duration(milliseconds: 400),
       );
     } else {
-      // API error fallback for easy testing
       Get.snackbar(
-        'Đăng nhập thử nghiệm',
-        'Không kết nối được server, tự động đăng nhập nhanh để kiểm tra giao diện.',
-        backgroundColor: const Color(0xFF0C3D2B).withValues(alpha: 0.8),
+        'Đăng nhập thất bại',
+        result['message'] ?? 'Email hoặc mật khẩu không đúng.',
+        backgroundColor: Colors.redAccent,
         colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
-      clearFields();
-      Get.offAll(
-        () => const HomeDashboardPage(),
-        transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 400),
       );
     }
   }
@@ -143,11 +135,12 @@ class AuthController extends GetxController {
             backgroundColor: Colors.green, colorText: Colors.white);
       });
     } else {
-      // API error fallback for easy testing
-      Get.snackbar('Đăng ký thử nghiệm', 'Không kết nối được server. Tự động chuyển qua đăng nhập.',
-          backgroundColor: const Color(0xFF0C3D2B).withValues(alpha: 0.8), colorText: Colors.white);
-      clearFields();
-      Get.offAll(() => const LoginPages());
+      Get.snackbar(
+        'Đăng ký thất bại',
+        result['message'] ?? 'Không thể đăng ký tài khoản.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -172,11 +165,12 @@ class AuthController extends GetxController {
       Get.snackbar('Thành công', result['message'],
           backgroundColor: Colors.green, colorText: Colors.white);
     } else {
-      // API error fallback for easy testing
-      currentStep.value = 2;
-      update();
-      Get.snackbar('Thử nghiệm OTP', 'Không kết nối được server. Đã gửi OTP giả lập: 123456',
-          backgroundColor: const Color(0xFF0C3D2B).withValues(alpha: 0.8), colorText: Colors.white);
+      Get.snackbar(
+        'Gửi OTP thất bại',
+        result['message'] ?? 'Không thể gửi mã OTP.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -218,13 +212,12 @@ class AuthController extends GetxController {
         Get.offAll(() => const LoginPages());
       });
     } else {
-      // API error fallback for easy testing
-      clearFields();
-      Get.snackbar('Thành công', 'Đặt lại mật khẩu thử nghiệm thành công',
-          backgroundColor: Colors.green, colorText: Colors.white);
-      Future.delayed(const Duration(seconds: 1), () {
-        Get.offAll(() => const LoginPages());
-      });
+      Get.snackbar(
+        'Đặt lại mật khẩu thất bại',
+        result['message'] ?? 'Không thể đặt lại mật khẩu.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 
