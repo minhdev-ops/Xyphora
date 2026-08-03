@@ -9,7 +9,7 @@ class AccountSecurityPage extends GetView<AccountSecurityController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE4F5E5),
+      backgroundColor: const Color(0xFFF4FAF6),
       body: SafeArea(
         child: Column(
           children: [
