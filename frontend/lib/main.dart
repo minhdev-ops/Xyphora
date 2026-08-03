@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
       // locale: DevicePreview.locale(context),
       // builder: DevicePreview.appBuilder,
       initialBinding: BindingsBuilder(() {
-        Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+        Get.put<AuthController>(AuthController(), permanent: true);
         Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
         Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
@@ -95,7 +95,7 @@ class MyAppPhone extends StatelessWidget {
       title: 'Xyphora',
       debugShowCheckedModeBanner: false,
       initialBinding: BindingsBuilder(() {
-        Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+        Get.put<AuthController>(AuthController(), permanent: true);
         Get.lazyPut<DashboardController>(
           () => DashboardController(),
           fenix: true,
