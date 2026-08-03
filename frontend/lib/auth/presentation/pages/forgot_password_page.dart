@@ -23,7 +23,10 @@ class ForgotPasswordPage extends GetView<AuthController> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Obx(() => controller.currentStep.value == 1 ? _buildStep1() : _buildStep2()),
+          child: GetBuilder<AuthController>(
+            builder: (auth) =>
+                auth.currentStep.value == 1 ? _buildStep1() : _buildStep2(),
+          ),
         ),
       ),
     );
@@ -64,8 +67,9 @@ class ForgotPasswordPage extends GetView<AuthController> {
         ),
         const SizedBox(height: 32),
 
-        Obx(() => ElevatedButton(
-          onPressed: controller.isLoading.value ? null : controller.handleSendOtp,
+        GetBuilder<AuthController>(
+          builder: (auth) => ElevatedButton(
+          onPressed: auth.isLoading.value ? null : auth.handleSendOtp,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF0C3D2B),
             minimumSize: const Size(double.infinity, 54),
@@ -74,7 +78,7 @@ class ForgotPasswordPage extends GetView<AuthController> {
             ),
             elevation: 0,
           ),
-          child: controller.isLoading.value
+          child: auth.isLoading.value
               ? const SizedBox(
                   height: 20,
                   width: 20,
@@ -91,7 +95,8 @@ class ForgotPasswordPage extends GetView<AuthController> {
                     color: Colors.white,
                   ),
                 ),
-        )),
+        ),
+        ),
         const SizedBox(height: 32),
 
         Row(
@@ -179,8 +184,9 @@ class ForgotPasswordPage extends GetView<AuthController> {
         ),
         const SizedBox(height: 32),
 
-        Obx(() => ElevatedButton(
-          onPressed: controller.isLoading.value ? null : controller.handleResetPassword,
+        GetBuilder<AuthController>(
+          builder: (auth) => ElevatedButton(
+          onPressed: auth.isLoading.value ? null : auth.handleResetPassword,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF0C3D2B),
             minimumSize: const Size(double.infinity, 54),
@@ -189,7 +195,7 @@ class ForgotPasswordPage extends GetView<AuthController> {
             ),
             elevation: 0,
           ),
-          child: controller.isLoading.value
+          child: auth.isLoading.value
               ? const SizedBox(
                   height: 20,
                   width: 20,
@@ -206,13 +212,15 @@ class ForgotPasswordPage extends GetView<AuthController> {
                     color: Colors.white,
                   ),
                 ),
-        )),
+        ),
+        ),
         const SizedBox(height: 16),
 
         Center(
           child: TextButton(
             onPressed: controller.isLoading.value ? null : () {
               controller.currentStep.value = 1;
+              controller.update();
             },
             child: Text(
               'Gửi lại mã OTP',
@@ -263,8 +271,9 @@ class ForgotPasswordPage extends GetView<AuthController> {
               ),
             ],
           ),
-          child: Obx(() {
-            bool isVisible = isConfirmPassword ? controller.isConfirmPasswordVisible.value : controller.isPasswordVisible.value;
+          child: GetBuilder<AuthController>(
+            builder: (auth) {
+            bool isVisible = isConfirmPassword ? auth.isConfirmPasswordVisible.value : auth.isPasswordVisible.value;
             return TextField(
               controller: textController,
               obscureText: isPassword && !isVisible,
@@ -292,9 +301,9 @@ class ForgotPasswordPage extends GetView<AuthController> {
                         ),
                         onPressed: () {
                           if (isConfirmPassword) {
-                            controller.toggleConfirmPasswordVisibility();
+                            auth.toggleConfirmPasswordVisibility();
                           } else {
-                            controller.togglePasswordVisibility();
+                            auth.togglePasswordVisibility();
                           }
                         },
                       )

@@ -41,10 +41,12 @@ class AuthController extends GetxController {
 
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
+    update();
   }
 
   void toggleConfirmPasswordVisibility() {
     isConfirmPasswordVisible.value = !isConfirmPasswordVisible.value;
+    update();
   }
 
   Future<void> handleLogin() async {
@@ -58,8 +60,10 @@ class AuthController extends GetxController {
     }
 
     isLoading.value = true;
+    update();
     final result = await _authService.login(email, password);
     isLoading.value = false;
+    update();
 
     if (result['success']) {
       clearFields();
@@ -88,8 +92,10 @@ class AuthController extends GetxController {
 
   Future<void> handleGoogleLogin() async {
     isLoading.value = true;
+    update();
     final result = await _authService.googleLogin();
     isLoading.value = false;
+    update();
 
     if (result['success']) {
       clearFields();
@@ -124,8 +130,10 @@ class AuthController extends GetxController {
     }
 
     isLoading.value = true;
+    update();
     final result = await _authService.register(name, email, password);
     isLoading.value = false;
+    update();
 
     if (result['success']) {
       clearFields();
@@ -153,16 +161,20 @@ class AuthController extends GetxController {
     }
 
     isLoading.value = true;
+    update();
     final result = await _authService.forgotPassword(email);
     isLoading.value = false;
+    update();
 
     if (result['success']) {
       currentStep.value = 2;
+      update();
       Get.snackbar('Thành công', result['message'],
           backgroundColor: Colors.green, colorText: Colors.white);
     } else {
       // API error fallback for easy testing
       currentStep.value = 2;
+      update();
       Get.snackbar('Thử nghiệm OTP', 'Không kết nối được server. Đã gửi OTP giả lập: 123456',
           backgroundColor: const Color(0xFF0C3D2B).withValues(alpha: 0.8), colorText: Colors.white);
     }
@@ -193,8 +205,10 @@ class AuthController extends GetxController {
     }
 
     isLoading.value = true;
+    update();
     final result = await _authService.resetPassword(email, otp, password, confirmPassword);
     isLoading.value = false;
+    update();
 
     if (result['success']) {
       clearFields();

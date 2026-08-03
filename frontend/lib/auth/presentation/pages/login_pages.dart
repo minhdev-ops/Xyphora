@@ -86,8 +86,9 @@ class LoginPages extends GetView<AuthController> {
               const SizedBox(height: 20),
 
               // Login Button
-              Obx(() => ElevatedButton(
-                onPressed: controller.isLoading.value ? null : controller.handleLogin,
+              GetBuilder<AuthController>(
+                builder: (auth) => ElevatedButton(
+                onPressed: auth.isLoading.value ? null : auth.handleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0C3D2B),
                   minimumSize: const Size(double.infinity, 54),
@@ -96,7 +97,7 @@ class LoginPages extends GetView<AuthController> {
                   ),
                   elevation: 0,
                 ),
-                child: controller.isLoading.value
+                child: auth.isLoading.value
                     ? const SizedBox(
                         height: 20,
                         width: 20,
@@ -113,7 +114,8 @@ class LoginPages extends GetView<AuthController> {
                           color: Colors.white,
                         ),
                       ),
-              )),
+              ),
+              ),
               const SizedBox(height: 32),
 
               // Divider
@@ -137,8 +139,9 @@ class LoginPages extends GetView<AuthController> {
               const SizedBox(height: 24),
 
               // Google Login Button
-              Obx(() => OutlinedButton(
-                onPressed: controller.isLoading.value ? null : controller.handleGoogleLogin,
+              GetBuilder<AuthController>(
+                builder: (auth) => OutlinedButton(
+                onPressed: auth.isLoading.value ? null : auth.handleGoogleLogin,
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 54),
@@ -166,7 +169,8 @@ class LoginPages extends GetView<AuthController> {
                     ),
                   ],
                 ),
-              )),
+              ),
+              ),
               const SizedBox(height: 32),
 
               // Register text
@@ -234,9 +238,10 @@ class LoginPages extends GetView<AuthController> {
               ),
             ],
           ),
-          child: Obx(() => TextField(
+          child: GetBuilder<AuthController>(
+            builder: (auth) => TextField(
             controller: textController,
-            obscureText: isPassword && !controller.isPasswordVisible.value,
+            obscureText: isPassword && !auth.isPasswordVisible.value,
             keyboardType: keyboardType,
             style: GoogleFonts.nunito(
               color: const Color(0xFF0C3D2B),
@@ -252,13 +257,13 @@ class LoginPages extends GetView<AuthController> {
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
-                        controller.isPasswordVisible.value
+                        auth.isPasswordVisible.value
                             ? Icons.visibility
                             : Icons.visibility_off,
                         color: const Color(0xFF5A7563),
                         size: 20,
                       ),
-                      onPressed: controller.togglePasswordVisibility,
+                      onPressed: auth.togglePasswordVisibility,
                     )
                   : null,
               border: OutlineInputBorder(
@@ -272,7 +277,8 @@ class LoginPages extends GetView<AuthController> {
                 vertical: 16,
               ),
             ),
-          )),
+          ),
+          ),
         ),
       ],
     );
