@@ -4,14 +4,13 @@ import 'package:get/get.dart';
 
 import '../controllers/add_expense_controller.dart';
 
-class ReceiptAttachment extends StatelessWidget {
+class ReceiptAttachment extends GetView<AddExpenseController> {
   const ReceiptAttachment({super.key});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        final controller = Get.find<AddExpenseController>();
         controller.hideCurrencyPicker();
         controller.hideKeypad();
         Get.snackbar(

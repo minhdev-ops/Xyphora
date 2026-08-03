@@ -7,13 +7,11 @@ import '../widgets/statistics_summary_card.dart';
 import '../widgets/statistics_chart.dart';
 import '../../../home_dashboard/presentation/widgets/custom_bottom_nav_bar.dart';
 
-class StatisticsPage extends StatelessWidget {
+class StatisticsPage extends GetView<StatisticsController> {
   const StatisticsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final StatisticsController controller = Get.find<StatisticsController>();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6),
       body: SafeArea(

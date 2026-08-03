@@ -4,14 +4,11 @@ import 'package:get/get.dart';
 
 import '../controllers/add_group_expense_controller.dart';
 
-class GroupExpenseHeader extends StatelessWidget {
+class GroupExpenseHeader extends GetView<AddGroupExpenseController> {
   const GroupExpenseHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final AddGroupExpenseController controller =
-        Get.find<AddGroupExpenseController>();
-
     return Container(
       color: Colors.white,
       child: Padding(

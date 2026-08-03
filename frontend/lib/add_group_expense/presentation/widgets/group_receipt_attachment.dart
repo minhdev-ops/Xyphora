@@ -4,14 +4,13 @@ import 'package:get/get.dart';
 
 import '../controllers/add_group_expense_controller.dart';
 
-class GroupReceiptAttachment extends StatelessWidget {
+class GroupReceiptAttachment extends GetView<AddGroupExpenseController> {
   const GroupReceiptAttachment({super.key});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        final controller = Get.find<AddGroupExpenseController>();
         controller.hideCurrencyPicker();
         controller.hideKeypad();
         Get.snackbar(

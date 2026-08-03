@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../pages/home_dashboard_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
-import '../../../statistics/presentaition/pages/statistics_page.dart';
+import '../../../statistics/presentation/pages/statistics_page.dart';
 import '../../../event_management/presentation/pages/event_page.dart';
 
 class CustomBottomNavBar extends StatefulWidget {

@@ -2,39 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../controllers/add_group_expense_controller.dart';
-import '../widgets/group_expense_header.dart';
-import '../widgets/group_expense_card.dart';
-import '../widgets/group_expense_calculator.dart';
-import '../widgets/group_payers_section.dart';
-import '../widgets/group_receipt_attachment.dart';
+import '../controllers/add_expense_controller.dart';
+import '../widgets/expense_header.dart';
+import '../widgets/expense_card.dart';
+import '../widgets/expense_calculator.dart';
+import '../widgets/receipt_attachment.dart';
 
-class GroupExpensePage extends StatefulWidget {
-  const GroupExpensePage({super.key});
+class ExpensePage extends GetView<AddExpenseController> {
+  ExpensePage({super.key});
 
-  @override
-  State<GroupExpensePage> createState() => _GroupExpensePageState();
-}
-
-class _GroupExpensePageState extends State<GroupExpensePage> {
-  final GlobalKey _chipKey = GlobalKey();
-  bool _wasPickerVisible = false;
+  late final GlobalKey _chipKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    final AddGroupExpenseController controller =
-        Get.find<AddGroupExpenseController>();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6),
       body: SafeArea(
         child: Builder(
           builder: (context) {
-            final RenderBox? stackBox =
-                context.findRenderObject() as RenderBox?;
-            final RenderBox? chipBox =
-                _chipKey.currentContext?.findRenderObject() as RenderBox?;
-
             return Stack(
               clipBehavior: Clip.none,
               children: [
@@ -50,34 +35,27 @@ class _GroupExpensePageState extends State<GroupExpensePage> {
                       Expanded(
                         child: NotificationListener<ScrollNotification>(
                           onNotification: (notification) {
-                            if (notification.depth == 0) {
-                              controller.hideCurrencyPicker();
-                            }
+                            controller.hideCurrencyPicker();
                             return false;
                           },
                           child: SingleChildScrollView(
                             child: Column(
                               children: [
-                                const GroupExpenseHeader(),
+                                const ExpenseHeader(),
                                 const SizedBox(height: 24),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 20,
                                   ),
-                                  child: GroupExpenseCard(
+                                  child: ExpenseCard(
                                     controller: controller,
                                     chipKey: _chipKey,
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 24),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 20),
-                                  child: GroupPayersSection(),
-                                ),
-                                const SizedBox(height: 16),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 20),
-                                  child: GroupReceiptAttachment(),
+                                  child: ReceiptAttachment(),
                                 ),
                                 const SizedBox(height: 24),
                               ],
@@ -97,7 +75,7 @@ class _GroupExpensePageState extends State<GroupExpensePage> {
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 20,
                                     ),
-                                    child: GroupExpenseCalculator(),
+                                    child: ExpenseCalculator(),
                                   )
                                 : const SizedBox.shrink(
                                     key: ValueKey('no-keypad'),
@@ -111,15 +89,16 @@ class _GroupExpensePageState extends State<GroupExpensePage> {
                 ),
                 Obx(() {
                   final visible = controller.isCurrencyPickerVisible.value;
-                  if (visible != _wasPickerVisible) {
-                    _wasPickerVisible = visible;
-                    if (visible) {
-                      Future.delayed(const Duration(milliseconds: 250), () {
-                        if (mounted) setState(() {});
-                      });
-                    }
+                  if (!visible) {
+                    return const SizedBox.shrink();
                   }
-                  if (!visible || chipBox == null || stackBox == null) {
+
+                  final RenderBox? stackBox =
+                      context.findRenderObject() as RenderBox?;
+                  final RenderBox? chipBox =
+                      _chipKey.currentContext
+                          ?.findRenderObject() as RenderBox?;
+                  if (stackBox == null || chipBox == null) {
                     return const SizedBox.shrink();
                   }
 
@@ -135,7 +114,7 @@ class _GroupExpensePageState extends State<GroupExpensePage> {
                         chipBox.size.height +
                         8,
                     left: chipTopLeft.dx - stackTopLeft.dx,
-                    child: _buildCurrencyPicker(controller),
+                    child: _buildCurrencyPicker(),
                   );
                 }),
               ],
@@ -146,7 +125,7 @@ class _GroupExpensePageState extends State<GroupExpensePage> {
     );
   }
 
-  Widget _buildCurrencyPicker(AddGroupExpenseController controller) {
+  Widget _buildCurrencyPicker() {
     return Container(
       width: 110,
       padding: const EdgeInsets.symmetric(vertical: 6),

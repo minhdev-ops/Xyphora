@@ -5,14 +5,11 @@ import 'package:get/get.dart';
 import '../controllers/add_group_expense_controller.dart';
 import '../../domain/models/group_expense_model.dart';
 
-class GroupPayersSection extends StatelessWidget {
+class GroupPayersSection extends GetView<AddGroupExpenseController> {
   const GroupPayersSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final AddGroupExpenseController controller =
-        Get.find<AddGroupExpenseController>();
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       decoration: BoxDecoration(

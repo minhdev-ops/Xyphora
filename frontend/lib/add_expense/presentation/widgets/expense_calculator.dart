@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../controllers/add_group_expense_controller.dart';
-import 'group_expense_keypad_button.dart';
+import '../controllers/add_expense_controller.dart';
+import 'expense_keypad_button.dart';
 
 const double _keyGap = 6;
 
-class GroupExpenseCalculator extends StatelessWidget {
-  const GroupExpenseCalculator({super.key});
+class ExpenseCalculator extends GetView<AddExpenseController> {
+  const ExpenseCalculator({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final AddGroupExpenseController controller =
-        Get.find<AddGroupExpenseController>();
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final cellWidth = (constraints.maxWidth - _keyGap * 3) / 4;
@@ -33,7 +30,7 @@ class GroupExpenseCalculator extends StatelessWidget {
   }
 
   Widget _buildRow(
-    AddGroupExpenseController controller,
+    AddExpenseController controller,
     List<String> keys,
     double height,
   ) {
@@ -47,7 +44,7 @@ class GroupExpenseCalculator extends StatelessWidget {
           return Expanded(
             child: Padding(
               padding: const EdgeInsets.all(_keyGap),
-              child: GroupExpenseKeypadButton(
+              child: ExpenseKeypadButton(
                 text: text,
                 isPrimary: isPrimary,
                 isAction: isAction,
@@ -60,7 +57,7 @@ class GroupExpenseCalculator extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomRow(AddGroupExpenseController controller, double height) {
+  Widget _buildBottomRow(AddExpenseController controller, double height) {
     return SizedBox(
       height: height,
       child: Row(
@@ -69,7 +66,7 @@ class GroupExpenseCalculator extends StatelessWidget {
             flex: 2,
             child: Padding(
               padding: const EdgeInsets.all(_keyGap),
-              child: GroupExpenseKeypadButton(
+              child: ExpenseKeypadButton(
                 text: "0",
                 onTap: () => controller.onKeyPressed("0"),
               ),
@@ -78,7 +75,7 @@ class GroupExpenseCalculator extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(_keyGap),
-              child: GroupExpenseKeypadButton(
+              child: ExpenseKeypadButton(
                 text: "000",
                 onTap: () => controller.onKeyPressed("000"),
               ),
@@ -87,7 +84,7 @@ class GroupExpenseCalculator extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(_keyGap),
-              child: GroupExpenseKeypadButton(
+              child: ExpenseKeypadButton(
                 text: "=",
                 isPrimary: true,
                 onTap: () => controller.onKeyPressed("="),

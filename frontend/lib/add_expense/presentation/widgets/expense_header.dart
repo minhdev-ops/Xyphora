@@ -4,13 +4,11 @@ import 'package:get/get.dart';
 
 import '../controllers/add_expense_controller.dart';
 
-class ExpenseHeader extends StatelessWidget {
+class ExpenseHeader extends GetView<AddExpenseController> {
   const ExpenseHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final AddExpenseController controller = Get.find<AddExpenseController>();
-
     return Container(
       color: Colors.white,
       child: Padding(

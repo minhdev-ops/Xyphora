@@ -2,37 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../controllers/add_expense_controller.dart';
-import '../widgets/expense_header.dart';
-import '../widgets/expense_card.dart';
-import '../widgets/expense_calculator.dart';
-import '../widgets/receipt_attachment.dart';
+import '../controllers/add_group_expense_controller.dart';
+import '../widgets/group_expense_header.dart';
+import '../widgets/group_expense_card.dart';
+import '../widgets/group_expense_calculator.dart';
+import '../widgets/group_payers_section.dart';
+import '../widgets/group_receipt_attachment.dart';
 
-class ExpensePage extends StatefulWidget {
-  const ExpensePage({super.key});
+class GroupExpensePage extends GetView<AddGroupExpenseController> {
+  GroupExpensePage({super.key});
 
-  @override
-  State<ExpensePage> createState() => _ExpensePageState();
-}
-
-class _ExpensePageState extends State<ExpensePage> {
-  final GlobalKey _chipKey = GlobalKey();
-  bool _wasPickerVisible = false;
+  late final GlobalKey _chipKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    final AddExpenseController controller = Get.find<AddExpenseController>();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6),
       body: SafeArea(
         child: Builder(
           builder: (context) {
-            final RenderBox? stackBox =
-                context.findRenderObject() as RenderBox?;
-            final RenderBox? chipBox =
-                _chipKey.currentContext?.findRenderObject() as RenderBox?;
-
             return Stack(
               clipBehavior: Clip.none,
               children: [
@@ -48,27 +36,34 @@ class _ExpensePageState extends State<ExpensePage> {
                       Expanded(
                         child: NotificationListener<ScrollNotification>(
                           onNotification: (notification) {
-                            controller.hideCurrencyPicker();
+                            if (notification.depth == 0) {
+                              controller.hideCurrencyPicker();
+                            }
                             return false;
                           },
                           child: SingleChildScrollView(
                             child: Column(
                               children: [
-                                const ExpenseHeader(),
+                                const GroupExpenseHeader(),
                                 const SizedBox(height: 24),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 20,
                                   ),
-                                  child: ExpenseCard(
+                                  child: GroupExpenseCard(
                                     controller: controller,
                                     chipKey: _chipKey,
                                   ),
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 16),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 20),
-                                  child: ReceiptAttachment(),
+                                  child: GroupPayersSection(),
+                                ),
+                                const SizedBox(height: 16),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 20),
+                                  child: GroupReceiptAttachment(),
                                 ),
                                 const SizedBox(height: 24),
                               ],
@@ -88,7 +83,7 @@ class _ExpensePageState extends State<ExpensePage> {
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 20,
                                     ),
-                                    child: ExpenseCalculator(),
+                                    child: GroupExpenseCalculator(),
                                   )
                                 : const SizedBox.shrink(
                                     key: ValueKey('no-keypad'),
@@ -102,15 +97,16 @@ class _ExpensePageState extends State<ExpensePage> {
                 ),
                 Obx(() {
                   final visible = controller.isCurrencyPickerVisible.value;
-                  if (visible != _wasPickerVisible) {
-                    _wasPickerVisible = visible;
-                    if (visible) {
-                      Future.delayed(const Duration(milliseconds: 250), () {
-                        if (mounted) setState(() {});
-                      });
-                    }
+                  if (!visible) {
+                    return const SizedBox.shrink();
                   }
-                  if (!visible || chipBox == null || stackBox == null) {
+
+                  final RenderBox? stackBox =
+                      context.findRenderObject() as RenderBox?;
+                  final RenderBox? chipBox =
+                      _chipKey.currentContext
+                          ?.findRenderObject() as RenderBox?;
+                  if (stackBox == null || chipBox == null) {
                     return const SizedBox.shrink();
                   }
 
@@ -126,7 +122,7 @@ class _ExpensePageState extends State<ExpensePage> {
                         chipBox.size.height +
                         8,
                     left: chipTopLeft.dx - stackTopLeft.dx,
-                    child: _buildCurrencyPicker(controller),
+                    child: _buildCurrencyPicker(),
                   );
                 }),
               ],
@@ -137,7 +133,7 @@ class _ExpensePageState extends State<ExpensePage> {
     );
   }
 
-  Widget _buildCurrencyPicker(AddExpenseController controller) {
+  Widget _buildCurrencyPicker() {
     return Container(
       width: 110,
       padding: const EdgeInsets.symmetric(vertical: 6),
