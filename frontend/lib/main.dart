@@ -1,18 +1,13 @@
+// import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:device_preview/device_preview.dart';
-import 'package:flutter/gestures.dart';
-import 'package:xyphora_frontend/add_expense/presentation/controllers/add_expense_controller.dart';
+// import 'package:device_preview/device_preview.dart';
 import 'package:xyphora_frontend/home_dashboard/presentation/pages/home_dashboard_page.dart';
-import 'package:xyphora_frontend/add_expense/presentation/pages/add_expense_page.dart';
+import 'package:xyphora_frontend/add_expense/presentation/controllers/add_expense_controller.dart';
 import 'package:xyphora_frontend/add_group_expense/presentation/controllers/add_group_expense_controller.dart';
-import 'package:xyphora_frontend/add_group_expense/presentation/pages/add_group_expense_page.dart';
 import 'package:xyphora_frontend/statistics/presentation/controllers/statistics_controller.dart';
-import 'package:xyphora_frontend/statistics/presentation/pages/statistics_page.dart';
-import 'auth/presentation/pages/home_page.dart';
 import 'auth/presentation/controllers/auth_controller.dart';
-import 'event_management/presentation/pages/event_page.dart';
 import 'home_dashboard/presentation/controllers/dashboard_controller.dart';
 import 'profile/presentation/controllers/profile_controller.dart';
 import 'notification/presentation/controllers/notification_controller.dart';
@@ -33,12 +28,10 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  runApp(
-    DevicePreview(
-      enabled: true, // Chuyển thành false khi muốn chạy trên máy ảo điện thoại hoặc thiết bị thật
-      builder: (context) => const MyApp(),
-    ),
-  );
+  // Chạy có DevicePreview (dùng cho web/desktop):
+  // runApp(kIsWeb ? DevicePreview(builder: (context) => const MyApp()) : const MyApp());
+  // Chạy trực tiếp (Android/iOS/desktop):
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -49,10 +42,10 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Xyphora',
       debugShowCheckedModeBanner: false,
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
+      // locale: DevicePreview.locale(context),
+      // builder: DevicePreview.appBuilder,
       initialBinding: BindingsBuilder(() {
-        Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+        Get.put<AuthController>(AuthController(), permanent: true);
         Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
         Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
@@ -102,7 +95,7 @@ class MyAppPhone extends StatelessWidget {
       title: 'Xyphora',
       debugShowCheckedModeBanner: false,
       initialBinding: BindingsBuilder(() {
-        Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+        Get.put<AuthController>(AuthController(), permanent: true);
         Get.lazyPut<DashboardController>(
           () => DashboardController(),
           fenix: true,

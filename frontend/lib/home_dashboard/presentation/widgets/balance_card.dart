@@ -23,9 +23,8 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DashboardController controller = Get.find<DashboardController>();
-
-    return Obx(() {
+    return GetBuilder<DashboardController>(
+      builder: (controller) {
       final total = controller.totalBalance.value;
       final toYou = controller.debtToYou.value;
       final youOwe = controller.yourDebt.value;
@@ -127,6 +126,7 @@ class BalanceCard extends StatelessWidget {
           ],
         ),
       );
-    });
+      },
+    );
   }
 }
