@@ -36,7 +36,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       );
     } else if (index == 3) {
       Get.offAll(
-        () => const ProfilePage(),
+        () => const SettingsPage(),
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
@@ -71,7 +71,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         ],
       ),
       child: SizedBox(
-        height: 56,
+        height: 68,
         child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/custom_header.dart';
 import '../widgets/setting_card.dart';
@@ -17,7 +18,7 @@ class SettingsPage extends GetView<SettingsController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE4F5E5),
+      backgroundColor: const Color(0xFFF4FAF6),
       body: SafeArea(
         child: Column(
           children: [
@@ -28,32 +29,32 @@ class SettingsPage extends GetView<SettingsController> {
                 children: [
                   SettingCard(
                     icon: Icons.lock_outline_rounded,
-                    iconBg: const Color(0xFF1C2C24),
-                    iconColor: const Color(0xFF43D08A),
+                    iconBg: const Color(0xFFE0E0E0),
+                    iconColor: const Color(0xFF0C3D2B),
                     title: 'Tài khoản & Bảo mật',
                     subtitle: 'Mật khẩu, xác thực 2 bước',
                     onTap: () => Get.to(() => const AccountSecurityPage()),
                   ),
                   SettingCard(
                     icon: Icons.notifications_none_rounded,
-                    iconBg: const Color(0xFF352B1E),
-                    iconColor: const Color(0xFFFFB74D),
+                    iconBg: const Color(0xFFE0E0E0),
+                    iconColor: const Color(0xFFFF5360 ),//0xFFFFB74D),
                     title: 'Thông báo đẩy',
                     subtitle: 'Nhắc nhở thanh toán, cập nhật',
                     onTap: () => Get.to(() => const PushNotificationPage()),
                   ),
                   Obx(() => SettingCard(
                         icon: Icons.currency_exchange_rounded,
-                        iconBg: const Color(0xFF1C2C24),
-                        iconColor: const Color(0xFF43D08A),
+                        iconBg: const Color(0xFFE0E0E0),
+                        iconColor: const Color(0xFF0C3D2B),
                         title: 'Tiền tệ mặc định',
                         subtitle: controller.currencySubtitle,
                         onTap: () => Get.to(() => const DefaultCurrencyPage()),
                       )),
                   SettingCard(
                     icon: Icons.file_download_outlined,
-                    iconBg: const Color(0xFF1B3D2F),
-                    iconColor: const Color(0xFF43D08A),
+                    iconBg: const Color(0xFFE0E0E0),
+                    iconColor: const Color(0xFF0C3D2B),
                     title: 'Import từ Splitwise',
                     subtitle: 'Nhập nhóm & lịch sử chi tiêu',
                     badgeText: 'Mới',
@@ -62,16 +63,16 @@ class SettingsPage extends GetView<SettingsController> {
                   ),
                   SettingCard(
                     icon: Icons.file_upload_outlined,
-                    iconBg: const Color(0xFF1C2C24),
-                    iconColor: const Color(0xFF43D08A),
+                    iconBg: const Color(0xFFE0E0E0),
+                    iconColor: const Color(0xFF0C3D2B),
                     title: 'Xuất dữ liệu CSV',
                     subtitle: 'Tải báo cáo chi tiêu',
                     onTap: () => controller.showComingSoon('Xuất CSV'),
                   ),
                   Obx(() => SettingCard(
                         icon: Icons.language_rounded,
-                        iconBg: const Color(0xFF1C2C24),
-                        iconColor: const Color(0xFF43D08A),
+                        iconBg: const Color(0xFFE0E0E0),
+                        iconColor: const Color(0xFF0C3D2B),
                         title: 'Ngôn ngữ',
                         subtitle: controller.languageSubtitle,
                         onTap: () => Get.to(() => const LanguagePage()),
@@ -79,15 +80,15 @@ class SettingsPage extends GetView<SettingsController> {
 
                   SettingCard(
                     icon: Icons.chat_bubble_outline_rounded,
-                    iconBg: const Color(0xFF1C2C24),
-                    iconColor: const Color(0xFF43D08A),
+                    iconBg: const Color(0xFFE0E0E0),
+                    iconColor: const Color(0xFF0C3D2B),
                     title: 'Hỗ trợ & Phản hồi',
                     subtitle: 'Liên hệ chúng tôi',
                     onTap: () => Get.to(() => const SupportFeedbackPage()),
                   ),
                   SettingCard(
                     icon: Icons.logout_rounded,
-                    iconBg: const Color(0xFF381E1E),
+                    iconBg: const Color(0xFFE0E0E0),
                     iconColor: const Color(0xFFFF5252),
                     title: 'Đăng xuất',
                     titleColor: const Color(0xFFFF5252),
@@ -108,4 +109,18 @@ class SettingsPage extends GetView<SettingsController> {
       bottomNavigationBar: const CustomBottomNavBar(initialIndex: 3),
     );
   }
+  //
+  // Widget _buildSectionHeader(String title) {
+  //   return Padding(
+  //     padding: const EdgeInsets.only(left: 8, bottom: 8),
+  //     child: Text(
+  //       title,
+  //       style: GoogleFonts.nunito(
+  //         color: const Color(0xFF5A7563), // Chữ rêu nhạt
+  //         fontSize: 12,
+  //         fontWeight: FontWeight.w900,
+  //       ),
+  //     ),
+  //   );
+  // }
 }

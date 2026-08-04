@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CustomHeader extends StatelessWidget {
   final String title;
@@ -23,18 +24,22 @@ class CustomHeader extends StatelessWidget {
               child: Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE2F0E5), // Xanh nhạt
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.white),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Color(0xFF0C3D2B)),
               ),
             ),
           if (showBack) const SizedBox(width: 16),
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+              style: GoogleFonts.nunito(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0C3D2B) // Xanh đậm
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
