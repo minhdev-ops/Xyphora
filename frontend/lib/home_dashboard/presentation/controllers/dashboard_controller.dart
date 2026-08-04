@@ -116,13 +116,16 @@ class DashboardController extends GetxController {
         note: 'Mua Vitamin C và khẩu trang',
       ),
     ]);
+    update();
   }
 
   void changeTab(String tab) {
     selectedTab.value = tab;
+    update();
   }
 
   void onTabChanged(int index) {
     selectedIndex.value = index;
+    update();
   }
 }

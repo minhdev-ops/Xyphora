@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="                                  " type="FlutterRunConfigurationType" factoryName="Flutter" editBeforeRun="true" focusToolWindowBeforeRun="true">
+    <option name="additionalArgs" value="-d emulator-5554 --dart-define=GOOGLE_SERVER_CLIENT_ID=873208631301-g4h6p1o1cks4lbutc5ng6ibo3ljot5vj.apps.googleusercontent.com" />
+    <option name="filePath" value="$PROJECT_DIR$/frontend/lib/main.dart" />
+    <method v="2" />
+  </configuration>
+</component>

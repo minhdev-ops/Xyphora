@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use App\Mail\OtpMail;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -35,7 +37,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token')->accessToken;
 
         return response()->json([
             'message' => 'Đăng ký thành công',
@@ -54,7 +56,7 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->firstOrFail();
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token')->accessToken;
 
         return response()->json([
             'message' => 'Đăng nhập thành công',
@@ -66,15 +68,68 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $token = $request->user()->currentAccessToken();
-
-        if ($token) {
-            $token->delete();
-        }
+        $request->user()->token()->revoke();
 
         return response()->json([
             'message' => 'Đã đăng xuất thành công'
         ]);
+    }
+
+    public function googleLogin(Request $request)
+    {
+        $request->validate([
+            'id_token' => 'required|string',
+        ], [
+            'id_token.required' => 'Vui lòng cung cấp Google ID token.',
+        ]);
+
+        try {
+            $response = Http::timeout(15)->get('https://oauth2.googleapis.com/tokeninfo', [
+                'id_token' => $request->id_token,
+            ]);
+
+            if ($response->failed()) {
+                \Log::error('Google tokeninfo failed: HTTP ' . $response->status() . ' - ' . $response->body());
+                return response()->json([
+                    'message' => 'Token Google không hợp lệ',
+                    'error' => 'HTTP ' . $response->status(),
+                    'detail' => $response->body(),
+                ], 401);
+            }
+
+            $payload = $response->json();
+            $expectedAud = config('services.google.client_id');
+
+            if ($payload['aud'] !== $expectedAud) {
+                \Log::warning('Google tokeninfo audience mismatch', ['aud' => $payload['aud'] ?? 'none', 'expected' => $expectedAud]);
+                return response()->json([
+                    'message' => 'Token Google không hợp lệ',
+                ], 401);
+            }
+
+            $user = User::updateOrCreate(
+                ['email' => $payload['email']],
+                [
+                    'name' => $payload['name'] ?? $payload['email'],
+                    'password' => Hash::make(Str::random(16)),
+                ]
+            );
+
+            $token = $user->createToken('google_token')->accessToken;
+
+            return response()->json([
+                'message' => 'Đăng nhập Google thành công',
+                'data' => $user,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Google login exception: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Token Google không hợp lệ',
+                'error' => $e->getMessage(),
+            ], 401);
+        }
     }
 
     public function sendOtp(Request $request)

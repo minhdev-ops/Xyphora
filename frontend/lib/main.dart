@@ -1,3 +1,4 @@
+// import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -34,12 +35,10 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  runApp(
-    DevicePreview(
-      enabled: true, // Chuyển thành false khi muốn chạy trên máy ảo điện thoại hoặc thiết bị thật
-      builder: (context) => const MyApp(),
-    ),
-  );
+  // Chạy có DevicePreview (dùng cho web/desktop):
+  // runApp(kIsWeb ? DevicePreview(builder: (context) => const MyApp()) : const MyApp());
+  // Chạy trực tiếp (Android/iOS/desktop):
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -50,20 +49,24 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Xyphora',
       debugShowCheckedModeBanner: false,
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
+      // locale: DevicePreview.locale(context),
+      // builder: DevicePreview.appBuilder,
       initialBinding: BindingsBuilder(() {
-        Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+        Get.put<AuthController>(AuthController(), permanent: true);
         Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
         Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
+        Get.lazyPut<AddExpenseController>(() => AddExpenseController(), fenix: true);
+        Get.lazyPut<AddGroupExpenseController>(() => AddGroupExpenseController(), fenix: true);
+        Get.lazyPut<StatisticsController>(() => StatisticsController(), fenix: true);
+
       }),
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFE4F5E5),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const HomeDashboardPage(),
     );
   }
 }
@@ -99,17 +102,43 @@ class MyAppPhone extends StatelessWidget {
       title: 'Xyphora',
       debugShowCheckedModeBanner: false,
       initialBinding: BindingsBuilder(() {
-        Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
-        Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+        Get.put<AuthController>(AuthController(), permanent: true);
+        Get.lazyPut<DashboardController>(
+          () => DashboardController(),
+          fenix: true,
+        );
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
-        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
+        Get.lazyPut<NotificationController>(
+          () => NotificationController(),
+          fenix: true,
+        );
+        Get.lazyPut<AddExpenseController>(
+          () => AddExpenseController(),
+          fenix: true,
+        );
+        Get.lazyPut<AddGroupExpenseController>(
+          () => AddGroupExpenseController(),
+          fenix: true,
+        );
+        Get.lazyPut<StatisticsController>(
+          () => StatisticsController(),
+          fenix: true,
+        );
       }),
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF4FAF6),
+        scaffoldBackgroundColor: const Color(0xFFE4F5E5),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      scrollBehavior: MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.trackpad,
+        },
+      ),
+      home: ExpensePage(),
     );
   }
 }

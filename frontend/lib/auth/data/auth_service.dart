@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../config/api_config.dart';
 
 
@@ -104,6 +105,52 @@ class AuthService {
     } catch (e) {
       // Bỏ qua lỗi kết nối khi logout
     }
+  }
+
+  late final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    serverClientId: ApiConfig.googleServerClientId.isNotEmpty
+        ? ApiConfig.googleServerClientId
+        : null,
+  );
+
+  Future<Map<String, dynamic>> googleLogin() async {
+    try {
+      try { await _googleSignIn.disconnect(); } catch (_) { await _googleSignIn.signOut(); }
+      final GoogleSignInAccount? account = await _googleSignIn.signIn();
+      if (account == null) {
+        return {'success': false, 'message': 'Đăng nhập Google đã bị hủy'};
+      }
+
+      final GoogleSignInAuthentication auth = await account.authentication;
+      final String? idToken = auth.idToken;
+
+      if (idToken == null) {
+        return {'success': false, 'message': 'Không thể lấy ID token từ Google'};
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/google'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'id_token': idToken}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        await _saveToken(data['access_token']);
+        return {'success': true, 'message': data['message'] ?? 'Đăng nhập Google thành công'};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Đăng nhập Google thất bại'};
+      }
+    } catch (e) {
+      debugPrint('Google login error: $e');
+      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+    }
+  }
+
+  Future<void> googleSignOut() async {
+    await _googleSignIn.signOut();
   }
 
   Future<Map<String, dynamic>> forgotPassword(String email) async {
