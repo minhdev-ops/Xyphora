@@ -1,4 +1,5 @@
 // import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -36,9 +37,9 @@ void main() {
     ),
   );
   // Chạy có DevicePreview (dùng cho web/desktop):
-  // runApp(kIsWeb ? DevicePreview(builder: (context) => const MyApp()) : const MyApp());
+  runApp(kIsWeb ? DevicePreview(builder: (context) => const MyApp()) : const MyApp());
   // Chạy trực tiếp (Android/iOS/desktop):
-  runApp(const MyApp());
+  // runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -49,8 +50,8 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Xyphora',
       debugShowCheckedModeBanner: false,
-      // locale: DevicePreview.locale(context),
-      // builder: DevicePreview.appBuilder,
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
       initialBinding: BindingsBuilder(() {
         Get.put<AuthController>(AuthController(), permanent: true);
         Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
