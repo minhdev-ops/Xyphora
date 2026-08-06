@@ -35,10 +35,13 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  // Chạy có DevicePreview (dùng cho web/desktop):
-  // runApp(kIsWeb ? DevicePreview(builder: (context) => const MyApp()) : const MyApp());
-  // Chạy trực tiếp (Android/iOS/desktop):
-  runApp(const MyApp());
+  runApp(
+    DevicePreview(
+      enabled: true,
+      // Chuyển thành false khi muốn chạy trên máy ảo điện thoại hoặc thiết bị thật
+      builder: (context) => const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -49,17 +52,31 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Xyphora',
       debugShowCheckedModeBanner: false,
-      // locale: DevicePreview.locale(context),
-      // builder: DevicePreview.appBuilder,
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
       initialBinding: BindingsBuilder(() {
         Get.put<AuthController>(AuthController(), permanent: true);
-        Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+        Get.lazyPut<DashboardController>(
+          () => DashboardController(),
+          fenix: true,
+        );
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
-        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
-        Get.lazyPut<AddExpenseController>(() => AddExpenseController(), fenix: true);
-        Get.lazyPut<AddGroupExpenseController>(() => AddGroupExpenseController(), fenix: true);
-        Get.lazyPut<StatisticsController>(() => StatisticsController(), fenix: true);
-
+        Get.lazyPut<NotificationController>(
+          () => NotificationController(),
+          fenix: true,
+        );
+        Get.lazyPut<AddExpenseController>(
+          () => AddExpenseController(),
+          fenix: true,
+        );
+        Get.lazyPut<AddGroupExpenseController>(
+          () => AddGroupExpenseController(),
+          fenix: true,
+        );
+        Get.lazyPut<StatisticsController>(
+          () => StatisticsController(),
+          fenix: true,
+        );
       }),
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFE4F5E5),
