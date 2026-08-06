@@ -77,8 +77,9 @@ class RegisterPages extends GetView<AuthController> {
               const SizedBox(height: 40),
 
               // Register Button
-              Obx(() => ElevatedButton(
-                onPressed: controller.isLoading.value ? null : controller.handleRegister,
+              GetBuilder<AuthController>(
+                builder: (auth) => ElevatedButton(
+                onPressed: auth.isLoading.value ? null : auth.handleRegister,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0C3D2B),
                   minimumSize: const Size(double.infinity, 54),
@@ -87,7 +88,7 @@ class RegisterPages extends GetView<AuthController> {
                   ),
                   elevation: 0,
                 ),
-                child: controller.isLoading.value
+                child: auth.isLoading.value
                     ? const SizedBox(
                         height: 20,
                         width: 20,
@@ -104,7 +105,8 @@ class RegisterPages extends GetView<AuthController> {
                           color: Colors.white,
                         ),
                       ),
-              )),
+              ),
+              ),
               const SizedBox(height: 32),
 
               // Login text
@@ -172,9 +174,10 @@ class RegisterPages extends GetView<AuthController> {
               ),
             ],
           ),
-          child: Obx(() => TextField(
+          child: GetBuilder<AuthController>(
+            builder: (auth) => TextField(
             controller: textController,
-            obscureText: isPassword && !controller.isPasswordVisible.value,
+            obscureText: isPassword && !auth.isPasswordVisible.value,
             keyboardType: keyboardType,
             style: GoogleFonts.nunito(
               color: const Color(0xFF0C3D2B),
@@ -190,13 +193,13 @@ class RegisterPages extends GetView<AuthController> {
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
-                        controller.isPasswordVisible.value
+                        auth.isPasswordVisible.value
                             ? Icons.visibility
                             : Icons.visibility_off,
                         color: const Color(0xFF5A7563),
                         size: 20,
                       ),
-                      onPressed: controller.togglePasswordVisibility,
+                      onPressed: auth.togglePasswordVisibility,
                     )
                   : null,
               border: OutlineInputBorder(
@@ -210,7 +213,8 @@ class RegisterPages extends GetView<AuthController> {
                 vertical: 16,
               ),
             ),
-          )),
+          ),
+          ),
         ),
       ],
     );

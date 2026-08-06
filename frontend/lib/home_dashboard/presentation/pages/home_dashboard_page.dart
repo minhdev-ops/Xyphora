@@ -8,6 +8,7 @@ import '../widgets/balance_card.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import 'spending_detail_page.dart';
 import '../../../notification/presentation/pages/notification_page.dart';
+import '../../../setting/presentation/pages/settings_page.dart';
 
 class HomeDashboardPage extends GetView<DashboardController> {
   const HomeDashboardPage({super.key});
@@ -73,18 +74,19 @@ class HomeDashboardPage extends GetView<DashboardController> {
               _buildTabSelector(controller),
               const SizedBox(height: 20),
               // Dynamic view switcher based on tab selection
-              Obx(() {
-                if (controller.selectedTab.value == 'my_spending') {
+              GetBuilder<DashboardController>(
+                builder: (ctrl) {
+                if (ctrl.selectedTab.value == 'my_spending') {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSpendingSummaryCard(controller),
+                      _buildSpendingSummaryCard(ctrl),
                       const SizedBox(height: 16),
-                      _buildSpendingList(controller),
+                      _buildSpendingList(ctrl),
                     ],
                   );
                 } else {
-                  return _buildEventList(controller);
+                  return _buildEventList(ctrl);
                 }
               }),
               const SizedBox(height: 32),
@@ -111,14 +113,15 @@ class HomeDashboardPage extends GetView<DashboardController> {
               ),
             ),
             const SizedBox(height: 4),
-            Obx(() => Text(
-                  '${controller.userName.value} 👋',
-                  style: GoogleFonts.nunito(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF0C3D2B),
-                  ),
-                )),
+            GetBuilder<DashboardController>(
+              builder: (ctrl) => Text(
+                    '${ctrl.userName.value} 👋',
+                    style: GoogleFonts.nunito(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF0C3D2B),
+                    ),
+                  )),
           ],
         ),
         const Spacer(),
@@ -136,7 +139,11 @@ class HomeDashboardPage extends GetView<DashboardController> {
         _buildHeaderIcon(
           icon: Icons.settings_outlined,
           onTap: () {
-            Get.snackbar('Cài đặt nhanh', 'Phần cài đặt nhanh đang phát triển');
+            Get.to(
+              () => const SettingsPage(),
+              transition: Transition.rightToLeft,
+              duration: const Duration(milliseconds: 300),
+            );
           },
         ),
       ],
@@ -191,13 +198,14 @@ class HomeDashboardPage extends GetView<DashboardController> {
           ),
         ],
       ),
-      child: Obx(() {
-        final currentTab = controller.selectedTab.value;
+      child: GetBuilder<DashboardController>(
+        builder: (ctrl) {
+        final currentTab = ctrl.selectedTab.value;
         return Row(
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () => controller.changeTab('all'),
+                onTap: () => ctrl.changeTab('all'),
                 child: Container(
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -221,7 +229,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
             ),
             Expanded(
               child: GestureDetector(
-                onTap: () => controller.changeTab('my_spending'),
+                onTap: () => ctrl.changeTab('my_spending'),
                 child: Container(
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
