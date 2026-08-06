@@ -8,6 +8,7 @@ import '../widgets/balance_card.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import 'spending_detail_page.dart';
 import '../../../notification/presentation/pages/notification_page.dart';
+import '../../../setting/presentation/pages/settings_page.dart';
 
 class HomeDashboardPage extends GetView<DashboardController> {
   const HomeDashboardPage({super.key});
@@ -138,7 +139,11 @@ class HomeDashboardPage extends GetView<DashboardController> {
         _buildHeaderIcon(
           icon: Icons.settings_outlined,
           onTap: () {
-            Get.snackbar('Cài đặt nhanh', 'Phần cài đặt nhanh đang phát triển');
+            Get.to(
+              () => const SettingsPage(),
+              transition: Transition.rightToLeft,
+              duration: const Duration(milliseconds: 300),
+            );
           },
         ),
       ],
