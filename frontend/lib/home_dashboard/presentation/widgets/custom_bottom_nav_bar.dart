@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../pages/home_dashboard_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../statistics/presentation/pages/statistics_page.dart';
 import '../../../event_management/presentation/pages/event_page.dart';
+import '../../../setting/presentation/pages/settings_page.dart';
 
 class CustomBottomNavBar extends StatefulWidget {
   final int initialIndex;
@@ -32,15 +34,9 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
-    } else if (index == 2) {
-      Get.offAll(
-        () => const EventPage(),
-        transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 300),
-      );
     } else if (index == 3) {
       Get.offAll(
-        () => const ProfilePage(),
+        () => const SettingsPage(),
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
@@ -75,7 +71,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         ],
       ),
       child: SizedBox(
-        height: 56,
+        height: 68,
         child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -91,7 +87,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
                 index: 1,
               ),
               _buildNavItem(
-                icon: _selectedIndex == 2 ? Icons.group : Icons.group_outlined,
+                icon: Icons.group_outlined,
                 label: 'Sự kiện',
                 index: 2,
               ),
