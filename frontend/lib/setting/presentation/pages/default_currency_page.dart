@@ -25,14 +25,16 @@ class DefaultCurrencyPage extends GetView<DefaultCurrencyController> {
                       BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
                     ],
                   ),
-                  child: Obx(() => ListView.separated(
+                  child: Obx(() {
+                    final selectedCode = controller.selectedCode.value;
+                    return ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: controller.currencies.length,
                     separatorBuilder: (context, index) => const Divider(color: Color(0xFFECEFF1), height: 1, thickness: 1),
                     itemBuilder: (context, index) {
                       final item = controller.currencies[index];
-                      final isSelected = item.code == controller.selectedCode.value;
+                      final isSelected = item.code == selectedCode;
 
                       return InkWell(
                         onTap: () => controller.selectCurrency(item.code),
@@ -76,10 +78,11 @@ class DefaultCurrencyPage extends GetView<DefaultCurrencyController> {
                         ),
                       );
                     },
-                  )),
-                ),
+                  );
+                }),
               ),
             ),
+          ),
           ],
         ),
       ),
