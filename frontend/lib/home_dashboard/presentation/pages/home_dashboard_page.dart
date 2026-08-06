@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import '../../../add_expense/presentation/bindings/add_expense_binding.dart';
+import '../../../add_expense/presentation/pages/add_expense_page.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../domain/models/transaction_model.dart';
 import '../../domain/models/spending_model.dart';
@@ -8,6 +10,7 @@ import '../widgets/balance_card.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import 'spending_detail_page.dart';
 import '../../../notification/presentation/pages/notification_page.dart';
+import '../../../setting/presentation/bindings/settings_binding.dart';
 import '../../../setting/presentation/pages/settings_page.dart';
 
 class HomeDashboardPage extends GetView<DashboardController> {
@@ -43,12 +46,11 @@ class HomeDashboardPage extends GetView<DashboardController> {
       bottomNavigationBar: const CustomBottomNavBar(initialIndex: 0),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Get.snackbar(
-            'Thêm sự kiện',
-            'Chức năng tạo sự kiện tài chính mới đang phát triển',
-            backgroundColor: const Color(0xFF0C3D2B).withValues(alpha: 0.8),
-            colorText: Colors.white,
-            duration: const Duration(seconds: 2),
+          Get.to(
+            () => ExpensePage(),
+            binding: AddExpenseBinding(),
+            transition: Transition.rightToLeft,
+            duration: const Duration(milliseconds: 300),
           );
         },
         backgroundColor: const Color(0xFF0C3D2B), // Deep Green FAB
@@ -141,6 +143,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
           onTap: () {
             Get.to(
               () => const SettingsPage(),
+              binding: SettingsBinding(),
               transition: Transition.rightToLeft,
               duration: const Duration(milliseconds: 300),
             );

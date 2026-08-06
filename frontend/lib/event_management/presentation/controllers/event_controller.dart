@@ -57,4 +57,8 @@ class EventController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  void addEvent(EventModel event) {
+    events.insert(0, event);
+  }
 }
