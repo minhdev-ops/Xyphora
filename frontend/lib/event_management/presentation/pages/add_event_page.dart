@@ -1,84 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../auth/domain/models/user.dart';
-import '../../domain/models/event_model.dart';
-import '../../domain/models/participant_model.dart';
 import '../bindings/event_binding.dart';
-import '../controllers/event_controller.dart';
+import '../controllers/add_event_controller.dart';
 
-class AddEventPage extends StatefulWidget {
+class AddEventPage extends GetView<AddEventController> {
   const AddEventPage({super.key});
 
-  @override
-  State<AddEventPage> createState() => _AddEventPageState();
-}
-
-class _AddEventPageState extends State<AddEventPage> {
   static const Color _green = Color(0xFF0C3D2B);
-  static const List<String> _emojis = [
-    '🎉', '⛰️', '🍽️', '🎂', '🏖️', '🏠', '🎊', '⚽',
-  ];
-
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  String _selectedEmoji = '🎉';
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  void _createEvent() {
-    final title = _titleController.text.trim();
-    if (title.isEmpty) {
-      Get.snackbar(
-        'Lỗi',
-        'Vui lòng nhập tên sự kiện',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
-      return;
-    }
-
-    final controller = Get.find<EventController>();
-    final eventId = DateTime.now().millisecondsSinceEpoch.toString();
-
-    final event = EventModel(
-      id: eventId,
-      ownerId: controller.myUserId,
-      emoji: _selectedEmoji,
-      title: title,
-      description: _descriptionController.text.trim(),
-      createdAt: DateTime.now(),
-      participants: [
-        ParticipantModel(
-          id: '${eventId}_p1',
-          eventId: eventId,
-          userId: controller.myUserId,
-          user: UserModel(
-            id: controller.myUserId,
-            name: 'Bạn',
-            email: 'ban@email.com',
-          ),
-        ),
-      ],
-      expenses: [],
-    );
-
-    controller.addEvent(event);
-    Get.back();
-    Get.snackbar(
-      'Thành công',
-      'Đã tạo sự kiện mới',
-      backgroundColor: _green,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,16 +68,16 @@ class _AddEventPageState extends State<AddEventPage> {
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
-                          children: _emojis.map((emoji) {
-                            final isSelected = emoji == _selectedEmoji;
+                          children: AddEventController.emojis.map((emoji) {
+                            final isSelected =
+                                emoji == controller.selectedEmoji.value;
                             return Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 4,
                                 vertical: 4,
                               ),
                               child: GestureDetector(
-                                onTap: () =>
-                                    setState(() => _selectedEmoji = emoji),
+                                onTap: () => controller.selectEmoji(emoji),
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
@@ -180,7 +109,7 @@ class _AddEventPageState extends State<AddEventPage> {
                     Container(
                       decoration: _cardDecoration(),
                       child: TextField(
-                        controller: _titleController,
+                        controller: controller.titleController,
                         style: GoogleFonts.nunito(
                           color: _green,
                           fontSize: 15,
@@ -206,7 +135,7 @@ class _AddEventPageState extends State<AddEventPage> {
                     Container(
                       decoration: _cardDecoration(),
                       child: TextField(
-                        controller: _descriptionController,
+                        controller: controller.descriptionController,
                         maxLines: 3,
                         style: GoogleFonts.nunito(
                           color: _green,
@@ -229,7 +158,7 @@ class _AddEventPageState extends State<AddEventPage> {
                     ),
                     const SizedBox(height: 28),
                     ElevatedButton(
-                      onPressed: _createEvent,
+                      onPressed: controller.createEvent,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _green,
                         foregroundColor: Colors.white,

@@ -2,42 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import '../../data/auth_service.dart';
-import '../../../home_dashboard/presentation/pages/home_dashboard_page.dart';
+import '../controllers/auth_controller.dart';
 import 'login_pages.dart';
 import 'register_pages.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends GetView<AuthController> {
   const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  bool _isLoading = false;
-  final AuthService _authService = AuthService();
-
-  void _handleGoogleLogin() async {
-    setState(() => _isLoading = true);
-    final result = await _authService.googleLogin();
-    setState(() => _isLoading = false);
-
-    if (result['success']) {
-      Get.offAll(() => const HomeDashboardPage());
-    } else {
-      Get.snackbar(
-        'Đăng nhập Google thất bại',
-        result['message'],
-        backgroundColor: const Color(0xFFE53935),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 3),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +66,9 @@ class _HomePageState extends State<HomePage> {
               const Spacer(),
               // Google Button
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleGoogleLogin,
+                onPressed: controller.isLoading.value
+                    ? null
+                    : controller.handleGoogleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4285F4),
                   minimumSize: const Size(double.infinity, 54),
@@ -105,7 +77,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   elevation: 0,
                 ),
-                child: _isLoading
+                child: controller.isLoading.value
                     ? const SizedBox(
                         height: 20,
                         width: 20,
