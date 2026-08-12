@@ -6,6 +6,7 @@ import '../widgets/summary_card.dart';
 import '../widgets/filter_chip.dart';
 import '../widgets/event_card.dart';
 import 'event_detail_view.dart';
+import 'add_event_page.dart';
 import '../../../home_dashboard/presentation/widgets/custom_bottom_nav_bar.dart';
 
 class EventPage extends GetView<EventController> {
@@ -119,7 +120,7 @@ class EventPage extends GetView<EventController> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF0A4226),
-        onPressed: () {},
+        onPressed: () => Get.to(() => const AddEventPage()),
         child: const Icon(Icons.add, color: Colors.white),
       ),
       bottomNavigationBar: const CustomBottomNavBar(initialIndex: 2),

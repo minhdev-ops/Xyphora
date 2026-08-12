@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../pages/home_dashboard_page.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../statistics/presentation/pages/statistics_page.dart';
 import '../../../event_management/presentation/pages/event_page.dart';
+import '../../../setting/presentation/bindings/settings_binding.dart';
 import '../../../setting/presentation/pages/settings_page.dart';
 
 class CustomBottomNavBar extends StatefulWidget {
@@ -34,21 +34,24 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
-    } else if (index == 3) {
+    } else if (index == 1) {
       Get.offAll(
-        () => const SettingsPage(),
+        () => const StatisticsPage(),
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
-    } else {
-      setState(() => _selectedIndex = index);
-      Get.snackbar(
-        'Chức năng',
-        'Tính năng đang được phát triển',
-        backgroundColor: const Color(0xFF0C3D2B).withValues(alpha: 0.8),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 1),
+    } else if (index == 2) {
+      Get.offAll(
+        () => const EventPage(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
+      );
+    } else if (index == 3) {
+      Get.offAll(
+        () => const SettingsPage(),
+        binding: SettingsBinding(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
       );
     }
   }
@@ -87,7 +90,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
                 index: 1,
               ),
               _buildNavItem(
-                icon: Icons.group_outlined,
+                icon: _selectedIndex == 2 ? Icons.group : Icons.group_outlined,
                 label: 'Sự kiện',
                 index: 2,
               ),

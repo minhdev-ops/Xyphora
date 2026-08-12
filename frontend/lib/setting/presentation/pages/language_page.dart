@@ -28,8 +28,9 @@ class LanguagePage extends GetView<LanguageController> {
                       BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
                     ],
                   ),
-                  child: Obx(
-                    () => ListView.separated(
+                  child: Obx(() {
+                    final selectedCode = controller.selectedCode.value;
+                    return ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: controller.languages.length,
@@ -37,7 +38,7 @@ class LanguagePage extends GetView<LanguageController> {
                       itemBuilder: (context, index) {
                         final item = controller.languages[index];
                         final isSelected =
-                            item.code == controller.selectedCode.value;
+                            item.code == selectedCode;
 
                         return InkWell(
                           onTap: () => controller.selectLanguage(item.code),
@@ -79,15 +80,16 @@ class LanguagePage extends GetView<LanguageController> {
                             ),
                           ),
                         );
-                      },
-                    ),
-                  ),
-                ),
+                    },
+                  );
+                }),
               ),
             ),
+          ),
           ],
         ),
       ),
     );
   }
 }
+

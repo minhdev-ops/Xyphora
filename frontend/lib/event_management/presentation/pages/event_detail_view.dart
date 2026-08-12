@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../add_group_expense/presentation/bindings/add_group_expense_binding.dart';
+import '../../../add_group_expense/presentation/pages/add_group_expense_page.dart';
 import '../controllers/event_detail_controller.dart';
 import '../widgets/expenses_tab.dart';
 import '../widgets/balances_tab.dart';
@@ -90,7 +92,22 @@ class EventDetailView extends GetView<EventDetailController> {
           children: [
             FloatingActionButton(
               backgroundColor: const Color(0xFF0A4226),
-              onPressed: () {},
+              onPressed: () {
+                if (isPhotoTab) {
+                  Get.snackbar(
+                    'Thêm ảnh',
+                    'Chức năng thêm ảnh đang phát triển',
+                    backgroundColor: const Color(0xFF0A4226),
+                    colorText: Colors.white,
+                    duration: const Duration(seconds: 2),
+                  );
+                } else {
+                  Get.to(
+                    () => GroupExpensePage(),
+                    binding: AddGroupExpenseBinding(),
+                  );
+                }
+              },
               child: Icon(
                 isPhotoTab ? Icons.camera_alt : Icons.add,
                 color: Colors.white,
