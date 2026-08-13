@@ -12,9 +12,56 @@ class AddEventController extends GetxController {
 
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController participantController = TextEditingController();
   final RxString selectedEmoji = '🎉'.obs;
+  final RxList<ParticipantModel> participants = <ParticipantModel>[].obs;
+  final RxBool isAddingParticipant = false.obs;
+  int _participantCounter = 0;
 
   void selectEmoji(String emoji) => selectedEmoji.value = emoji;
+
+  void startAddParticipant() {
+    participantController.clear();
+    isAddingParticipant.value = true;
+  }
+
+  void cancelAddParticipant() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    isAddingParticipant.value = false;
+  }
+
+  void confirmAddParticipant() {
+    final name = participantController.text.trim();
+    if (name.isEmpty) {
+      Get.snackbar(
+        'Lỗi',
+        'Vui lòng nhập tên người tham gia',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
+    _participantCounter++;
+    participants.add(
+      ParticipantModel(
+        id: 'draft_p$_participantCounter',
+        eventId: 'draft',
+        userId: 'guest_$_participantCounter',
+        user: UserModel(
+          id: 'guest_$_participantCounter',
+          name: name,
+          email: '',
+        ),
+      ),
+    );
+    isAddingParticipant.value = false;
+  }
+
+  void removeParticipant(ParticipantModel participant) {
+    participants.remove(participant);
+  }
 
   void createEvent() {
     final title = titleController.text.trim();
@@ -50,6 +97,12 @@ class AddEventController extends GetxController {
             email: 'ban@email.com',
           ),
         ),
+        ...participants.asMap().entries.map((e) => ParticipantModel(
+              id: '${eventId}_p${e.key + 2}',
+              eventId: eventId,
+              userId: e.value.userId,
+              user: e.value.user,
+            )),
       ],
       expenses: [],
     );
@@ -69,6 +122,7 @@ class AddEventController extends GetxController {
   void onClose() {
     titleController.dispose();
     descriptionController.dispose();
+    participantController.dispose();
     super.onClose();
   }
 }

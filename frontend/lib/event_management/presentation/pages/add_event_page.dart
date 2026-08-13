@@ -157,6 +157,41 @@ class AddEventPage extends GetView<AddEventController> {
                       ),
                     ),
                     const SizedBox(height: 28),
+                    _buildSectionLabel('NGƯỜI THAM GIA'),
+                    const SizedBox(height: 10),
+                    Container(
+                      decoration: _cardDecoration(),
+                      child: Obx(
+                        () => Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildParticipantRow(
+                              name: 'Bạn',
+                              isCreator: true,
+                            ),
+                            ...controller.participants.map(
+                              (p) => _buildParticipantRow(
+                                name: p.user?.name ?? '',
+                                isCreator: false,
+                                onRemove: () =>
+                                    controller.removeParticipant(p),
+                              ),
+                            ),
+                            const Divider(
+                              height: 1,
+                              indent: 68,
+                              endIndent: 16,
+                              color: Color(0xFFE2F0E5),
+                            ),
+                            if (controller.isAddingParticipant.value)
+                              _buildParticipantInput()
+                            else
+                              _buildAddParticipantRow(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
                     ElevatedButton(
                       onPressed: controller.createEvent,
                       style: ElevatedButton.styleFrom(
@@ -209,6 +244,187 @@ class AddEventPage extends GetView<AddEventController> {
         color: const Color(0xFF5A7563),
         fontSize: 11,
         fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+
+  Widget _buildParticipantRow({
+    required String name,
+    required bool isCreator,
+    VoidCallback? onRemove,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE2F0E5),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                name.isNotEmpty ? name.characters.first.toUpperCase() : '?',
+                style: GoogleFonts.nunito(
+                  color: _green,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: GoogleFonts.nunito(
+                color: _green,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isCreator)
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2F0E5),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Người tạo',
+                style: GoogleFonts.nunito(
+                  color: _green,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            )
+          else
+            GestureDetector(
+              onTap: onRemove,
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: Color(0xFF9E9E9E),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddParticipantRow() {
+    return InkWell(
+      onTap: controller.startAddParticipant,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2F0E5),
+                shape: BoxShape.circle,
+                border: Border.all(color: _green, width: 1.2),
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: _green,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Thêm người tham gia',
+              style: GoogleFonts.nunito(
+                color: _green,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildParticipantInput() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 12, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller.participantController,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => controller.confirmAddParticipant(),
+              style: GoogleFonts.nunito(
+                color: _green,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Nhập tên người tham gia',
+                hintStyle: GoogleFonts.nunito(
+                  color: const Color(0xFF9E9E9E),
+                  fontSize: 14,
+                ),
+                isDense: true,
+                filled: true,
+                fillColor: const Color(0xFFF4FAF6),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: controller.confirmAddParticipant,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: _green,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: controller.cancelAddParticipant,
+            child: const Padding(
+              padding: EdgeInsets.all(8),
+              child: Icon(
+                Icons.close_rounded,
+                color: Color(0xFF9E9E9E),
+                size: 20,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
