@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../../add_expense/presentation/bindings/add_expense_binding.dart';
 import '../../../add_expense/presentation/pages/add_expense_page.dart';
+import '../../../category_list/presentation/bindings/category_list_binding.dart';
+import '../../../category_list/presentation/pages/category_list_page.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../domain/models/transaction_model.dart';
 import '../../domain/models/spending_model.dart';
@@ -11,8 +13,6 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import '../../../expense_detail/presentation/bindings/expense_detail_binding.dart';
 import '../../../expense_detail/presentation/pages/expense_detail_page.dart';
 import '../../../notification/presentation/pages/notification_page.dart';
-import '../../../setting/presentation/bindings/settings_binding.dart';
-import '../../../setting/presentation/pages/settings_page.dart';
 
 class HomeDashboardPage extends GetView<DashboardController> {
   const HomeDashboardPage({super.key});
@@ -138,13 +138,11 @@ class HomeDashboardPage extends GetView<DashboardController> {
         ),
         const SizedBox(width: 12),
         _buildHeaderIcon(
-          icon: Icons.settings_outlined,
+          icon: Icons.category_rounded,
           onTap: () {
             Get.to(
-              () => const SettingsPage(),
-              binding: SettingsBinding(),
-              transition: Transition.rightToLeft,
-              duration: const Duration(milliseconds: 300),
+              () => const CategoryListPage(),
+              binding: CategoryListBinding(),
             );
           },
         ),
