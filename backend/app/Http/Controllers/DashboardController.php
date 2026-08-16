@@ -126,6 +126,7 @@ class DashboardController extends Controller
         $spendings = Expense::whereIn('expense_id', $monthlyExpenseIds)
             ->with('category')
             ->orderByDesc('expense_date')
+            ->orderByDesc('created_at')
             ->get()
             ->map(function (Expense $expense) use ($monthlySplits) {
                 $share = round(

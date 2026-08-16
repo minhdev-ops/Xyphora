@@ -149,6 +149,194 @@ class ExpenseController extends Controller
         ], 201);
     }
 
+    public function index(Request $request)
+    {
+        $request->validate([
+            'event_id' => 'nullable|integer|exists:events,event_id',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:50',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date',
+            'category_id' => 'nullable|integer|exists:categories,category_id',
+            'payer_id' => 'nullable|integer|exists:participants,participant_id',
+            'search' => 'nullable|string|max:150',
+            'my_split_status' => 'nullable|in:pending,settled',
+            'sort' => 'nullable|in:asc,desc',
+        ], [
+            'event_id.exists' => 'Sự kiện không tồn tại.',
+            'per_page.max' => 'per_page không được vượt quá 50.',
+            'date_from.date' => 'date_from không hợp lệ.',
+            'date_to.date' => 'date_to không hợp lệ.',
+            'category_id.exists' => 'Danh mục không tồn tại.',
+            'payer_id.exists' => 'Người trả không tồn tại.',
+            'my_split_status.in' => 'my_split_status phải là pending hoặc settled.',
+            'sort.in' => 'sort phải là asc hoặc desc.',
+        ]);
+
+        $user = $request->user();
+
+        // Cac su kien user co quyen xem chi tieu (owner hoac participant active)
+        $accessibleEventIds = Event::where('owner_id', $user->id)
+            ->pluck('event_id')
+            ->merge(
+                Participant::where('user_id', $user->id)
+                    ->where('status', Participant::STATUS_ACTIVE)
+                    ->pluck('event_id')
+            )
+            ->unique()
+            ->values();
+
+        $eventId = $request->event_id;
+        if ($eventId !== null && ! $accessibleEventIds->contains($eventId)) {
+            return response()->json([
+                'message' => 'Bạn không có quyền xem chi tiêu của sự kiện này.',
+            ], 403);
+        }
+
+        $query = Expense::with(['event', 'category', 'payer', 'splits'])
+            ->whereIn('event_id', $accessibleEventIds);
+
+        if ($eventId !== null) {
+            $query->where('event_id', $eventId);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('expense_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('expense_date', '<=', $request->date_to);
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('payer_id')) {
+            $query->where('payer_id', $request->payer_id);
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%'.$request->search.'%')
+                    ->orWhere('description', 'like', '%'.$request->search.'%');
+            });
+        }
+
+        if ($request->filled('my_split_status')) {
+            $query->whereHas('splits', function ($q) use ($request, $user) {
+                $q->where('status', $request->my_split_status)
+                    ->whereIn('participant_id', function ($sub) use ($user) {
+                        $sub->select('participant_id')
+                            ->from('participants')
+                            ->where('user_id', $user->id);
+                    });
+            });
+        }
+
+        // Tong tien tren TOAN BO tap da loc (khong phai rieng trang)
+        $summaryAmount = (clone $query)->sum('amount');
+
+        $myParticipantIds = Participant::where('user_id', $user->id)
+            ->where('status', Participant::STATUS_ACTIVE)
+            ->whereIn('event_id', $accessibleEventIds)
+            ->pluck('participant_id');
+
+        $myTotalAmount = 0.0;
+        if ($myParticipantIds->isNotEmpty()) {
+            $myTotalAmount = (clone $query)
+                ->join('expense_splits', 'expenses.expense_id', '=', 'expense_splits.expense_id')
+                ->whereIn('expense_splits.participant_id', $myParticipantIds)
+                ->sum('expense_splits.amount');
+        }
+
+        $sort = $request->sort ?? 'desc';
+        $query->orderBy('expense_date', $sort)->orderBy('created_at', $sort);
+
+        $perPage = $request->per_page ?? 15;
+        $expenses = $query->paginate($perPage)->withQueryString();
+
+        // Map participant cua user theo tung su kien (de tim my_split)
+        $myParticipantByEvent = Participant::where('user_id', $user->id)
+            ->where('status', Participant::STATUS_ACTIVE)
+            ->whereIn('event_id', $accessibleEventIds)
+            ->get(['event_id', 'participant_id'])
+            ->keyBy('event_id');
+
+        $data = $expenses->map(function (Expense $expense) use ($myParticipantByEvent) {
+            $myParticipant = $myParticipantByEvent->get($expense->event_id);
+            $mySplit = $myParticipant
+                ? $expense->splits->firstWhere('participant_id', $myParticipant->participant_id)
+                : null;
+
+            return [
+                'expense_id' => $expense->expense_id,
+                'event_id' => $expense->event_id,
+                'event_title' => $expense->event?->title,
+                'title' => $expense->title,
+                'description' => $expense->description,
+                'amount' => (float) $expense->amount,
+                'currency' => $expense->currency,
+                'expense_date' => $expense->expense_date?->toDateString(),
+                'split_method' => $expense->split_method,
+                'category' => $expense->category ? [
+                    'category_id' => $expense->category->category_id,
+                    'name' => $expense->category->name,
+                    'icon' => $expense->category->icon,
+                    'color' => $expense->category->color,
+                ] : null,
+                'payer' => $expense->payer ? [
+                    'participant_id' => $expense->payer->participant_id,
+                    'user_id' => $expense->payer->user_id,
+                    'display_name' => $expense->payer->display_name,
+                    'avatar' => $expense->payer->avatar,
+                ] : null,
+                'my_split' => $mySplit ? [
+                    'amount' => (float) $mySplit->amount,
+                    'status' => $mySplit->status,
+                ] : null,
+                'split_count' => $expense->splits->count(),
+                'created_by' => $expense->created_by,
+                'created_at' => $expense->created_at?->toDateTimeString(),
+            ];
+        });
+
+        return response()->json([
+            'message' => 'Lấy danh sách chi tiêu thành công',
+            'data' => $data,
+            'summary' => [
+                'total_amount' => round((float) $summaryAmount, 2),
+                'my_total_amount' => round($myTotalAmount, 2),
+            ],
+            'meta' => [
+                'current_page' => $expenses->currentPage(),
+                'per_page' => $expenses->perPage(),
+                'total' => $expenses->total(),
+                'last_page' => $expenses->lastPage(),
+                'from' => $expenses->firstItem(),
+                'to' => $expenses->lastItem(),
+            ],
+        ]);
+    }
+
+    public function categories(Request $request)
+    {
+        $user = $request->user();
+
+        $categories = Category::where('type', Category::TYPE_EXPENSE)
+            ->where(function ($q) use ($user) {
+                $q->where('is_default', true)
+                    ->orWhere('created_by', $user->id);
+            })
+            ->orderBy('category_id')
+            ->get(['category_id', 'name', 'icon', 'color', 'type']);
+
+        return response()->json([
+            'message' => 'Lấy danh sách danh mục thành công',
+            'data' => $categories,
+        ]);
+    }
+
     /**
      * Tao danh sach chia tien theo phuong thuc.
      */
