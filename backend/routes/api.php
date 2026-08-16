@@ -1,9 +1,10 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,8 +28,14 @@ Route::post('/auth/google', [AuthController::class, 'googleLogin']);
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
-    
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::post('/events/create', [EventController::class, 'store']);
+    Route::put('/events/{event}/update', [EventController::class, 'update']);
+    Route::delete('/events/{event}/delete', [EventController::class, 'destroy']);
+
+    Route::resource('events', EventController::class)->except(['create', 'edit']);
 });
