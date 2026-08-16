@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../expense_history/presentation/bindings/expense_history_binding.dart';
+import '../../../expense_history/presentation/pages/expense_history_page.dart';
 import '../../../home_dashboard/presentation/pages/home_dashboard_page.dart';
 
 class StatisticsHeader extends StatelessWidget {
@@ -45,6 +47,32 @@ class StatisticsHeader extends StatelessWidget {
               ),
             ),
             const Spacer(),
+            GestureDetector(
+              onTap: () => Get.to(
+                () => const ExpenseHistoryPage(),
+                binding: ExpenseHistoryBinding(),
+              ),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF4FAF6),
+                  shape: BoxShape.circle,
+                  border: Border.fromBorderSide(
+                    BorderSide(
+                      color: Color(0xFF0C3D2B),
+                      width: 1.2,
+                    ),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  size: 20,
+                  color: Color(0xFF0C3D2B),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(

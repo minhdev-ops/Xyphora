@@ -111,7 +111,10 @@ class EventPage extends GetView<EventController> {
                     .map((e) => EventCard(
                         event: e,
                         balance: e.getUserBalance(controller.myUserId),
-                        onTap: () => Get.to(() => const EventDetailView())))
+                        onTap: () => Get.to(
+                          () => const EventDetailView(),
+                          arguments: {'event_id': 10},
+                        )))
                     .toList(),
               );
             }),

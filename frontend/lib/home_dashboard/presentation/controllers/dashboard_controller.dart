@@ -35,6 +35,7 @@ class DashboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    debugPrint('[Dashboard] controller onInit -> loadDashboardData');
     loadDashboardData();
   }
 

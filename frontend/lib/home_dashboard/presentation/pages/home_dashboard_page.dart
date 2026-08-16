@@ -423,12 +423,16 @@ class HomeDashboardPage extends GetView<DashboardController> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            item.date,
-                            style: GoogleFonts.nunito(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF5A7563),
+                          Expanded(
+                            child: Text(
+                              item.date,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF5A7563),
+                              ),
                             ),
                           ),
                         ],

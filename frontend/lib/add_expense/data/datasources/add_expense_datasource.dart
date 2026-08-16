@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../domain/models/expense_model.dart';
 import '../../../config/api_config.dart';
+import '../../../config/token_storage.dart';
 
 class AddExpenseDatasource {
   static final String baseUrl = ApiConfig.baseUrl;
-  static final _storage = FlutterSecureStorage();
 
   static final List<ExpenseModel> _mockExpenses = [
     ExpenseModel(
@@ -77,7 +76,7 @@ class AddExpenseDatasource {
 
   Future<Map<String, dynamic>> fetchEvents() async {
     try {
-      final token = await _storage.read(key: 'auth_token');
+      final token = await TokenStorage.read();
       if (token == null) {
         return {'success': false, 'message': 'Chưa đăng nhập'};
       }
@@ -114,7 +113,7 @@ class AddExpenseDatasource {
     String? expenseDate,
   }) async {
     try {
-      final token = await _storage.read(key: 'auth_token');
+      final token = await TokenStorage.read();
       if (token == null) {
         return {'success': false, 'message': 'Chưa đăng nhập'};
       }

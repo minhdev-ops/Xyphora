@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../home_dashboard/presentation/controllers/dashboard_controller.dart';
 import '../../data/repositories/add_expense_repository.dart';
 import '../../domain/models/expense_model.dart';
 
@@ -244,6 +245,9 @@ class AddExpenseController extends GetxController {
     update();
 
     if (result['success'] == true) {
+      if (Get.isRegistered<DashboardController>()) {
+        Get.find<DashboardController>().loadDashboardData();
+      }
       Get.back(result: true);
       Get.snackbar(
         'Thành công',
