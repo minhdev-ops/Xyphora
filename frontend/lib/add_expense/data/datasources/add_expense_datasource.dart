@@ -104,8 +104,39 @@ class AddExpenseDatasource {
     }
   }
 
+  Future<Map<String, dynamic>> fetchCategories() async {
+    try {
+      final token = await TokenStorage.read();
+      if (token == null) {
+        return {'success': false, 'message': 'Chưa đăng nhập'};
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/categories'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'data': (body['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>(),
+        };
+      }
+      return {'success': false, 'message': body['message'] ?? 'Lỗi tải danh mục'};
+    } catch (e) {
+      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+    }
+  }
+
   Future<Map<String, dynamic>> createExpense({
     int? eventId,
+    int? categoryId,
     required String title,
     required double amount,
     String currency = 'VND',
@@ -126,7 +157,8 @@ class AddExpenseDatasource {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          if (eventId != null) 'event_id': eventId,
+          'event_id': ?eventId,
+          'category_id': ?categoryId,
           'title': title,
           'amount': amount,
           'currency': currency,

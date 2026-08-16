@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/repositories/category_list_repository.dart';
 import '../../domain/models/category_stat_item.dart';
@@ -8,6 +9,7 @@ class CategoryListController extends GetxController {
   final isLoading = true.obs;
   final errorMessage = RxnString();
   final categories = <CategoryStatItem>[].obs;
+  final isMutating = false.obs;
 
   List<CategoryStatItem> get sortedCategories {
     final list = [...categories];
@@ -39,6 +41,58 @@ class CategoryListController extends GetxController {
 
     isLoading.value = false;
     update();
+  }
+
+  Future<bool> createCategory({
+    required String name,
+    String? icon,
+    String? color,
+  }) async {
+    return _mutate(() => _repository.createCategory(
+          name: name,
+          icon: icon,
+          color: color,
+        ));
+  }
+
+  Future<bool> updateCategory({
+    required int categoryId,
+    required String name,
+    String? icon,
+    String? color,
+  }) async {
+    return _mutate(() => _repository.updateCategory(
+          categoryId: categoryId,
+          name: name,
+          icon: icon,
+          color: color,
+        ));
+  }
+
+  Future<bool> deleteCategory(int categoryId) async {
+    return _mutate(() => _repository.deleteCategory(categoryId));
+  }
+
+  Future<bool> _mutate(Future<dynamic> Function() action) async {
+    isMutating.value = true;
+    update();
+
+    try {
+      await action();
+      await loadCategories();
+      return true;
+    } catch (e) {
+      Get.snackbar(
+        'Thất bại',
+        e.toString().replaceFirst('Exception: ', ''),
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      isMutating.value = false;
+      update();
+    }
   }
 
   String formatCurrency(double amount) {

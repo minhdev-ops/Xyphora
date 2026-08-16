@@ -17,6 +17,7 @@ class ExpenseController extends Controller
     {
         $request->validate([
             'event_id' => 'nullable|integer|exists:events,event_id',
+            'category_id' => 'nullable|integer|exists:categories,category_id',
             'title' => 'nullable|string|max:150',
             'amount' => 'required|numeric|gt:0',
             'currency' => 'nullable|string|size:3',
@@ -26,6 +27,7 @@ class ExpenseController extends Controller
             'payer_id' => 'nullable|integer|exists:participants,participant_id',
         ], [
             'event_id.exists' => 'Sự kiện không tồn tại.',
+            'category_id.exists' => 'Danh mục không tồn tại.',
             'amount.required' => 'Vui lòng nhập số tiền.',
             'amount.gt' => 'Số tiền phải lớn hơn 0.',
             'title.max' => 'Tiêu đề không được quá 150 ký tự.',
@@ -76,11 +78,30 @@ class ExpenseController extends Controller
             }
         }
 
-        // Category: uu tien danh muc mac dinh loai expense
-        $category = Category::where('type', Category::TYPE_EXPENSE)
-            ->where('is_default', true)
-            ->orderBy('category_id')
-            ->first();
+        // Category: uu tien danh muc duoc chon, mac dinh la danh muc mac dinh loai expense
+        $category = null;
+        if ($request->filled('category_id')) {
+            $category = Category::where('category_id', $request->category_id)
+                ->where('type', Category::TYPE_EXPENSE)
+                ->where(function ($q) use ($user) {
+                    $q->where('is_default', true)
+                        ->orWhere('created_by', $user->id);
+                })
+                ->first();
+
+            if (! $category) {
+                return response()->json([
+                    'message' => 'Danh mục không hợp lệ.',
+                ], 422);
+            }
+        }
+
+        if (! $category) {
+            $category = Category::where('type', Category::TYPE_EXPENSE)
+                ->where('is_default', true)
+                ->orderBy('category_id')
+                ->first();
+        }
 
         if (! $category) {
             $category = Category::create([
@@ -481,6 +502,135 @@ class ExpenseController extends Controller
             'message' => 'Lấy danh sách danh mục thành công',
             'data' => $data,
         ]);
+    }
+
+    public function storeCategory(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:50',
+            'icon' => 'nullable|string|max:30',
+            'color' => 'nullable|string|max:9',
+            'type' => 'nullable|in:expense,income',
+        ], [
+            'name.required' => 'Vui lòng nhập tên danh mục.',
+            'name.max' => 'Tên danh mục không được quá 50 ký tự.',
+            'icon.max' => 'Icon không hợp lệ.',
+            'color.max' => 'Màu sắc không hợp lệ.',
+        ]);
+
+        $user = $request->user();
+
+        if ($this->categoryNameExists($user->id, $request->name)) {
+            return response()->json([
+                'message' => 'Danh mục này đã tồn tại.',
+            ], 422);
+        }
+
+        $category = Category::create([
+            'name' => trim($request->name),
+            'icon' => $request->icon,
+            'color' => $request->color,
+            'type' => $request->type ?? Category::TYPE_EXPENSE,
+            'is_default' => false,
+            'created_by' => $user->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Tạo danh mục thành công',
+            'data' => [
+                'category_id' => $category->category_id,
+                'name' => $category->name,
+                'icon' => $category->icon,
+                'color' => $category->color,
+                'type' => $category->type,
+                'is_default' => (bool) $category->is_default,
+            ],
+        ], 201);
+    }
+
+    public function updateCategory(Request $request, int $category)
+    {
+        $request->validate([
+            'name' => 'required|string|max:50',
+            'icon' => 'nullable|string|max:30',
+            'color' => 'nullable|string|max:9',
+        ], [
+            'name.required' => 'Vui lòng nhập tên danh mục.',
+            'name.max' => 'Tên danh mục không được quá 50 ký tự.',
+        ]);
+
+        $user = $request->user();
+
+        $category = Category::find($category);
+        if (! $category || $category->is_default || $category->created_by !== $user->id) {
+            return response()->json([
+                'message' => 'Bạn không có quyền sửa danh mục này.',
+            ], 403);
+        }
+
+        if (strtolower($category->name) !== strtolower(trim($request->name))
+            && $this->categoryNameExists($user->id, $request->name)) {
+            return response()->json([
+                'message' => 'Danh mục này đã tồn tại.',
+            ], 422);
+        }
+
+        $category->update([
+            'name' => trim($request->name),
+            'icon' => $request->icon,
+            'color' => $request->color,
+        ]);
+
+        return response()->json([
+            'message' => 'Cập nhật danh mục thành công',
+            'data' => [
+                'category_id' => $category->category_id,
+                'name' => $category->name,
+                'icon' => $category->icon,
+                'color' => $category->color,
+                'type' => $category->type,
+                'is_default' => (bool) $category->is_default,
+            ],
+        ]);
+    }
+
+    public function deleteCategory(Request $request, int $category)
+    {
+        $user = $request->user();
+
+        $category = Category::find($category);
+        if (! $category || $category->is_default || $category->created_by !== $user->id) {
+            return response()->json([
+                'message' => 'Bạn không có quyền xóa danh mục này.',
+            ], 403);
+        }
+
+        $count = Expense::where('category_id', $category->category_id)
+            ->where('is_deleted', false)
+            ->count();
+
+        if ($count > 0) {
+            return response()->json([
+                'message' => "Danh mục đang có {$count} khoản chi, không thể xóa.",
+            ], 422);
+        }
+
+        $category->delete();
+
+        return response()->json([
+            'message' => 'Xóa danh mục thành công',
+        ]);
+    }
+
+    private function categoryNameExists(int $userId, string $name): bool
+    {
+        return Category::where('type', Category::TYPE_EXPENSE)
+            ->where('name', trim($name))
+            ->where(function ($q) use ($userId) {
+                $q->where('is_default', true)
+                    ->orWhere('created_by', $userId);
+            })
+            ->exists();
     }
 
     /**

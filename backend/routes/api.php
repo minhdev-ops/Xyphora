@@ -36,6 +36,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/expenses', [ExpenseController::class, 'index']);
     Route::get('/expenses/{expense}', [ExpenseController::class, 'show']);
     Route::get('/categories', [ExpenseController::class, 'categories']);
+    Route::post('/categories', [ExpenseController::class, 'storeCategory']);
+    Route::put('/categories/{category}', [ExpenseController::class, 'updateCategory']);
+    Route::delete('/categories/{category}', [ExpenseController::class, 'deleteCategory']);
 
     Route::get('/user', function (Request $request) {
         return $request->user();

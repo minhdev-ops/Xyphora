@@ -30,7 +30,69 @@ class CategoryListDatasource {
           .toList();
     }
 
-    String message = 'Không thể tải danh mục';
+    throw _parseError(response, 'Không thể tải danh mục');
+  }
+
+  Future<Map<String, dynamic>> createCategory({
+    required String name,
+    String? icon,
+    String? color,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/categories'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'name': name,
+        'icon': ?icon,
+        'color': ?color,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+
+    throw _parseError(response, 'Không thể tạo danh mục');
+  }
+
+  Future<Map<String, dynamic>> updateCategory({
+    required int categoryId,
+    required String name,
+    String? icon,
+    String? color,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/categories/$categoryId'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'name': name,
+        'icon': ?icon,
+        'color': ?color,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+
+    throw _parseError(response, 'Không thể cập nhật danh mục');
+  }
+
+  Future<void> deleteCategory(int categoryId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/categories/$categoryId'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw _parseError(response, 'Không thể xóa danh mục');
+  }
+
+  Exception _parseError(http.Response response, String fallback) {
+    String message = fallback;
     if (response.statusCode == 401) {
       message = 'Phiên đăng nhập đã hết hạn';
     } else {
@@ -39,7 +101,6 @@ class CategoryListDatasource {
         message = body['message']?.toString() ?? message;
       } catch (_) {}
     }
-
-    throw Exception(message);
+    return Exception(message);
   }
 }

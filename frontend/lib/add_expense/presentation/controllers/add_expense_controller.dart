@@ -24,6 +24,11 @@ class AddExpenseController extends GetxController {
   final selectedEventId = RxnInt();
   final isLoadingEvents = false.obs;
 
+  // Danh muc
+  final categories = <Map<String, dynamic>>[].obs;
+  final selectedCategoryId = RxnInt();
+  final isLoadingCategories = false.obs;
+
   List<String> get sortedCurrencies => [
     selectedCurrency.value,
     ...currencies.where((c) => c != selectedCurrency.value),
@@ -37,6 +42,39 @@ class AddExpenseController extends GetxController {
   void onInit() {
     super.onInit();
     loadEvents();
+    loadCategories();
+  }
+
+  Future<void> loadCategories() async {
+    isLoadingCategories.value = true;
+    update();
+
+    final result = await _repository.fetchCategories();
+
+    if (result['success'] == true) {
+      categories.assignAll(result['data'] as List<Map<String, dynamic>>);
+      if (selectedCategoryId.value == null && categories.isNotEmpty) {
+        selectedCategoryId.value =
+            (categories.first['category_id'] as num).toInt();
+      }
+    } else {
+      Get.snackbar(
+        'Lỗi',
+        result['message'] ?? 'Không thể tải danh sách danh mục',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
+
+    isLoadingCategories.value = false;
+    update();
+  }
+
+  void selectCategory(int? categoryId) {
+    selectedCategoryId.value = (categoryId == null || categoryId == 0)
+        ? null
+        : categoryId;
+    update();
   }
 
   Future<void> loadEvents() async {
@@ -221,6 +259,7 @@ class AddExpenseController extends GetxController {
 
     final result = await _repository.saveExpense(
       eventId: selectedEventId.value,
+      categoryId: selectedCategoryId.value,
       title: description.value.isEmpty ? 'Chi tiêu mới' : description.value,
       amount: amount.value,
       currency: selectedCurrency.value,
@@ -290,6 +329,8 @@ class AddExpenseController extends GetxController {
     expression.value = '';
     description.value = '';
     descriptionController.clear();
+    selectedCategoryId.value =
+        categories.isEmpty ? null : (categories.first['category_id'] as num).toInt();
   }
 
   @override

@@ -4,9 +4,93 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/category_icons.dart';
 import '../../domain/models/category_stat_item.dart';
 import '../controllers/category_list_controller.dart';
+import '../widgets/category_form_sheet.dart';
 
 class CategoryListPage extends GetView<CategoryListController> {
   const CategoryListPage({super.key});
+
+  Future<void> _openForm({CategoryStatItem? item}) async {
+    final result = await Get.bottomSheet<Map<String, dynamic>>(
+      CategoryFormSheet(
+        initialName: item?.name,
+        initialIcon: item?.icon,
+        initialColor: item?.color,
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+    );
+
+    if (result == null) return;
+
+    if (item == null) {
+      await controller.createCategory(
+        name: result['name'] as String,
+        icon: result['icon'] as String?,
+        color: result['color'] as String?,
+      );
+    } else {
+      await controller.updateCategory(
+        categoryId: item.categoryId,
+        name: result['name'] as String,
+        icon: result['icon'] as String?,
+        color: result['color'] as String?,
+      );
+    }
+  }
+
+  Future<void> _confirmDelete(CategoryStatItem item) async {
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Xóa danh mục "${item.name}"?',
+          style: GoogleFonts.nunito(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0C3D2B),
+          ),
+        ),
+        content: Text(
+          'Danh mục này sẽ bị xóa vĩnh viễn.',
+          style: GoogleFonts.nunito(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF5A7563),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text(
+              'Hủy',
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF5A7563),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: Text(
+              'Xóa',
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFFC62828),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await controller.deleteCategory(item.categoryId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,10 +130,16 @@ class CategoryListPage extends GetView<CategoryListController> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _openForm(),
+        backgroundColor: const Color(0xFF0C3D2B),
+        shape: const CircleBorder(),
+        elevation: 4,
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
       body: SafeArea(
         child: GetBuilder<CategoryListController>(
-          builder: (ctrl) {
-            if (ctrl.isLoading.value) {
+          builder: (ctrl) {            if (ctrl.isLoading.value) {
               return const Center(
                 child: CircularProgressIndicator(color: Color(0xFF0C3D2B)),
               );
@@ -133,7 +223,7 @@ class CategoryListPage extends GetView<CategoryListController> {
                       child: _buildCategoryCard(ctrl, item, items),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 88),
                 ],
               ),
             );
@@ -307,13 +397,61 @@ class CategoryListPage extends GetView<CategoryListController> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                ctrl.formatCurrency(item.totalAmount),
-                style: GoogleFonts.nunito(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF0C3D2B),
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    ctrl.formatCurrency(item.totalAmount),
+                    style: GoogleFonts.nunito(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF0C3D2B),
+                    ),
+                  ),
+                  if (!item.isDefault) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => _openForm(item: item),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE2F0E5),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.edit_rounded,
+                              color: Color(0xFF0C3D2B),
+                              size: 15,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: () => _confirmDelete(item),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFDE8E8),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.delete_outline_rounded,
+                              color: Color(0xFFC62828),
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
