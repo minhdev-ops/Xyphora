@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../config/api_config.dart';
@@ -18,7 +19,7 @@ class DashboardService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/dashboard'),
+        Uri.parse('$baseUrl/home/dashboard'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -27,7 +28,10 @@ class DashboardService {
       );
 
       if (response.statusCode == 200) {
-        return {'success': true, 'data': response.body};
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        return {'success': true, 'data': body['data']};
+      } else if (response.statusCode == 401) {
+        return {'success': false, 'message': 'Phiên đăng nhập đã hết hạn'};
       } else {
         return {'success': false, 'message': 'Lỗi tải dữ liệu'};
       }
