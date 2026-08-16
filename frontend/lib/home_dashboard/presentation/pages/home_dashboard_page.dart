@@ -8,7 +8,8 @@ import '../../domain/models/transaction_model.dart';
 import '../../domain/models/spending_model.dart';
 import '../widgets/balance_card.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-import 'spending_detail_page.dart';
+import '../../../expense_detail/presentation/bindings/expense_detail_binding.dart';
+import '../../../expense_detail/presentation/pages/expense_detail_page.dart';
 import '../../../notification/presentation/pages/notification_page.dart';
 import '../../../setting/presentation/bindings/settings_binding.dart';
 import '../../../setting/presentation/pages/settings_page.dart';
@@ -56,11 +57,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
         backgroundColor: const Color(0xFF0C3D2B), // Deep Green FAB
         shape: const CircleBorder(),
         elevation: 4,
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 32,
-        ),
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -78,19 +75,20 @@ class HomeDashboardPage extends GetView<DashboardController> {
               // Dynamic view switcher based on tab selection
               GetBuilder<DashboardController>(
                 builder: (ctrl) {
-                if (ctrl.selectedTab.value == 'my_spending') {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSpendingSummaryCard(ctrl),
-                      const SizedBox(height: 16),
-                      _buildSpendingList(ctrl),
-                    ],
-                  );
-                } else {
-                  return _buildEventList(ctrl);
-                }
-              }),
+                  if (ctrl.selectedTab.value == 'my_spending') {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSpendingSummaryCard(ctrl),
+                        const SizedBox(height: 16),
+                        _buildSpendingList(ctrl),
+                      ],
+                    );
+                  } else {
+                    return _buildEventList(ctrl);
+                  }
+                },
+              ),
               const SizedBox(height: 32),
             ],
           ),
@@ -117,13 +115,14 @@ class HomeDashboardPage extends GetView<DashboardController> {
             const SizedBox(height: 4),
             GetBuilder<DashboardController>(
               builder: (ctrl) => Text(
-                    '${ctrl.userName.value} 👋',
-                    style: GoogleFonts.nunito(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF0C3D2B),
-                    ),
-                  )),
+                '${ctrl.userName.value} 👋',
+                style: GoogleFonts.nunito(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0C3D2B),
+                ),
+              ),
+            ),
           ],
         ),
         const Spacer(),
@@ -177,11 +176,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
             ),
           ],
         ),
-        child: Icon(
-          icon,
-          color: const Color(0xFF5A7563),
-          size: 22,
-        ),
+        child: Icon(icon, color: const Color(0xFF5A7563), size: 22),
       ),
     );
   }
@@ -203,60 +198,61 @@ class HomeDashboardPage extends GetView<DashboardController> {
       ),
       child: GetBuilder<DashboardController>(
         builder: (ctrl) {
-        final currentTab = ctrl.selectedTab.value;
-        return Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => ctrl.changeTab('all'),
-                child: Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: currentTab == 'all'
-                        ? const Color(0xFF0C3D2B)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: Text(
-                    'Tất cả',
-                    style: GoogleFonts.nunito(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+          final currentTab = ctrl.selectedTab.value;
+          return Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => ctrl.changeTab('all'),
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
                       color: currentTab == 'all'
-                          ? Colors.white
-                          : const Color(0xFF5A7563),
+                          ? const Color(0xFF0C3D2B)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Text(
+                      'Tất cả',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: currentTab == 'all'
+                            ? Colors.white
+                            : const Color(0xFF5A7563),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => ctrl.changeTab('my_spending'),
-                child: Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: currentTab == 'my_spending'
-                        ? const Color(0xFF0C3D2B)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: Text(
-                    'Chi tiêu của tôi',
-                    style: GoogleFonts.nunito(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => ctrl.changeTab('my_spending'),
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
                       color: currentTab == 'my_spending'
-                          ? Colors.white
-                          : const Color(0xFF5A7563),
+                          ? const Color(0xFF0C3D2B)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Text(
+                      'Chi tiêu của tôi',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: currentTab == 'my_spending'
+                            ? Colors.white
+                            : const Color(0xFF5A7563),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        );
-      }),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -355,7 +351,8 @@ class HomeDashboardPage extends GetView<DashboardController> {
         final SpendingModel item = list[index];
         return GestureDetector(
           onTap: () => Get.to(
-            () => SpendingDetailPage(spending: item),
+            () => ExpenseDetailPage(expenseId: item.expenseId),
+            binding: ExpenseDetailBinding(item.expenseId),
             transition: Transition.rightToLeft,
             duration: const Duration(milliseconds: 300),
           ),
@@ -384,11 +381,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(
-                    item.icon,
-                    color: item.themeColor,
-                    size: 22,
-                  ),
+                  child: Icon(item.icon, color: item.themeColor, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -408,7 +401,9 @@ class HomeDashboardPage extends GetView<DashboardController> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: item.bgThemeColor,
                               borderRadius: BorderRadius.circular(8),
@@ -621,10 +616,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
     return SizedBox(
       height: 24,
       width: (displayCount + (tx.memberCount > limit ? 1 : 0)) * 18.0 + 8.0,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: avatarWidgets,
-      ),
+      child: Stack(clipBehavior: Clip.none, children: avatarWidgets),
     );
   }
 

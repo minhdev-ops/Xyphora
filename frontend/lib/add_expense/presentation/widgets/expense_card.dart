@@ -152,50 +152,46 @@ class ExpenseCard extends StatelessWidget {
                 color: const Color(0xFFE2F0E5),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  value: controller.events.any(
-                    (e) => e['event_id'] == controller.selectedEventId.value,
-                  )
-                      ? controller.selectedEventId.value
-                      : null,
+              child: DropdownButton<int>(
+                  value: controller.selectedEventId.value ?? 0,
                   isExpanded: true,
                   isDense: true,
-                  hint: Text(
-                    controller.events.isEmpty
-                        ? 'Chưa có sự kiện nào'
-                        : 'Chọn sự kiện',
-                    style: GoogleFonts.nunito(
-                      color: const Color(0xFF5A7563),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
                   icon: const Icon(
                     Icons.keyboard_arrow_down_rounded,
                     color: Color(0xFF0C3D2B),
                   ),
-                  items: controller.events
-                      .map(
-                        (event) => DropdownMenuItem<int>(
-                          value: event['event_id'] as int,
-                          child: Text(
-                            event['title']?.toString() ?? '',
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.nunito(
-                              color: const Color(0xFF0C3D2B),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
+                  items: [
+                    const DropdownMenuItem<int>(
+                      value: 0,
+                      child: Text(
+                        'Không thuộc sự kiện nào',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Color(0xFF0C3D2B),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    ...controller.events
+                        .map(
+                          (event) => DropdownMenuItem<int>(
+                            value: event['event_id'] as int,
+                            child: Text(
+                              event['title']?.toString() ?? '',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.nunito(
+                                color: const Color(0xFF0C3D2B),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: controller.events.isEmpty
-                      ? null
-                      : controller.selectEvent,
+                        )
+                        .toList(),
+                  ],
+                  onChanged: controller.selectEvent,
                 ),
-              ),
             );
           }),
           const SizedBox(height: 16),

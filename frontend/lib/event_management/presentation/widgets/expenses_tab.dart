@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/category_icons.dart';
+import '../../../expense_detail/presentation/bindings/expense_detail_binding.dart';
+import '../../../expense_detail/presentation/pages/expense_detail_page.dart';
 import '../../domain/models/expense_model.dart';
 import '../controllers/event_detail_controller.dart';
 
@@ -120,68 +122,82 @@ class _ExpenseItemView extends StatelessWidget {
     final icon = controller.categoryIconFor(expense.id);
     final color = categoryColorFor(icon);
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: icon != null
-                  ? color.withValues(alpha: 0.12)
-                  : const Color(0xFFF0F0F0),
-              borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: () {
+        final expenseId = int.tryParse(expense.id) ?? 0;
+        Get.to(
+          () => ExpenseDetailPage(expenseId: expenseId),
+          binding: ExpenseDetailBinding(expenseId),
+          transition: Transition.rightToLeft,
+          duration: const Duration(milliseconds: 300),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.06),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-            alignment: Alignment.center,
-            child: icon != null
-                ? Icon(categoryIconFor(icon), size: 22, color: color)
-                : Text(emojiFor(expense.title), style: const TextStyle(fontSize: 20)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  expense.title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: icon != null
+                    ? color.withValues(alpha: 0.12)
+                    : const Color(0xFFF0F0F0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: icon != null
+                  ? Icon(categoryIconFor(icon), size: 22, color: color)
+                  : Text(
+                      emojiFor(expense.title),
+                      style: const TextStyle(fontSize: 20),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    expense.title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Paid by ${controller.payerName(expense.payerId)}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF9E9E9E),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Paid by ${controller.payerName(expense.payerId)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9E9E9E),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Text(
-            formatVND(expense.amount),
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+            Text(
+              formatVND(expense.amount),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -222,10 +238,7 @@ class _SummarySection extends StatelessWidget {
                 children: [
                   const Text(
                     'Chi tiêu của tôi',
-                    style: TextStyle(
-                      color: Color(0xFF9E9E9E),
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 12),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -251,10 +264,7 @@ class _SummarySection extends StatelessWidget {
                 children: [
                   const Text(
                     'Tổng chi tiêu',
-                    style: TextStyle(
-                      color: Color(0xFF9E9E9E),
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 12),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -287,8 +297,11 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.cloud_off_rounded,
-              size: 44, color: Color(0xFFB8CFC0)),
+          const Icon(
+            Icons.cloud_off_rounded,
+            size: 44,
+            color: Color(0xFFB8CFC0),
+          ),
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -313,7 +326,10 @@ class _ErrorState extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
               ),
             ),
-            child: Text('Thử lại', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            child: Text(
+              'Thử lại',
+              style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),

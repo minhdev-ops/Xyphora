@@ -47,9 +47,6 @@ class AddExpenseController extends GetxController {
 
     if (result['success'] == true) {
       events.assignAll(result['data'] as List<Map<String, dynamic>>);
-      if (events.isNotEmpty && selectedEventId.value == null) {
-        selectedEventId.value = events.first['event_id'] as int;
-      }
     } else {
       Get.snackbar(
         'Lỗi',
@@ -64,7 +61,7 @@ class AddExpenseController extends GetxController {
   }
 
   void selectEvent(int? eventId) {
-    selectedEventId.value = eventId;
+    selectedEventId.value = (eventId == null || eventId == 0) ? null : eventId;
     update();
   }
 
@@ -219,22 +216,11 @@ class AddExpenseController extends GetxController {
       return;
     }
 
-    final eventId = selectedEventId.value;
-    if (eventId == null) {
-      Get.snackbar(
-        'Lỗi',
-        'Vui lòng chọn sự kiện',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
     isSaving.value = true;
     update();
 
     final result = await _repository.saveExpense(
-      eventId: eventId,
+      eventId: selectedEventId.value,
       title: description.value.isEmpty ? 'Chi tiêu mới' : description.value,
       amount: amount.value,
       currency: selectedCurrency.value,

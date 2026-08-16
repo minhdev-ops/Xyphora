@@ -93,6 +93,9 @@ class DashboardController extends GetxController {
       final map = item as Map<String, dynamic>;
       final style = _categoryStyle(map['category']?.toString());
       return SpendingModel(
+        expenseId: map['expense_id'] is num
+            ? (map['expense_id'] as num).toInt()
+            : 0,
         title: map['title']?.toString() ?? '',
         category: map['category']?.toString() ?? 'Khác',
         date: _formatDate(map['date']),

@@ -17,7 +17,7 @@ class AddExpenseRepository {
   }
 
   Future<Map<String, dynamic>> saveExpense({
-    required int eventId,
+    int? eventId,
     required String title,
     required double amount,
     String currency = 'VND',

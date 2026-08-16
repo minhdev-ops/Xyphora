@@ -48,7 +48,7 @@ class ExpenseHistoryItem {
 
     return ExpenseHistoryItem(
       expenseId: (json['expense_id'] as num).toInt(),
-      eventId: (json['event_id'] as num).toInt(),
+      eventId: (json['event_id'] as num?)?.toInt() ?? 0,
       eventTitle: json['event_title'] as String?,
       title: json['title'] as String,
       description: json['description'] as String?,

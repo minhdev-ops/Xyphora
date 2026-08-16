@@ -105,7 +105,7 @@ class AddExpenseDatasource {
   }
 
   Future<Map<String, dynamic>> createExpense({
-    required int eventId,
+    int? eventId,
     required String title,
     required double amount,
     String currency = 'VND',
@@ -126,7 +126,7 @@ class AddExpenseDatasource {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'event_id': eventId,
+          if (eventId != null) 'event_id': eventId,
           'title': title,
           'amount': amount,
           'currency': currency,

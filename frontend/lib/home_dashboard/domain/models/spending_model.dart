@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SpendingModel {
+  final int expenseId;
   final String title;
   final String category;
   final String date;
@@ -12,6 +13,7 @@ class SpendingModel {
   final String note;
 
   const SpendingModel({
+    required this.expenseId,
     required this.title,
     required this.category,
     required this.date,
