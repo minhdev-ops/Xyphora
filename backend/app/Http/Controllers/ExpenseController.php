@@ -16,7 +16,7 @@ class ExpenseController extends Controller
     public function create(Request $request)
     {
         $request->validate([
-            'event_id' => 'required|integer|exists:events,event_id',
+            'event_id' => 'nullable|integer|exists:events,event_id',
             'title' => 'nullable|string|max:150',
             'amount' => 'required|numeric|gt:0',
             'currency' => 'nullable|string|size:3',
@@ -25,7 +25,6 @@ class ExpenseController extends Controller
             'split_method' => 'nullable|in:equal,exact,percentage,share',
             'payer_id' => 'nullable|integer|exists:participants,participant_id',
         ], [
-            'event_id.required' => 'Vui lòng chọn sự kiện.',
             'event_id.exists' => 'Sự kiện không tồn tại.',
             'amount.required' => 'Vui lòng nhập số tiền.',
             'amount.gt' => 'Số tiền phải lớn hơn 0.',
@@ -35,40 +34,46 @@ class ExpenseController extends Controller
         ]);
 
         $user = $request->user();
-        $event = Event::findOrFail($request->event_id);
 
-        // Kiem tra user co quyen them chi tieu vao su kien
-        $isOwner = $event->owner_id === $user->id;
-        $userParticipant = Participant::where('event_id', $event->event_id)
-            ->where('user_id', $user->id)
-            ->where('status', Participant::STATUS_ACTIVE)
-            ->first();
+        // Chi tieu ca nhan (khong thuoc su kien nao)
+        $event = null;
+        $payer = null;
+        if ($request->filled('event_id')) {
+            $event = Event::findOrFail($request->event_id);
 
-        if (! $isOwner && ! $userParticipant) {
-            return response()->json([
-                'message' => 'Bạn không phải thành viên của sự kiện này.',
-            ], 403);
-        }
-
-        // Payer: mac dinh la participant cua user, hoac theo payer_id duoc chi dinh
-        if ($request->filled('payer_id')) {
-            $payer = Participant::where('participant_id', $request->payer_id)
-                ->where('event_id', $event->event_id)
+            // Kiem tra user co quyen them chi tieu vao su kien
+            $isOwner = $event->owner_id === $user->id;
+            $userParticipant = Participant::where('event_id', $event->event_id)
+                ->where('user_id', $user->id)
                 ->where('status', Participant::STATUS_ACTIVE)
                 ->first();
 
-            if (! $payer) {
+            if (! $isOwner && ! $userParticipant) {
                 return response()->json([
-                    'message' => 'Người trả không hợp lệ cho sự kiện này.',
-                ], 422);
-            }
-        } else {
-            if (! $userParticipant) {
-                return response()->json([
-                    'message' => 'Bạn chưa tham gia sự kiện này.',
+                    'message' => 'Bạn không phải thành viên của sự kiện này.',
                 ], 403);
             }
-            $payer = $userParticipant;
+
+            // Payer: mac dinh la participant cua user, hoac theo payer_id duoc chi dinh
+            if ($request->filled('payer_id')) {
+                $payer = Participant::where('participant_id', $request->payer_id)
+                    ->where('event_id', $event->event_id)
+                    ->where('status', Participant::STATUS_ACTIVE)
+                    ->first();
+
+                if (! $payer) {
+                    return response()->json([
+                        'message' => 'Người trả không hợp lệ cho sự kiện này.',
+                    ], 422);
+                }
+            } else {
+                if (! $userParticipant) {
+                    return response()->json([
+                        'message' => 'Bạn chưa tham gia sự kiện này.',
+                    ], 403);
+                }
+                $payer = $userParticipant;
+            }
         }
 
         // Category: uu tien danh muc mac dinh loai expense
@@ -101,9 +106,9 @@ class ExpenseController extends Controller
             $title
         ) {
             $expense = Expense::create([
-                'event_id' => $event->event_id,
+                'event_id' => $event?->event_id,
                 'created_by' => $user->id,
-                'payer_id' => $payer->participant_id,
+                'payer_id' => $payer?->participant_id,
                 'category_id' => $category->category_id,
                 'title' => $title,
                 'description' => $request->description,
@@ -116,19 +121,22 @@ class ExpenseController extends Controller
                 'is_deleted' => false,
             ]);
 
-            $splits = $this->buildSplits($event, (float) $request->amount, $splitMethod);
+            // Chi tieu thuoc su kien moi chia tien va thong bao
+            if ($event !== null && $payer !== null) {
+                $splits = $this->buildSplits($event, (float) $request->amount, $splitMethod);
 
-            foreach ($splits as $split) {
-                ExpenseSplit::create([
-                    'expense_id' => $expense->expense_id,
-                    'participant_id' => $split['participant_id'],
-                    'amount' => $split['amount'],
-                    'status' => ExpenseSplit::STATUS_PENDING,
-                ]);
+                foreach ($splits as $split) {
+                    ExpenseSplit::create([
+                        'expense_id' => $expense->expense_id,
+                        'participant_id' => $split['participant_id'],
+                        'amount' => $split['amount'],
+                        'status' => ExpenseSplit::STATUS_PENDING,
+                    ]);
+                }
+
+                // Thong bao cho cac thanh vien khac
+                $this->notifyParticipants($event, $user, $expense);
             }
-
-            // Thong bao cho cac thanh vien khac
-            $this->notifyParticipants($event, $user, $expense);
 
             return $expense;
         });
@@ -194,7 +202,12 @@ class ExpenseController extends Controller
         }
 
         $query = Expense::with(['event', 'category', 'payer', 'splits'])
-            ->whereIn('event_id', $accessibleEventIds);
+            ->where(function ($q) use ($user, $accessibleEventIds) {
+                $q->whereIn('event_id', $accessibleEventIds)
+                    ->orWhere(function ($sub) use ($user) {
+                        $sub->whereNull('event_id')->where('created_by', $user->id);
+                    });
+            });
 
         if ($eventId !== null) {
             $query->where('event_id', $eventId);
@@ -315,6 +328,97 @@ class ExpenseController extends Controller
                 'last_page' => $expenses->lastPage(),
                 'from' => $expenses->firstItem(),
                 'to' => $expenses->lastItem(),
+            ],
+        ]);
+    }
+
+    public function show(Request $request, int $expense)
+    {
+        $user = $request->user();
+
+        $expense = Expense::with(['event', 'category', 'payer', 'splits.participant'])
+            ->findOrFail($expense);
+
+        $accessibleEventIds = Event::where('owner_id', $user->id)
+            ->pluck('event_id')
+            ->merge(
+                Participant::where('user_id', $user->id)
+                    ->where('status', Participant::STATUS_ACTIVE)
+                    ->pluck('event_id')
+            )
+            ->unique()
+            ->values();
+
+        if ($expense->event_id === null) {
+            if ($expense->created_by !== $user->id) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền xem chi tiêu của sự kiện này.',
+                ], 403);
+            }
+        } elseif (! $accessibleEventIds->contains($expense->event_id)) {
+            return response()->json([
+                'message' => 'Bạn không có quyền xem chi tiêu của sự kiện này.',
+            ], 403);
+        }
+
+        $myParticipant = Participant::where('event_id', $expense->event_id)
+            ->where('user_id', $user->id)
+            ->where('status', Participant::STATUS_ACTIVE)
+            ->first();
+
+        $mySplit = $myParticipant
+            ? $expense->splits->firstWhere('participant_id', $myParticipant->participant_id)
+            : null;
+
+        $splits = $expense->splits
+            ->sortBy('participant_id')
+            ->values()
+            ->map(function (ExpenseSplit $split) use ($expense) {
+                $participant = $split->participant;
+
+                return [
+                    'participant_id' => $split->participant_id,
+                    'user_id' => $participant?->user_id,
+                    'display_name' => $participant?->display_name,
+                    'avatar' => $participant?->avatar,
+                    'amount' => (float) $split->amount,
+                    'status' => $split->status,
+                    'is_payer' => $split->participant_id === $expense->payer_id,
+                ];
+            });
+
+        return response()->json([
+            'message' => 'Lấy chi tiết chi tiêu thành công',
+            'data' => [
+                'expense_id' => $expense->expense_id,
+                'event_id' => $expense->event_id,
+                'event_title' => $expense->event?->title,
+                'title' => $expense->title,
+                'description' => $expense->description,
+                'amount' => (float) $expense->amount,
+                'currency' => $expense->currency,
+                'expense_date' => $expense->expense_date?->toDateString(),
+                'split_method' => $expense->split_method,
+                'created_at' => $expense->created_at?->toDateTimeString(),
+                'category' => $expense->category ? [
+                    'category_id' => $expense->category->category_id,
+                    'name' => $expense->category->name,
+                    'icon' => $expense->category->icon,
+                    'color' => $expense->category->color,
+                ] : null,
+                'payer' => $expense->payer ? [
+                    'participant_id' => $expense->payer->participant_id,
+                    'user_id' => $expense->payer->user_id,
+                    'display_name' => $expense->payer->display_name,
+                    'avatar' => $expense->payer->avatar,
+                ] : null,
+                'my_split' => $mySplit ? [
+                    'participant_id' => $mySplit->participant_id,
+                    'amount' => (float) $mySplit->amount,
+                    'status' => $mySplit->status,
+                ] : null,
+                'splits' => $splits,
+                'split_count' => $expense->splits->count(),
             ],
         ]);
     }

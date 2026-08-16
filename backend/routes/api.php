@@ -34,6 +34,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/events', [EventController::class, 'index']);
     Route::post('/expenses/create', [ExpenseController::class, 'create']);
     Route::get('/expenses', [ExpenseController::class, 'index']);
+    Route::get('/expenses/{expense}', [ExpenseController::class, 'show']);
     Route::get('/categories', [ExpenseController::class, 'categories']);
 
     Route::get('/user', function (Request $request) {

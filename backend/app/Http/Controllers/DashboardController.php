@@ -30,11 +30,25 @@ class DashboardController extends Controller
             })
             ->get();
 
-        $monthlySpending = round($monthlySplits->sum(fn ($s) => (float) $s->amount), 2);
-        $monthlySpendingCount = $monthlySplits->count();
+        // Chi tieu ca nhan (khong thuoc su kien) cua user trong thang
+        $personalExpenses = Expense::whereNull('event_id')
+            ->where('created_by', $userId)
+            ->whereBetween('expense_date', [$startOfMonth, $endOfMonth])
+            ->get();
+
+        $monthlySpending = round(
+            $monthlySplits->sum(fn ($s) => (float) $s->amount)
+                + $personalExpenses->sum(fn ($e) => (float) $e->amount),
+            2
+        );
+        $monthlySpendingCount = $monthlySplits->count() + $personalExpenses->count();
 
         // 2. So du: tong da tra - tong phan chia
-        $paid = (float) Expense::whereIn('payer_id', $participantIds)->sum('amount');
+        $paid = (float) Expense::whereIn('payer_id', $participantIds)
+            ->orWhere(function ($q) use ($userId) {
+                $q->whereNull('payer_id')->where('created_by', $userId);
+            })
+            ->sum('amount');
         $owed = (float) ExpenseSplit::whereIn('participant_id', $participantIds)->sum('amount');
         $net = round($paid - $owed, 2);
 
@@ -121,18 +135,25 @@ class DashboardController extends Controller
         });
 
         // 6. Danh sach chi tieu thang nay (tab "Chi tieu cua toi")
-        $monthlyExpenseIds = $monthlySplits->pluck('expense_id')->unique();
+        $monthlyExpenseIds = $monthlySplits->pluck('expense_id')->unique()
+            ->merge($personalExpenses->pluck('expense_id'))
+            ->unique()
+            ->values();
+
+        $splitAmountByExpense = $monthlySplits
+            ->groupBy('expense_id')
+            ->map(fn ($splits) => round($splits->sum(fn ($s) => (float) $s->amount), 2));
 
         $spendings = Expense::whereIn('expense_id', $monthlyExpenseIds)
             ->with('category')
             ->orderByDesc('expense_date')
             ->orderByDesc('created_at')
             ->get()
-            ->map(function (Expense $expense) use ($monthlySplits) {
-                $share = round(
-                    $monthlySplits->where('expense_id', $expense->expense_id)->sum(fn ($s) => (float) $s->amount),
-                    2
-                );
+            ->map(function (Expense $expense) use ($splitAmountByExpense) {
+                $share = $splitAmountByExpense->get($expense->expense_id);
+                if ($share === null) {
+                    $share = round((float) $expense->amount, 2);
+                }
 
                 return [
                     'expense_id' => $expense->expense_id,
