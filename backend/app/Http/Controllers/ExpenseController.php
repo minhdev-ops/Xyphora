@@ -433,11 +433,53 @@ class ExpenseController extends Controller
                     ->orWhere('created_by', $user->id);
             })
             ->orderBy('category_id')
-            ->get(['category_id', 'name', 'icon', 'color', 'type']);
+            ->get(['category_id', 'name', 'icon', 'color', 'type', 'is_default']);
+
+        // Cac su kien user co quyen xem chi tieu (owner hoac participant active)
+        $accessibleEventIds = Event::where('owner_id', $user->id)
+            ->pluck('event_id')
+            ->merge(
+                Participant::where('user_id', $user->id)
+                    ->where('status', Participant::STATUS_ACTIVE)
+                    ->pluck('event_id')
+            )
+            ->unique()
+            ->values();
+
+        // Thong ke so khoan va tong tien theo danh muc (chi tieu trong event + ca nhan)
+        $expenseStats = Expense::whereIn(
+            'category_id',
+            $categories->pluck('category_id')
+        )
+            ->where(function ($q) use ($user, $accessibleEventIds) {
+                $q->whereIn('event_id', $accessibleEventIds)
+                    ->orWhere(function ($sub) use ($user) {
+                        $sub->whereNull('event_id')->where('created_by', $user->id);
+                    });
+            })
+            ->selectRaw('category_id, COUNT(*) as cnt, COALESCE(SUM(amount), 0) as total')
+            ->groupBy('category_id')
+            ->get()
+            ->keyBy('category_id');
+
+        $data = $categories->map(function (Category $category) use ($expenseStats) {
+            $stats = $expenseStats->get($category->category_id);
+
+            return [
+                'category_id' => $category->category_id,
+                'name' => $category->name,
+                'icon' => $category->icon,
+                'color' => $category->color,
+                'type' => $category->type,
+                'is_default' => (bool) $category->is_default,
+                'expense_count' => (int) ($stats?->cnt ?? 0),
+                'total_amount' => round((float) ($stats?->total ?? 0), 2),
+            ];
+        });
 
         return response()->json([
             'message' => 'Lấy danh sách danh mục thành công',
-            'data' => $categories,
+            'data' => $data,
         ]);
     }
 
