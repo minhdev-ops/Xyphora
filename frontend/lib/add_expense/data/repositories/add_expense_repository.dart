@@ -11,4 +11,26 @@ class AddExpenseRepository {
 
   ExpenseModel addMockExpense(ExpenseModel expense) =>
       _datasource.addMockExpense(expense);
+
+  Future<Map<String, dynamic>> fetchEvents() {
+    return _datasource.fetchEvents();
+  }
+
+  Future<Map<String, dynamic>> saveExpense({
+    required int eventId,
+    required String title,
+    required double amount,
+    String currency = 'VND',
+    String? description,
+    String? expenseDate,
+  }) {
+    return _datasource.createExpense(
+      eventId: eventId,
+      title: title,
+      amount: amount,
+      currency: currency,
+      description: description,
+      expenseDate: expenseDate,
+    );
+  }
 }

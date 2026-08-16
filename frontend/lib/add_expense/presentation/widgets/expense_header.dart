@@ -45,7 +45,9 @@ class ExpenseHeader extends GetView<AddExpenseController> {
             ),
             const Spacer(),
             ElevatedButton(
-              onPressed: () => controller.saveExpense(),
+              onPressed: controller.isSaving.value
+                  ? null
+                  : () => controller.saveExpense(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0C3D2B),
                 foregroundColor: Colors.white,
@@ -58,12 +60,23 @@ class ExpenseHeader extends GetView<AddExpenseController> {
                   borderRadius: BorderRadius.circular(24),
                 ),
               ),
-              child: Text(
-                "Lưu",
-                style: GoogleFonts.nunito(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
+              child: Obx(
+                () => controller.isSaving.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        "Lưu",
+                        style: GoogleFonts.nunito(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],

@@ -16,6 +16,12 @@ class AddExpenseController extends GetxController {
   final selectedCurrency = 'VND'.obs;
   final isKeypadVisible = false.obs;
   final isCurrencyPickerVisible = false.obs;
+  final isSaving = false.obs;
+
+  // Su kien
+  final events = <Map<String, dynamic>>[].obs;
+  final selectedEventId = RxnInt();
+  final isLoadingEvents = false.obs;
 
   List<String> get sortedCurrencies => [
     selectedCurrency.value,
@@ -25,6 +31,41 @@ class AddExpenseController extends GetxController {
   final TextEditingController descriptionController = TextEditingController();
 
   List<ExpenseModel> get mockExpenses => _repository.getMockExpenses();
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadEvents();
+  }
+
+  Future<void> loadEvents() async {
+    isLoadingEvents.value = true;
+    update();
+
+    final result = await _repository.fetchEvents();
+
+    if (result['success'] == true) {
+      events.assignAll(result['data'] as List<Map<String, dynamic>>);
+      if (events.isNotEmpty && selectedEventId.value == null) {
+        selectedEventId.value = events.first['event_id'] as int;
+      }
+    } else {
+      Get.snackbar(
+        'Lỗi',
+        result['message'] ?? 'Không thể tải danh sách sự kiện',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
+
+    isLoadingEvents.value = false;
+    update();
+  }
+
+  void selectEvent(int? eventId) {
+    selectedEventId.value = eventId;
+    update();
+  }
 
   void onKeyPressed(String key) {
     HapticFeedback.lightImpact();
@@ -162,7 +203,7 @@ class AddExpenseController extends GetxController {
     return result;
   }
 
-  void saveExpense() {
+  Future<void> saveExpense() async {
     if (amount.value <= 0 && expression.value.isNotEmpty) {
       _calculateResult();
     }
@@ -177,25 +218,48 @@ class AddExpenseController extends GetxController {
       return;
     }
 
-    final expense = ExpenseModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    final eventId = selectedEventId.value;
+    if (eventId == null) {
+      Get.snackbar(
+        'Lỗi',
+        'Vui lòng chọn sự kiện',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    isSaving.value = true;
+    update();
+
+    final result = await _repository.saveExpense(
+      eventId: eventId,
       title: description.value.isEmpty ? 'Chi tiêu mới' : description.value,
       amount: amount.value,
       currency: selectedCurrency.value,
       description: description.value,
-      date: DateTime.now().toIso8601String().split('T')[0],
     );
 
-    _repository.addMockExpense(expense);
+    isSaving.value = false;
+    update();
 
-    Get.back(result: expense);
-    Get.snackbar(
-      'Thành công',
-      'Đã thêm chi tiêu',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
-    clearAll();
+    if (result['success'] == true) {
+      Get.back(result: true);
+      Get.snackbar(
+        'Thành công',
+        result['message'] ?? 'Đã thêm chi tiêu',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      clearAll();
+    } else {
+      Get.snackbar(
+        'Thất bại',
+        result['message'] ?? 'Không thể thêm chi tiêu',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
   }
 
   void updateDescription(String value) {
