@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\ExpenseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +30,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/home/dashboard', [DashboardController::class, 'home']);
     Route::get('/dashboard', [DashboardController::class, 'home']);
+
+    Route::get('/events', [EventController::class, 'index']);
+    Route::post('/expenses/create', [ExpenseController::class, 'create']);
 
     Route::get('/user', function (Request $request) {
         return $request->user();
