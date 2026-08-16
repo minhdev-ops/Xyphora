@@ -4,7 +4,7 @@ import 'dart:convert';
 import '../../config/api_config.dart';
 
 class EventService {
-  static const String baseUrl = ApiConfig.baseUrl;
+  static final String baseUrl = ApiConfig.baseUrl;
 
   Future<List<Map<String, dynamic>>> fetchEvents(String token) async {
     try {

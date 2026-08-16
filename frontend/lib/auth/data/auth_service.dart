@@ -7,7 +7,7 @@ import '../../config/api_config.dart';
 
 
 class AuthService {
-  static const String baseUrl = ApiConfig.baseUrl;
+  static final String baseUrl = ApiConfig.baseUrl;
   static final _storage = FlutterSecureStorage();
 
   Future<Map<String, dynamic>> register(String name, String email, String password) async {

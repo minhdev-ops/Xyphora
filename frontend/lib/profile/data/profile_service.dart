@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../config/api_config.dart';
 
 class ProfileService {
-  static const String baseUrl = ApiConfig.baseUrl;
+  static final String baseUrl = ApiConfig.baseUrl;
   static final _storage = FlutterSecureStorage();
 
   Future<String?> _getToken() async {
