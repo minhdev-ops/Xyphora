@@ -169,10 +169,10 @@ class AddEventPage extends GetView<AddEventController> {
                               name: 'Bạn',
                               isCreator: true,
                             ),
-                            ...controller.participants.map(
-                              (p) => _buildParticipantRow(
-                                name: p.user?.name ?? '',
-                                isCreator: false,
+...controller.participants.map(
+              (p) => _buildParticipantRow(
+                name: p.name,
+                isCreator: false,
                                 onRemove: () =>
                                     controller.removeParticipant(p),
                               ),
@@ -192,24 +192,37 @@ class AddEventPage extends GetView<AddEventController> {
                       ),
                     ),
                     const SizedBox(height: 28),
-                    ElevatedButton(
-                      onPressed: controller.createEvent,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _green,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                    Obx(
+                      () => ElevatedButton(
+                        onPressed: controller.isCreating.value
+                            ? null
+                            : controller.createEvent,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _green,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'Tạo sự kiện',
-                        style: GoogleFonts.nunito(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
+                        child: controller.isCreating.value
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : Text(
+                                'Tạo sự kiện',
+                                style: GoogleFonts.nunito(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 24),

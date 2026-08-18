@@ -3,13 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Invitation;
 use App\Models\Notification;
 use App\Models\Participant;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
+    private const INVITE_LINK_PREFIX = 'xyphora://join?token=';
+
+    private const INVITE_TTL_DAYS = 7;
+
     /**
      * GET /api/events - List events the authenticated user has joined.
      */
@@ -46,6 +53,8 @@ class EventController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'nullable|in:active,completed,archived',
+            'participants' => 'nullable|array|max:100',
+            'participants.*.display_name' => 'required|string|max:100',
         ], [
             'title.required' => 'Vui lòng nhập tên sự kiện.',
             'title.max' => 'Tên sự kiện không được vượt quá 150 ký tự.',
@@ -54,6 +63,9 @@ class EventController extends Controller
             'end_date.date' => 'Ngày kết thúc không hợp lệ.',
             'end_date.after_or_equal' => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
             'status.in' => 'Trạng thái sự kiện không hợp lệ.',
+            'participants.max' => 'Danh sách người tham gia không được vượt quá 100 người.',
+            'participants.*.display_name.required' => 'Vui lòng nhập tên người tham gia.',
+            'participants.*.display_name.max' => 'Tên người tham gia không được vượt quá 100 ký tự.',
         ]);
 
         $user = $request->user();
@@ -75,14 +87,38 @@ class EventController extends Controller
                 'status' => 'active',
             ]);
 
+            foreach ($data['participants'] ?? [] as $index => $participant) {
+                Participant::create([
+                    'event_id' => $event->event_id,
+                    'user_id' => null,
+                    'display_name' => $participant['display_name'],
+                    'email' => 'guest-'.$event->event_id.'-'.($index + 1).'@xyphora.local',
+                    'role' => 'member',
+                    'status' => 'active',
+                ]);
+            }
+
+            Invitation::create([
+                'event_id' => $event->event_id,
+                'token' => Str::random(32),
+                'expired_at' => now()->addDays(self::INVITE_TTL_DAYS),
+                'status' => 'pending',
+            ]);
+
             return $event;
         });
 
         $event->load('owner:id,name,email,avatar', 'participants');
 
+        $invitation = Invitation::where('event_id', $event->event_id)
+            ->orderByDesc('invitation_id')
+            ->first();
+
         return response()->json([
             'message' => 'Tạo sự kiện thành công',
             'data' => $event,
+            'invite_token' => $invitation->token,
+            'invite_link' => self::INVITE_LINK_PREFIX.$invitation->token,
         ], 201);
     }
 
@@ -193,5 +229,183 @@ class EventController extends Controller
         return response()->json([
             'message' => 'Xóa sự kiện thành công',
         ], 200);
+    }
+
+    /**
+     * GET /api/events/{event}/invite - Get (or renew) the invite link/QR data (owner only).
+     */
+    public function invite(Event $event)
+    {
+        if ($event->owner_id !== auth()->id()) {
+            return response()->json([
+                'message' => 'Chỉ người tổ chức mới được xem link mời.',
+            ], 403);
+        }
+
+        $invitation = Invitation::where('event_id', $event->event_id)
+            ->orderByDesc('invitation_id')
+            ->first();
+
+        if (! $invitation || $invitation->status !== 'pending' || $invitation->expired_at->isPast()) {
+            $invitation = Invitation::create([
+                'event_id' => $event->event_id,
+                'token' => Str::random(32),
+                'expired_at' => now()->addDays(self::INVITE_TTL_DAYS),
+                'status' => 'pending',
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Lấy link mời thành công',
+            'data' => [
+                'invite_token' => $invitation->token,
+                'invite_link' => self::INVITE_LINK_PREFIX.$invitation->token,
+                'expired_at' => $invitation->expired_at,
+            ],
+        ], 200);
+    }
+
+    /**
+     * POST /api/events/join - Show unclaimed participants for an invite token.
+     */
+    public function join(Request $request)
+    {
+        $data = $request->validate([
+            'token' => 'required|string',
+        ], [
+            'token.required' => 'Vui lòng cung cấp mã mời.',
+        ]);
+
+        $invitation = $this->validInvitation($data['token']);
+        if ($invitation instanceof JsonResponse) {
+            return $invitation;
+        }
+
+        $event = $invitation->event;
+
+        $unclaimed = $event->participants()
+            ->whereNull('user_id')
+            ->where('status', 'active')
+            ->get(['participant_id', 'display_name']);
+
+        return response()->json([
+            'message' => 'Lấy danh sách người tham gia thành công',
+            'data' => [
+                'event' => [
+                    'event_id' => $event->event_id,
+                    'title' => $event->title,
+                    'icon' => $event->icon,
+                ],
+                'participants' => $unclaimed,
+            ],
+        ], 200);
+    }
+
+    /**
+     * POST /api/events/join/claim - Claim a participant name for the authenticated user.
+     */
+    public function claim(Request $request)
+    {
+        $data = $request->validate([
+            'token' => 'required|string',
+            'participant_id' => 'required|integer',
+        ], [
+            'token.required' => 'Vui lòng cung cấp mã mời.',
+            'participant_id.required' => 'Vui lòng chọn tên của bạn.',
+        ]);
+
+        $invitation = $this->validInvitation($data['token']);
+        if ($invitation instanceof JsonResponse) {
+            return $invitation;
+        }
+
+        $user = $request->user();
+
+        $participant = $invitation->event->participants()
+            ->where('participant_id', $data['participant_id'])
+            ->first();
+
+        if (! $participant) {
+            return response()->json([
+                'message' => 'Không tìm thấy người tham gia này.',
+            ], 404);
+        }
+
+        if ($participant->user_id !== null) {
+            return response()->json([
+                'message' => 'Tên này đã được chọn bởi người khác.',
+            ], 409);
+        }
+
+        $alreadyJoined = $invitation->event->participants()
+            ->where('user_id', $user->id)
+            ->where('status', 'active')
+            ->exists();
+
+        if ($alreadyJoined) {
+            return response()->json([
+                'message' => 'Bạn đã tham gia sự kiện này.',
+            ], 409);
+        }
+
+        DB::transaction(function () use ($participant, $user, $invitation) {
+            $participant->update([
+                'user_id' => $user->id,
+                'display_name' => $user->name,
+                'email' => $user->email,
+                'avatar' => $user->avatar,
+            ]);
+
+            $hasUnclaimed = $invitation->event->participants()
+                ->whereNull('user_id')
+                ->exists();
+
+            if (! $hasUnclaimed) {
+                $invitation->update([
+                    'status' => 'accepted',
+                    'used_at' => now(),
+                ]);
+            }
+        });
+
+        return response()->json([
+            'message' => 'Tham gia sự kiện thành công',
+            'data' => [
+                'event' => [
+                    'event_id' => $invitation->event_id,
+                    'title' => $invitation->event->title,
+                    'icon' => $invitation->event->icon,
+                ],
+                'participant' => $participant,
+            ],
+        ], 200);
+    }
+
+    /**
+     * Find a valid (pending, not expired) invitation or return an error response.
+     */
+    private function validInvitation(string $token): Invitation|JsonResponse
+    {
+        $invitation = Invitation::where('token', $token)->first();
+
+        if (! $invitation) {
+            return response()->json([
+                'message' => 'Link mời không hợp lệ.',
+            ], 400);
+        }
+
+        if ($invitation->status !== 'pending') {
+            return response()->json([
+                'message' => 'Link mời đã được sử dụng xong.',
+            ], 400);
+        }
+
+        if ($invitation->expired_at->isPast()) {
+            return response()->json([
+                'message' => 'Link mời đã hết hạn.',
+            ], 410);
+        }
+
+        return $invitation;
     }
 }

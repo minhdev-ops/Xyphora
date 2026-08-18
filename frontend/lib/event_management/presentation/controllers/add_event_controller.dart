@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../auth/domain/models/user.dart';
+import '../../../auth/data/auth_service.dart';
+import '../../data/event_service.dart';
 import '../../domain/models/event_model.dart';
 import '../../domain/models/participant_model.dart';
 import 'event_controller.dart';
@@ -16,6 +17,7 @@ class AddEventController extends GetxController {
   final RxString selectedEmoji = '🎉'.obs;
   final RxList<ParticipantModel> participants = <ParticipantModel>[].obs;
   final RxBool isAddingParticipant = false.obs;
+  final RxBool isCreating = false.obs;
   int _participantCounter = 0;
 
   void selectEmoji(String emoji) => selectedEmoji.value = emoji;
@@ -49,11 +51,7 @@ class AddEventController extends GetxController {
         id: 'draft_p$_participantCounter',
         eventId: 'draft',
         userId: 'guest_$_participantCounter',
-        user: UserModel(
-          id: 'guest_$_participantCounter',
-          name: name,
-          email: '',
-        ),
+        displayName: name,
       ),
     );
     isAddingParticipant.value = false;
@@ -63,7 +61,7 @@ class AddEventController extends GetxController {
     participants.remove(participant);
   }
 
-  void createEvent() {
+  Future<void> createEvent() async {
     final title = titleController.text.trim();
     if (title.isEmpty) {
       Get.snackbar(
@@ -76,45 +74,83 @@ class AddEventController extends GetxController {
       return;
     }
 
-    final eventController = Get.find<EventController>();
-    final eventId = DateTime.now().millisecondsSinceEpoch.toString();
+    final authService = AuthService();
+    final token = await authService.getToken();
+    if (token == null) {
+      Get.snackbar(
+        'Lỗi',
+        'Vui lòng đăng nhập để tạo sự kiện',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
 
-    final event = EventModel(
-      id: eventId,
-      ownerId: eventController.myUserId,
-      emoji: selectedEmoji.value,
-      title: title,
-      description: descriptionController.text.trim(),
-      createdAt: DateTime.now(),
-      participants: [
-        ParticipantModel(
-          id: '${eventId}_p1',
-          eventId: eventId,
-          userId: eventController.myUserId,
-          user: UserModel(
-            id: eventController.myUserId,
-            name: 'Bạn',
-            email: 'ban@email.com',
-          ),
-        ),
-        ...participants.asMap().entries.map((e) => ParticipantModel(
-              id: '${eventId}_p${e.key + 2}',
-              eventId: eventId,
-              userId: e.value.userId,
-              user: e.value.user,
-            )),
-      ],
+    isCreating.value = true;
+    try {
+      final response = await EventService().createEvent(token, {
+        'title': title,
+        'description': descriptionController.text.trim(),
+        'icon': selectedEmoji.value,
+        'participants': participants
+            .map((p) => {'display_name': p.displayName})
+            .toList(),
+      });
+
+      final data = response['data'] as Map<String, dynamic>? ?? {};
+      final event = _eventFromResponse(data);
+
+      Get.find<EventController>().addEvent(event);
+      Get.back();
+      Get.snackbar(
+        'Thành công',
+        'Đã tạo sự kiện mới',
+        backgroundColor: const Color(0xFF0C3D2B),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } on EventApiException catch (e) {
+      Get.snackbar(
+        'Lỗi',
+        e.message,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Lỗi',
+        'Không thể kết nối đến máy chủ',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    } finally {
+      isCreating.value = false;
+    }
+  }
+
+  EventModel _eventFromResponse(Map<String, dynamic> json) {
+    final id = json['event_id'].toString();
+    return EventModel(
+      id: id,
+      ownerId: json['owner_id'].toString(),
+      emoji: json['icon'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      currency: json['currency'] as String? ?? 'VND',
+      description: json['description'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      participants: (json['participants'] as List? ?? [])
+          .map((p) => ParticipantModel(
+                id: p['participant_id'].toString(),
+                eventId: id,
+                userId: p['user_id']?.toString() ?? '',
+                displayName: p['display_name'] as String? ?? '',
+              ))
+          .toList(),
       expenses: [],
-    );
-
-    eventController.addEvent(event);
-    Get.back();
-    Get.snackbar(
-      'Thành công',
-      'Đã tạo sự kiện mới',
-      backgroundColor: const Color(0xFF0C3D2B),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
     );
   }
 

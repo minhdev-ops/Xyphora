@@ -13,6 +13,8 @@ import 'package:xyphora_frontend/statistics/presentation/controllers/statistics_
 import 'package:xyphora_frontend/statistics/presentation/pages/statistics_page.dart';
 import 'auth/presentation/pages/home_page.dart';
 import 'auth/presentation/controllers/auth_controller.dart';
+import 'auth/presentation/pages/login_pages.dart';
+import 'core/deep_link_service.dart';
 import 'event_management/presentation/pages/event_page.dart';
 import 'home_dashboard/presentation/controllers/dashboard_controller.dart';
 import 'profile/presentation/controllers/profile_controller.dart';
@@ -42,6 +44,8 @@ void main() {
       builder: (context) => const MyApp(),
     ),
   );
+
+  DeepLinkService.init();
 }
 
 class MyApp extends StatelessWidget {
@@ -83,7 +87,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
         useMaterial3: true,
       ),
-      home: const HomeDashboardPage(),
+      home: const LoginPages(),
     );
   }
 }
