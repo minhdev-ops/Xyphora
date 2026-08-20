@@ -16,6 +16,14 @@ class AddExpenseRepository {
     return _datasource.fetchCategories();
   }
 
+  Future<Map<String, dynamic>> fetchEvents() {
+    return _datasource.fetchEvents();
+  }
+
+  Future<Map<String, dynamic>> fetchEvent(int eventId) {
+    return _datasource.fetchEvent(eventId);
+  }
+
   Future<Map<String, dynamic>> saveExpense({
     int? eventId,
     int? categoryId,
@@ -24,6 +32,9 @@ class AddExpenseRepository {
     String currency = 'VND',
     String? description,
     String? expenseDate,
+    String? splitMethod,
+    List<int> payerIds = const [],
+    List<Map<String, dynamic>> splits = const [],
   }) {
     return _datasource.createExpense(
       eventId: eventId,
@@ -33,6 +44,9 @@ class AddExpenseRepository {
       currency: currency,
       description: description,
       expenseDate: expenseDate,
+      splitMethod: splitMethod,
+      payerIds: payerIds,
+      splits: splits,
     );
   }
 }

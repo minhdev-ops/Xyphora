@@ -120,6 +120,98 @@ class ExpenseCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
+          // Su kien selector
+          Text(
+            'Sự kiện',
+            style: GoogleFonts.nunito(
+              color: const Color(0xFF5A7563),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Obx(() {
+            if (controller.isLoadingEvents.value) {
+              return const SizedBox(
+                height: 44,
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF0C3D2B),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2F0E5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButton<int>(
+                value: controller.events.any(
+                  (e) =>
+                      (e['event_id'] as num).toInt() ==
+                      controller.selectedEventId.value,
+                )
+                    ? controller.selectedEventId.value
+                    : -1,
+                isExpanded: true,
+                isDense: true,
+                icon: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF0C3D2B),
+                ),
+                items: [
+                  DropdownMenuItem<int>(
+                    value: -1,
+                    child: Text(
+                      'Không có sự kiện',
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.nunito(
+                        color: const Color(0xFF5A7563),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  ...controller.events.map(
+                    (event) => DropdownMenuItem<int>(
+                      value: (event['event_id'] as num).toInt(),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.event_rounded,
+                            size: 18,
+                            color: Color(0xFF0C3D2B),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              event['title']?.toString() ?? '',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.nunito(
+                                color: const Color(0xFF0C3D2B),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                onChanged: controller.selectEvent,
+              ),
+            );
+          }),
+          const SizedBox(height: 16),
           // Ngay chi tieu
           Text(
             'Ngày',
@@ -139,7 +231,7 @@ class ExpenseCard extends StatelessWidget {
                   context: context,
                   initialDate: date,
                   firstDate: DateTime(2020),
-                  lastDate: DateTime.now(),
+                  lastDate: DateTime(2100),
                   helpText: 'Chọn ngày chi tiêu',
                   builder: (context, child) {
                     return Theme(
@@ -225,9 +317,24 @@ class ExpenseCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButton<int>(
-                value: controller.selectedCategoryId.value ?? 0,
+                value: controller.categories.any(
+                  (category) =>
+                      (category['category_id'] as num).toInt() ==
+                      controller.selectedCategoryId.value,
+                )
+                    ? controller.selectedCategoryId.value
+                    : null,
                 isExpanded: true,
                 isDense: true,
+                hint: Text(
+                  'Chọn danh mục',
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.nunito(
+                    color: const Color(0xFF5A7563),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 icon: const Icon(
                   Icons.keyboard_arrow_down_rounded,
                   color: Color(0xFF0C3D2B),
@@ -276,6 +383,7 @@ class ExpenseCard extends StatelessWidget {
             onChanged: (value) => controller.updateDescription(value),
             minLines: 1,
             maxLines: 5,
+            maxLength: 500,
             decoration: InputDecoration(
               hintText: "Mô tả khoản chi tiêu...",
               hintStyle: GoogleFonts.nunito(
@@ -289,6 +397,7 @@ class ExpenseCard extends StatelessWidget {
                 horizontal: 18,
                 vertical: 18,
               ),
+              counterText: '',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,

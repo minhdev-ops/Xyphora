@@ -133,7 +133,11 @@ class ExpenseController extends Controller
 
         $splitMethod = $request->split_method ?? Expense::SPLIT_EQUAL;
         $expenseDate = $request->expense_date ?? now()->toDateString();
-        $title = $request->filled('title') ? $request->title : 'Chi tiêu mới';
+        $title = mb_substr(
+            $request->filled('title') ? $request->title : 'Chi tiêu mới',
+            0,
+            150
+        );
 
         $expense = DB::transaction(function () use (
             $request,

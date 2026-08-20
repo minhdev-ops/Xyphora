@@ -104,6 +104,70 @@ class AddExpenseDatasource {
     }
   }
 
+  Future<Map<String, dynamic>> fetchEvents() async {
+    try {
+      final token = await TokenStorage.read();
+      if (token == null) {
+        return {'success': false, 'message': 'Chưa đăng nhập'};
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/events'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'data': (body['data'] as List<dynamic>? ?? [])
+              .cast<Map<String, dynamic>>(),
+        };
+      }
+      return {
+        'success': false,
+        'message': body['message'] ?? 'Lỗi tải danh sách sự kiện',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchEvent(int eventId) async {
+    try {
+      final token = await TokenStorage.read();
+      if (token == null) {
+        return {'success': false, 'message': 'Chưa đăng nhập'};
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/events/$eventId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'data': body['data'] as Map<String, dynamic>? ?? const {},
+        };
+      }
+      return {'success': false, 'message': body['message'] ?? 'Lỗi tải sự kiện'};
+    } catch (e) {
+      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+    }
+  }
+
   Future<Map<String, dynamic>> createExpense({
     int? eventId,
     int? categoryId,
@@ -112,6 +176,9 @@ class AddExpenseDatasource {
     String currency = 'VND',
     String? description,
     String? expenseDate,
+    String? splitMethod,
+    List<int> payerIds = const [],
+    List<Map<String, dynamic>> splits = const [],
   }) async {
     try {
       final token = await TokenStorage.read();
@@ -135,6 +202,11 @@ class AddExpenseDatasource {
           if (description != null && description.isNotEmpty)
             'description': description,
           'expense_date': ?expenseDate,
+          if (eventId != null && splitMethod != null)
+            'split_method': splitMethod,
+          if (eventId != null && payerIds.isNotEmpty)
+            'payer_ids': payerIds,
+          if (eventId != null && splits.isNotEmpty) 'splits': splits,
         }),
       );
 
@@ -145,9 +217,12 @@ class AddExpenseDatasource {
       }
 
       String errorMsg = body['message'] ?? 'Dữ liệu không hợp lệ';
-      if (body['errors'] != null) {
-        final errors = body['errors'] as Map<String, dynamic>;
-        errorMsg = errors.values.first[0];
+      final rawErrors = body['errors'];
+      if (rawErrors is Map<String, dynamic> && rawErrors.isNotEmpty) {
+        final first = rawErrors.values.first;
+        if (first is List && first.isNotEmpty) {
+          errorMsg = first.first.toString();
+        }
       }
       return {'success': false, 'message': errorMsg};
     } catch (e) {

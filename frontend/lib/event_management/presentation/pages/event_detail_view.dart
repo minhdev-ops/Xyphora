@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../add_group_expense/presentation/bindings/add_group_expense_binding.dart';
-import '../../../add_group_expense/presentation/pages/add_group_expense_page.dart';
+import '../../../add_expense/presentation/bindings/add_expense_binding.dart';
+import '../../../add_expense/presentation/pages/add_expense_page.dart';
 import '../controllers/event_detail_controller.dart';
 import '../widgets/expenses_tab.dart';
 import '../widgets/balances_tab.dart';
@@ -104,8 +104,8 @@ class EventDetailView extends GetView<EventDetailController> {
                 } else {
                   final eventId = controller.eventId;
                   Get.to(
-                    () => GroupExpensePage(),
-                    binding: AddGroupExpenseBinding(),
+                    () => ExpensePage(),
+                    binding: AddExpenseBinding(),
                     arguments: {
                       'event_id': eventId,
                       'event_title': controller.event.title,

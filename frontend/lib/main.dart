@@ -7,8 +7,6 @@ import 'package:device_preview/device_preview.dart';
 import 'package:flutter/gestures.dart';
 import 'package:xyphora_frontend/add_expense/presentation/controllers/add_expense_controller.dart';
 import 'package:xyphora_frontend/home_dashboard/presentation/pages/home_dashboard_page.dart';
-import 'package:xyphora_frontend/add_group_expense/presentation/controllers/add_group_expense_controller.dart';
-import 'package:xyphora_frontend/add_group_expense/presentation/pages/add_group_expense_page.dart';
 import 'package:xyphora_frontend/statistics/presentation/controllers/statistics_controller.dart';
 import 'package:xyphora_frontend/statistics/presentation/pages/statistics_page.dart';
 import 'auth/presentation/pages/home_page.dart';
@@ -69,10 +67,6 @@ class MyApp extends StatelessWidget {
           () => AddExpenseController(),
           fenix: true,
         );
-        Get.lazyPut<AddGroupExpenseController>(
-          () => AddGroupExpenseController(),
-          fenix: true,
-        );
         Get.lazyPut<StatisticsController>(
           () => StatisticsController(),
           fenix: true,
@@ -131,10 +125,6 @@ class MyAppPhone extends StatelessWidget {
         );
         Get.lazyPut<AddExpenseController>(
           () => AddExpenseController(),
-          fenix: true,
-        );
-        Get.lazyPut<AddGroupExpenseController>(
-          () => AddGroupExpenseController(),
           fenix: true,
         );
         Get.lazyPut<StatisticsController>(

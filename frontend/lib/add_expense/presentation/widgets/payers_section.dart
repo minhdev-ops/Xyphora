@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
-import '../controllers/add_group_expense_controller.dart';
-import '../../domain/models/group_expense_model.dart';
+import '../controllers/add_expense_controller.dart';
+import '../../domain/models/group_member.dart';
 
-class GroupPayersSection extends GetView<AddGroupExpenseController> {
-  const GroupPayersSection({super.key});
+class PayersSection extends GetView<AddExpenseController> {
+  const PayersSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +95,7 @@ class GroupPayersSection extends GetView<AddGroupExpenseController> {
   }
 
   Widget _buildMember(
-    AddGroupExpenseController controller,
+    AddExpenseController controller,
     GroupMember member,
   ) {
     return Column(
@@ -178,7 +178,7 @@ class GroupPayersSection extends GetView<AddGroupExpenseController> {
     );
   }
 
-  Widget _buildSplitBar(AddGroupExpenseController controller) {
+  Widget _buildSplitBar(AddExpenseController controller) {
     return Container(
       height: 52,
       padding: const EdgeInsets.all(4),
@@ -192,7 +192,7 @@ class GroupPayersSection extends GetView<AddGroupExpenseController> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final option in AddGroupExpenseController.splitOptions)
+          for (final option in AddExpenseController.splitOptions)
             Expanded(child: _buildSplitSegment(controller, option)),
         ],
       ),
@@ -200,7 +200,7 @@ class GroupPayersSection extends GetView<AddGroupExpenseController> {
   }
 
   Widget _buildSplitSegment(
-    AddGroupExpenseController controller,
+    AddExpenseController controller,
     (String, String) option,
   ) {
     return Obx(() {
@@ -228,7 +228,7 @@ class GroupPayersSection extends GetView<AddGroupExpenseController> {
     });
   }
 
-  Widget _buildSplitInputs(AddGroupExpenseController controller) {
+  Widget _buildSplitInputs(AddExpenseController controller) {
     final mode = controller.selectedSplitMode.value;
     final isPercent = mode == 'percent';
 
@@ -316,7 +316,7 @@ class GroupPayersSection extends GetView<AddGroupExpenseController> {
     );
   }
 
-  String _sumText(AddGroupExpenseController controller) {
+  String _sumText(AddExpenseController controller) {
     final mode = controller.selectedSplitMode.value;
     final total = controller.members.fold<double>(
       0,

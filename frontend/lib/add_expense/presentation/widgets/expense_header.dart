@@ -35,12 +35,29 @@ class ExpenseHeader extends GetView<AddExpenseController> {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              "Thêm Chi Tiêu Cá Nhân",
-              style: GoogleFonts.inter(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1D1D1D),
+            Obx(
+              () => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Thêm Chi Tiêu",
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1D1D1D),
+                    ),
+                  ),
+                  if (controller.eventTitle.value != null)
+                    Text(
+                      controller.eventTitle.value!,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF5A7563),
+                      ),
+                    ),
+                ],
               ),
             ),
             const Spacer(),
