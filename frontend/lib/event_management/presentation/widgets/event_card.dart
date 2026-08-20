@@ -31,7 +31,7 @@ class EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle =
-        '${_formatDate(event.createdAt)} • ${event.participants.length} thành viên';
+        '${_formatDate(event.createdAt)} • ${event.participantCount} thành viên';
 
     return GestureDetector(
       onTap: onTap,

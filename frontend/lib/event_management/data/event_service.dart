@@ -72,6 +72,34 @@ class EventService {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> fetchEvent(
+      String token, String eventId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/events/$eventId'),
+      headers: _headers(token),
+    );
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> updateEvent(
+      String token, String eventId, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/events/$eventId'),
+      headers: _headers(token),
+      body: jsonEncode(data),
+    );
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> deleteEvent(
+      String token, String eventId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/events/$eventId'),
+      headers: _headers(token),
+    );
+    return _decode(response);
+  }
+
   Future<Map<String, dynamic>> joinEvent(String token, String inviteToken) async {
     final response = await http.post(
       Uri.parse('$baseUrl/events/join'),

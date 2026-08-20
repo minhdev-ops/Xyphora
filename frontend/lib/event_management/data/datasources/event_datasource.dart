@@ -9,7 +9,7 @@ import '../event_service.dart';
 
 class EventDatasource {
   final EventService _service;
-  bool _useDummy = true;
+  bool _useDummy = false;
 
   EventDatasource(this._service);
 
@@ -22,9 +22,7 @@ class EventDatasource {
     if (!_useDummy && token != null) {
       try {
         final raw = await _service.fetchEvents(token);
-        if (raw.isNotEmpty) {
-          return raw.map(_parseEvent).toList();
-        }
+        return raw.map(_parseEvent).toList();
       } catch (e) {
         debugPrint('EventDatasource: API failed, fallback to dummy: $e');
       }
@@ -32,47 +30,73 @@ class EventDatasource {
     return _buildDummyData();
   }
 
+  Future<EventModel> getEvent({
+    required String token,
+    required String eventId,
+  }) async {
+    final response = await _service.fetchEvent(token, eventId);
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return _parseEvent(data);
+    }
+    throw EventApiException('Không tìm thấy sự kiện');
+  }
+
+  Future<EventModel> updateEvent({
+    required String token,
+    required String eventId,
+    required Map<String, dynamic> data,
+  }) async {
+    final response = await _service.updateEvent(token, eventId, data);
+    final event = response['data'];
+    if (event is Map<String, dynamic>) {
+      return _parseEvent(event);
+    }
+    throw EventApiException('Cập nhật sự kiện thất bại');
+  }
+
+  Future<void> deleteEvent({
+    required String token,
+    required String eventId,
+  }) async {
+    await _service.deleteEvent(token, eventId);
+  }
+
   EventModel _parseEvent(Map<String, dynamic> json) {
+    final eventId = json['event_id'].toString();
     return EventModel(
-      id: json['id'] as String,
-      ownerId: json['owner_id'] as String,
-      emoji: json['emoji'] as String? ?? '',
-      title: json['title'] as String,
+      id: eventId,
+      ownerId: json['owner_id'].toString(),
+      emoji: json['icon'] as String? ?? '',
+      title: json['title'] as String? ?? '',
       currency: json['currency'] as String? ?? 'VND',
       description: json['description'] as String? ?? '',
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      participantCount: (json['participants_count'] as num?)?.toInt(),
       participants: (json['participants'] as List? ?? [])
-          .map((p) => ParticipantModel(
-                id: p['id'] as String,
-                eventId: p['event_id'] as String,
-                userId: p['user_id'] as String,
-                user: p['user'] != null
-                    ? UserModel(
-                        id: p['user']['id'] as String,
-                        name: p['user']['name'] as String,
-                        email: p['user']['email'] as String,
-                      )
-                    : null,
-              ))
+          .map((p) => _parseParticipant(p, eventId))
           .toList(),
-      expenses: (json['expenses'] as List? ?? [])
-          .map((e) => ExpenseModel(
-                id: e['id'] as String,
-                eventId: e['event_id'] as String,
-                title: e['title'] as String,
-                amount: (e['amount'] as num).toDouble(),
-                dayPaid: DateTime.parse(e['day_paid'] as String),
-                payerId: e['payer_id'] as String,
-                splits: (e['splits'] as List? ?? [])
-                    .map((s) => ExpenseSplitModel(
-                          expenseId: s['expense_id'] as String,
-                          participantId: s['participant_id'] as String,
-                          amount: (s['amount'] as num).toDouble(),
-                          status: s['status'] as String? ?? 'pending',
-                        ))
-                    .toList(),
-              ))
-          .toList(),
+      expenses: [],
+    );
+  }
+
+  ParticipantModel _parseParticipant(dynamic raw, String eventId) {
+    final p = raw as Map<String, dynamic>;
+    final userRaw = p['user'];
+    return ParticipantModel(
+      id: p['participant_id'].toString(),
+      eventId: eventId,
+      userId: p['user_id']?.toString() ?? '',
+      displayName: p['display_name'] as String? ?? '',
+      user: userRaw != null
+          ? UserModel(
+              id: (userRaw as Map<String, dynamic>)['id'].toString(),
+              name: userRaw['name'] as String? ?? '',
+              email: userRaw['email'] as String? ?? '',
+              avatarUrl: userRaw['avatar'] as String?,
+            )
+          : null,
     );
   }
 

@@ -4,6 +4,7 @@ import '../../../add_group_expense/presentation/bindings/add_group_expense_bindi
 import '../../../add_group_expense/presentation/pages/add_group_expense_page.dart';
 import '../../../auth/data/auth_service.dart';
 import '../../data/event_service.dart';
+import '../../data/repositories/event_repository.dart';
 import '../controllers/event_detail_controller.dart';
 import '../widgets/expenses_tab.dart';
 import '../widgets/balances_tab.dart';
@@ -70,9 +71,182 @@ class EventDetailView extends GetView<EventDetailController> {
     }
   }
 
+  void _showMoreMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0E0E0),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined, color: Color(0xFF0A4226)),
+              title: const Text('Chỉnh sửa sự kiện',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _showEditDialog(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              title: const Text('Xóa sự kiện',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.redAccent)),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _confirmDelete(context);
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditDialog(BuildContext context) async {
+    final controller = Get.find<EventDetailController>();
+    final current = controller.event.value;
+    final titleController = TextEditingController(text: current.title);
+    final descController = TextEditingController(text: current.description);
+    final emojiController = TextEditingController(text: current.emoji);
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Chỉnh sửa sự kiện'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emojiController,
+              decoration: const InputDecoration(labelText: 'Biểu tượng'),
+              maxLength: 10,
+            ),
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Tên sự kiện'),
+            ),
+            TextField(
+              controller: descController,
+              decoration: const InputDecoration(labelText: 'Mô tả'),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                await controller.updateEvent(
+                  title: titleController.text.trim(),
+                  description: descController.text.trim(),
+                  icon: emojiController.text.trim(),
+                );
+                Get.snackbar(
+                  'Thành công',
+                  'Đã cập nhật sự kiện',
+                  backgroundColor: const Color(0xFF0C3D2B),
+                  colorText: Colors.white,
+                  duration: const Duration(seconds: 2),
+                );
+              } on EventApiException catch (e) {
+                Get.snackbar(
+                  'Lỗi',
+                  e.message,
+                  backgroundColor: Colors.redAccent,
+                  colorText: Colors.white,
+                );
+              } catch (e) {
+                Get.snackbar(
+                  'Lỗi',
+                  'Không thể kết nối đến máy chủ',
+                  backgroundColor: Colors.redAccent,
+                  colorText: Colors.white,
+                );
+              }
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final controller = Get.find<EventDetailController>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Xóa sự kiện'),
+        content: const Text('Bạn có chắc chắn muốn xóa sự kiện này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await controller.deleteEvent();
+      Get.back();
+      Get.snackbar(
+        'Thành công',
+        'Đã xóa sự kiện',
+        backgroundColor: const Color(0xFF0C3D2B),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } on EventApiException catch (e) {
+      Get.snackbar(
+        'Lỗi',
+        e.message,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Lỗi',
+        'Không thể kết nối đến máy chủ',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    Get.put(EventDetailController());
+    final controller = Get.put(
+      EventDetailController(Get.find<EventRepository>()),
+    );
+    if (event != null && controller.event.value.id != event!.id) {
+      controller.loadEvent(event!);
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F7F4),
@@ -116,7 +290,7 @@ class EventDetailView extends GetView<EventDetailController> {
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.more_vert,
                     color: Color(0xFF0A4226), size: 20),
-                onPressed: () {},
+                onPressed: () => _showMoreMenu(context),
               ),
             ),
           ),
@@ -124,7 +298,7 @@ class EventDetailView extends GetView<EventDetailController> {
       ),
       body: Column(
         children: [
-          _EventInfo(event: controller.event),
+          Obx(() => _EventInfo(event: controller.event.value)),
           const SizedBox(height: 20),
           _CustomTabBar(currentTab: controller.currentTab, onSwitch: controller.switchTab),
           const SizedBox(height: 8),
@@ -201,8 +375,11 @@ class _EventInfo extends StatelessWidget {
       'tháng 5', 'tháng 6', 'tháng 7', 'tháng 8',
       'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12',
     ];
+    final memberCount = event.participants.isNotEmpty
+        ? event.participants.length
+        : event.participantCount;
     final dateStr =
-        '${event.participants.length} thành viên • ${months[event.createdAt.month - 1]}, ${event.createdAt.year}';
+        '$memberCount thành viên • ${months[event.createdAt.month - 1]}, ${event.createdAt.year}';
 
     return Column(
       children: [
