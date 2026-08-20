@@ -121,23 +121,6 @@ class EventDetailController extends GetxController {
     return link;
   }
 
-  Future<void> updateEvent({
-    required String title,
-    required String description,
-    required String icon,
-  }) async {
-    final current = event.value;
-    final token = await _authService.getToken();
-    if (token == null || current.id.startsWith('ev')) return;
-    final updated = await _repository.updateEvent(
-      token: token,
-      eventId: current.id,
-      data: {'title': title, 'description': description, 'icon': icon},
-    );
-    event.value = updated;
-    Get.find<EventController>().updateEvent(updated);
-  }
-
   Future<void> deleteEvent() async {
     final current = event.value;
     final token = await _authService.getToken();

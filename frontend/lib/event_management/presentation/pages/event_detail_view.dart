@@ -6,6 +6,7 @@ import '../../data/event_service.dart';
 import '../../data/repositories/event_repository.dart';
 import '../bindings/event_binding.dart';
 import '../controllers/event_detail_controller.dart';
+import 'edit_event_page.dart';
 import '../widgets/expenses_tab.dart';
 import '../widgets/balances_tab.dart';
 import '../widgets/invite_sheet.dart';
@@ -70,7 +71,11 @@ class EventDetailView extends GetView<EventDetailController> {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(sheetContext);
-                _showEditDialog(context);
+                Get.to(
+                  () => EditEventPage(
+                    event: Get.find<EventDetailController>().event.value,
+                  ),
+                );
               },
             ),
             ListTile(
@@ -85,80 +90,6 @@ class EventDetailView extends GetView<EventDetailController> {
             const SizedBox(height: 12),
           ],
         ),
-      ),
-    );
-  }
-
-  Future<void> _showEditDialog(BuildContext context) async {
-    final controller = Get.find<EventDetailController>();
-    final current = controller.event.value;
-    final titleController = TextEditingController(text: current.title);
-    final descController = TextEditingController(text: current.description);
-    final emojiController = TextEditingController(text: current.emoji);
-
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Chỉnh sửa sự kiện'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: emojiController,
-              decoration: const InputDecoration(labelText: 'Biểu tượng'),
-              maxLength: 10,
-            ),
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Tên sự kiện'),
-            ),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(labelText: 'Mô tả'),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              try {
-                await controller.updateEvent(
-                  title: titleController.text.trim(),
-                  description: descController.text.trim(),
-                  icon: emojiController.text.trim(),
-                );
-                Get.snackbar(
-                  'Thành công',
-                  'Đã cập nhật sự kiện',
-                  backgroundColor: const Color(0xFF0C3D2B),
-                  colorText: Colors.white,
-                  duration: const Duration(seconds: 2),
-                );
-              } on EventApiException catch (e) {
-                Get.snackbar(
-                  'Lỗi',
-                  e.message,
-                  backgroundColor: Colors.redAccent,
-                  colorText: Colors.white,
-                );
-              } catch (e) {
-                Get.snackbar(
-                  'Lỗi',
-                  'Không thể kết nối đến máy chủ',
-                  backgroundColor: Colors.redAccent,
-                  colorText: Colors.white,
-                );
-              }
-            },
-            child: const Text('Lưu'),
-          ),
-        ],
       ),
     );
   }

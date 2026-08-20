@@ -29,7 +29,9 @@ class EventController extends Controller
                 $query->where('user_id', $userId)->where('status', 'active');
             })
             ->with('owner:id,name,email,avatar')
-            ->withCount('participants')
+            ->withCount(['participants' => function ($query) {
+                $query->where('status', 'active');
+            }])
             ->orderByDesc('created_at')
             ->get();
 
@@ -172,6 +174,9 @@ class EventController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'nullable|in:active,completed,archived',
+            'participants' => 'nullable|array|max:100',
+            'participants.*.participant_id' => 'nullable|integer',
+            'participants.*.display_name' => 'required|string|max:100',
         ], [
             'title.required' => 'Vui lòng nhập tên sự kiện.',
             'title.max' => 'Tên sự kiện không được vượt quá 150 ký tự.',
@@ -180,14 +185,132 @@ class EventController extends Controller
             'end_date.date' => 'Ngày kết thúc không hợp lệ.',
             'end_date.after_or_equal' => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
             'status.in' => 'Trạng thái sự kiện không hợp lệ.',
+            'participants.max' => 'Danh sách người tham gia không được vượt quá 100 người.',
+            'participants.*.display_name.required' => 'Vui lòng nhập tên người tham gia.',
+            'participants.*.display_name.max' => 'Tên người tham gia không được vượt quá 100 ký tự.',
         ]);
 
-        $event->update($data);
+        $updated = DB::transaction(function () use ($event, $data) {
+            $participants = $data['participants'] ?? null;
+            unset($data['participants']);
+
+            $event->update($data);
+
+            if ($participants !== null) {
+                $this->syncParticipants($event, $participants);
+            }
+
+            return $event;
+        });
+
+        $updated->load([
+            'owner:id,name,email,avatar',
+            'participants' => function ($query) {
+                $query->where('status', 'active');
+            },
+        ]);
+
+        $updated->loadCount(['participants as participants_count' => function ($query) {
+            $query->where('status', 'active');
+        }]);
 
         return response()->json([
             'message' => 'Cập nhật sự kiện thành công',
-            'data' => $event,
+            'data' => $updated,
         ], 200);
+    }
+
+    /**
+     * Sync the event participant list based on the submitted participants.
+     *
+     * - The owner participant is always kept.
+     * - Submitted items with a valid participant_id are kept (and reactivated if needed).
+     * - Submitted items without a participant_id are added as guests
+     *   (or reactivated from a matching removed participant).
+     * - Existing active non-owner participants not in the submitted list are marked 'removed'.
+     */
+    private function syncParticipants(Event $event, array $participants): void
+    {
+        $existing = $event->participants()->get()->keyBy('participant_id');
+
+        $keepIds = [];
+        $nextGuestIndex = $this->nextGuestIndex($event->event_id, $existing);
+
+        foreach ($participants as $participant) {
+            $participantId = $participant['participant_id'] ?? null;
+            $displayName = trim($participant['display_name'] ?? '');
+
+            if ($participantId !== null) {
+                if (! $existing->has($participantId)) {
+                    continue;
+                }
+
+                $model = $existing[$participantId];
+
+                if ($model->role === 'owner') {
+                    $model->update([
+                        'display_name' => $displayName !== '' ? $displayName : $model->display_name,
+                    ]);
+                } else {
+                    $model->update([
+                        'display_name' => $displayName,
+                        'status' => 'active',
+                    ]);
+                }
+
+                $keepIds[] = $participantId;
+
+                continue;
+            }
+
+            $removed = $existing->first(function ($model) use ($displayName) {
+                return $model->role !== 'owner'
+                    && $model->status === 'removed'
+                    && strcasecmp($model->display_name, $displayName) === 0;
+            });
+
+            if ($removed) {
+                $removed->update([
+                    'display_name' => $displayName,
+                    'status' => 'active',
+                ]);
+                $keepIds[] = $removed->participant_id;
+
+                continue;
+            }
+
+            $email = 'guest-'.$event->event_id.'-'.(++$nextGuestIndex).'@xyphora.local';
+
+            $created = Participant::create([
+                'event_id' => $event->event_id,
+                'user_id' => null,
+                'display_name' => $displayName,
+                'email' => $email,
+                'role' => 'member',
+                'status' => 'active',
+            ]);
+
+            $keepIds[] = $created->participant_id;
+        }
+
+        $event->participants()
+            ->where('role', '!=', 'owner')
+            ->where('status', 'active')
+            ->whereNotIn('participant_id', array_unique($keepIds))
+            ->update(['status' => 'removed']);
+    }
+
+    private function nextGuestIndex(int $eventId, $existing): int
+    {
+        $max = 0;
+
+        foreach ($existing as $model) {
+            if (preg_match('/^guest-'.$eventId.'-(\d+)@xyphora\.local$/', $model->email, $m)) {
+                $max = max($max, (int) $m[1]);
+            }
+        }
+
+        return $max;
     }
 
     /**
