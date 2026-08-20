@@ -35,17 +35,35 @@ class GroupExpenseHeader extends GetView<AddGroupExpenseController> {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              "Thêm Chi Tiêu",
-              style: GoogleFonts.inter(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1D1D1D),
+            Obx(
+              () => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Thêm Chi Tiêu Nhóm",
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1D1D1D),
+                    ),
+                  ),
+                  if (controller.eventTitle != null)
+                    Text(
+                      controller.eventTitle!,
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF5A7563),
+                      ),
+                    ),
+                ],
               ),
             ),
             const Spacer(),
             ElevatedButton(
-              onPressed: () => controller.saveExpense(),
+              onPressed: controller.isSaving.value
+                  ? null
+                  : () => controller.saveExpense(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0C3D2B),
                 foregroundColor: Colors.white,
@@ -58,12 +76,23 @@ class GroupExpenseHeader extends GetView<AddGroupExpenseController> {
                   borderRadius: BorderRadius.circular(24),
                 ),
               ),
-              child: Text(
-                "Lưu",
-                style: GoogleFonts.nunito(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
+              child: Obx(
+                () => controller.isSaving.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        "Lưu",
+                        style: GoogleFonts.nunito(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],

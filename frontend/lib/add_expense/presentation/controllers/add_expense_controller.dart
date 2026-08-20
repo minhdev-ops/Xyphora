@@ -19,10 +19,8 @@ class AddExpenseController extends GetxController {
   final isCurrencyPickerVisible = false.obs;
   final isSaving = false.obs;
 
-  // Su kien
-  final events = <Map<String, dynamic>>[].obs;
-  final selectedEventId = RxnInt();
-  final isLoadingEvents = false.obs;
+  // Ngay chi tieu (mac dinh hom nay)
+  final selectedDate = DateTime.now().obs;
 
   // Danh muc
   final categories = <Map<String, dynamic>>[].obs;
@@ -41,7 +39,6 @@ class AddExpenseController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadEvents();
     loadCategories();
   }
 
@@ -77,29 +74,8 @@ class AddExpenseController extends GetxController {
     update();
   }
 
-  Future<void> loadEvents() async {
-    isLoadingEvents.value = true;
-    update();
-
-    final result = await _repository.fetchEvents();
-
-    if (result['success'] == true) {
-      events.assignAll(result['data'] as List<Map<String, dynamic>>);
-    } else {
-      Get.snackbar(
-        'Lỗi',
-        result['message'] ?? 'Không thể tải danh sách sự kiện',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-    }
-
-    isLoadingEvents.value = false;
-    update();
-  }
-
-  void selectEvent(int? eventId) {
-    selectedEventId.value = (eventId == null || eventId == 0) ? null : eventId;
+  void selectDate(DateTime date) {
+    selectedDate.value = date;
     update();
   }
 
@@ -258,12 +234,12 @@ class AddExpenseController extends GetxController {
     update();
 
     final result = await _repository.saveExpense(
-      eventId: selectedEventId.value,
       categoryId: selectedCategoryId.value,
       title: description.value.isEmpty ? 'Chi tiêu mới' : description.value,
       amount: amount.value,
       currency: selectedCurrency.value,
       description: description.value,
+      expenseDate: selectedDate.value.toIso8601String().split('T').first,
     );
 
     isSaving.value = false;
@@ -329,6 +305,7 @@ class AddExpenseController extends GetxController {
     expression.value = '';
     description.value = '';
     descriptionController.clear();
+    selectedDate.value = DateTime.now();
     selectedCategoryId.value =
         categories.isEmpty ? null : (categories.first['category_id'] as num).toInt();
   }

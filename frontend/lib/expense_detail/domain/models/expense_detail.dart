@@ -42,6 +42,34 @@ class ExpenseSplitItem {
   }
 }
 
+class ExpensePayerItem {
+  final int participantId;
+  final int? userId;
+  final String? displayName;
+  final String? avatar;
+  final double amount;
+
+  const ExpensePayerItem({
+    required this.participantId,
+    required this.amount,
+    this.userId,
+    this.displayName,
+    this.avatar,
+  });
+
+  factory ExpensePayerItem.fromJson(Map<String, dynamic> json) {
+    return ExpensePayerItem(
+      participantId: (json['participant_id'] as num).toInt(),
+      userId: json['user_id'] as int?,
+      displayName: json['display_name'] as String?,
+      avatar: json['avatar'] as String?,
+      amount: (json['amount'] as num).toDouble(),
+    );
+  }
+
+  String get name => displayName ?? 'Người trả';
+}
+
 class ExpenseDetail {
   final int expenseId;
   final int eventId;
@@ -64,6 +92,7 @@ class ExpenseDetail {
   final double? mySplitAmount;
   final String? mySplitStatus;
   final List<ExpenseSplitItem> splits;
+  final List<ExpensePayerItem> payers;
 
   const ExpenseDetail({
     required this.expenseId,
@@ -73,6 +102,7 @@ class ExpenseDetail {
     required this.currency,
     required this.splitMethod,
     required this.splits,
+    this.payers = const [],
     this.eventTitle,
     this.description,
     this.expenseDate,
@@ -119,6 +149,9 @@ class ExpenseDetail {
       mySplitStatus: mySplit?['status'] as String?,
       splits: (json['splits'] as List<dynamic>? ?? [])
           .map((s) => ExpenseSplitItem.fromJson(s as Map<String, dynamic>))
+          .toList(),
+      payers: (json['payers'] as List<dynamic>? ?? [])
+          .map((p) => ExpensePayerItem.fromJson(p as Map<String, dynamic>))
           .toList(),
     );
   }

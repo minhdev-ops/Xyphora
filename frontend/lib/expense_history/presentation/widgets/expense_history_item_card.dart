@@ -8,18 +8,50 @@ import '../../domain/models/expense_history_item.dart';
 
 class ExpenseHistoryItemCard extends StatelessWidget {
   final ExpenseHistoryItem item;
-  final String Function(double) formatCurrency;
 
   const ExpenseHistoryItemCard({
     super.key,
     required this.item,
-    required this.formatCurrency,
   });
+
+  String _formatAmount(double amount, String currency) {
+    final digits = amount.round().toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      buffer.write(digits[i]);
+      final remaining = digits.length - i - 1;
+      if (remaining > 0 && remaining % 3 == 0) {
+        buffer.write('.');
+      }
+    }
+    final symbol = switch (currency) {
+      'USD' => '\$',
+      'EUR' => '€',
+      'JPY' => '¥',
+      _ => 'đ',
+    };
+    return '${buffer.toString()}$symbol';
+  }
+
+  String _splitMethodLabel(String method) {
+    return switch (method) {
+      'percentage' => 'Theo %',
+      'exact' => 'Theo tiền',
+      'share' => 'Theo phần',
+      _ => 'Chia đều',
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final iconColor = categoryColorFor(item.categoryColor);
-    final payerName = item.payerName ?? 'Ai đó';
+
+    final isPersonal = item.eventTitle == null;
+    final subtitle = isPersonal
+        ? 'Cá nhân · Bạn trả'
+        : item.payerName == null
+            ? '${item.eventTitle} · Nhiều người trả'
+            : '${item.eventTitle} · ${item.payerName} trả';
 
     return GestureDetector(
       onTap: () => Get.to(
@@ -74,9 +106,7 @@ class ExpenseHistoryItemCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    item.eventTitle == null
-                        ? '$payerName trả'
-                        : '${item.eventTitle} · $payerName trả',
+                    subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.nunito(
@@ -85,6 +115,17 @@ class ExpenseHistoryItemCard extends StatelessWidget {
                       color: const Color(0xFF8A8A8A),
                     ),
                   ),
+                  if (!isPersonal && item.splitCount > 0) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '${item.splitCount} người · ${_splitMethodLabel(item.splitMethod)}',
+                      style: GoogleFonts.nunito(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: iconColor,
+                      ),
+                    ),
+                  ],
                   if (item.isMyDebt || item.isPaid) ...[
                     const SizedBox(height: 4),
                     _StatusBadge(item: item),
@@ -97,7 +138,7 @@ class ExpenseHistoryItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  formatCurrency(item.amount),
+                  _formatAmount(item.amount, item.currency),
                   style: GoogleFonts.nunito(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -109,8 +150,8 @@ class ExpenseHistoryItemCard extends StatelessWidget {
                   item.categoryName ?? 'Khác',
                   style: GoogleFonts.nunito(
                     fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF9E9E9E),
+                    fontWeight: FontWeight.w600,
+                    color: iconColor,
                   ),
                 ),
               ],

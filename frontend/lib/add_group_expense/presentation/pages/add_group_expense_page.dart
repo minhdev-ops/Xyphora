@@ -6,6 +6,7 @@ import '../controllers/add_group_expense_controller.dart';
 import '../widgets/group_expense_header.dart';
 import '../widgets/group_expense_card.dart';
 import '../widgets/group_expense_calculator.dart';
+import '../widgets/group_expense_detail.dart';
 import '../widgets/group_payers_section.dart';
 import '../widgets/group_receipt_attachment.dart';
 
@@ -54,6 +55,11 @@ class GroupExpensePage extends GetView<AddGroupExpenseController> {
                                     controller: controller,
                                     chipKey: _chipKey,
                                   ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 20),
+                                  child: GroupExpenseDetail(),
                                 ),
                                 const SizedBox(height: 16),
                                 const Padding(

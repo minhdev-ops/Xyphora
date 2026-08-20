@@ -120,9 +120,9 @@ class ExpenseCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          // Su kien selector
+          // Ngay chi tieu
           Text(
-            'Sự kiện',
+            'Ngày',
             style: GoogleFonts.nunito(
               color: const Color(0xFF5A7563),
               fontSize: 13,
@@ -131,67 +131,63 @@ class ExpenseCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Obx(() {
-            if (controller.isLoadingEvents.value) {
-              return const SizedBox(
-                height: 44,
-                child: Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF0C3D2B),
-                    ),
-                  ),
-                ),
-              );
-            }
-            return Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE2F0E5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: DropdownButton<int>(
-                  value: controller.selectedEventId.value ?? 0,
-                  isExpanded: true,
-                  isDense: true,
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Color(0xFF0C3D2B),
-                  ),
-                  items: [
-                    const DropdownMenuItem<int>(
-                      value: 0,
-                      child: Text(
-                        'Không thuộc sự kiện nào',
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Color(0xFF0C3D2B),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+            final date = controller.selectedDate.value;
+            return GestureDetector(
+              onTap: () async {
+                controller.hideKeypad();
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: date,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now(),
+                  helpText: 'Chọn ngày chi tiêu',
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.light(
+                          primary: Color(0xFF0C3D2B),
                         ),
                       ),
-                    ),
-                    ...controller.events
-                        .map(
-                          (event) => DropdownMenuItem<int>(
-                            value: event['event_id'] as int,
-                            child: Text(
-                              event['title']?.toString() ?? '',
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.nunito(
-                                color: const Color(0xFF0C3D2B),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                  ],
-                  onChanged: controller.selectEvent,
+                      child: child!,
+                    );
+                  },
+                );
+                if (picked != null) {
+                  controller.selectDate(picked);
+                }
+              },
+              child: Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2F0E5),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 18,
+                      color: Color(0xFF0C3D2B),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '${date.day} tháng ${date.month}, ${date.year}',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0C3D2B),
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 22,
+                      color: Color(0xFF0C3D2B),
+                    ),
+                  ],
+                ),
+              ),
             );
           }),
           const SizedBox(height: 16),

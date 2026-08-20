@@ -32,6 +32,8 @@ class EventDetailController extends GetxController {
   double get totalOwed => EventDetailMock.totalOwed;
   String get myUserId => EventDetailMock.myUserId;
 
+  int? get eventId => _eventId;
+
   static const List<String> _months = [
     'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4', 'tháng 5', 'tháng 6',
     'tháng 7', 'tháng 8', 'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12',

@@ -28,20 +28,55 @@ class GroupPayersSection extends GetView<AddGroupExpenseController> {
         children: [
           _sectionTitle("NGƯỜI TRẢ"),
           const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              spacing: 12,
-              children: [
-                for (final member in controller.members)
-                  SizedBox(width: 52, child: _buildMember(controller, member)),
-              ],
-            ),
-          ),
+          Obx(() {
+            if (controller.isLoadingMembers.value) {
+              return const SizedBox(
+                height: 44,
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF0C3D2B),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            if (controller.members.isEmpty) {
+              return Text(
+                'Chưa có thành viên trong sự kiện',
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  color: const Color(0xFF5A7563),
+                ),
+              );
+            }
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                spacing: 12,
+                children: [
+                  for (final member in controller.members)
+                    SizedBox(width: 52, child: _buildMember(controller, member)),
+                ],
+              ),
+            );
+          }),
           const SizedBox(height: 24),
           _sectionTitle("CÁCH CHIA"),
           const SizedBox(height: 12),
           _buildSplitBar(controller),
+          const SizedBox(height: 16),
+          Obx(() {
+            if (controller.selectedSplitMode.value == 'equal') {
+              return const SizedBox.shrink();
+            }
+            return _buildSplitInputs(controller);
+          }),
         ],
       ),
     );
@@ -124,7 +159,7 @@ class GroupPayersSection extends GetView<AddGroupExpenseController> {
         const SizedBox(height: 6),
         Obx(
           () => Text(
-            member.name,
+            member.isMe ? '${member.name} (bạn)' : member.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -191,5 +226,107 @@ class GroupPayersSection extends GetView<AddGroupExpenseController> {
         ),
       );
     });
+  }
+
+  Widget _buildSplitInputs(AddGroupExpenseController controller) {
+    final mode = controller.selectedSplitMode.value;
+    final isPercent = mode == 'percent';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              isPercent ? 'Phần trăm mỗi người' : 'Số tiền mỗi người',
+              style: GoogleFonts.nunito(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1A4331),
+              ),
+            ),
+            const Spacer(),
+            Text(
+              isPercent ? 'Tổng: ${_sumText(controller)}' : '',
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF5A7563),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        for (final member in controller.members)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: Color(member.color),
+                  child: Text(
+                    member.name.characters.first,
+                    style: GoogleFonts.nunito(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    member.isMe ? '${member.name} (bạn)' : member.name,
+                    style: GoogleFonts.nunito(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1D1D1D),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 90,
+                  child: TextField(
+                    controller: controller.splitControllerFor(member.id),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    textAlign: TextAlign.right,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      suffixText: isPercent ? '%' : 'đ',
+                      filled: true,
+                      fillColor: const Color(0xFFE2F0E5),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _sumText(AddGroupExpenseController controller) {
+    final mode = controller.selectedSplitMode.value;
+    final total = controller.members.fold<double>(
+      0,
+      (sum, m) =>
+          sum +
+          (double.tryParse(
+                controller.splitControllerFor(m.id).text.replaceAll(',', '.'),
+              ) ??
+              0),
+    );
+    return mode == 'percent' ? '${total.toStringAsFixed(1)}%' : '${total.round()} đ';
   }
 }

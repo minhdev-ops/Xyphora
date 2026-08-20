@@ -96,6 +96,9 @@ class DashboardController extends GetxController {
         expenseId: map['expense_id'] is num
             ? (map['expense_id'] as num).toInt()
             : 0,
+        eventId: map['event_id'] is num
+            ? (map['event_id'] as num).toInt()
+            : null,
         title: map['title']?.toString() ?? '',
         category: map['category']?.toString() ?? 'Khác',
         date: _formatDate(map['date']),
@@ -103,7 +106,7 @@ class DashboardController extends GetxController {
         icon: style.icon,
         themeColor: style.themeColor,
         bgThemeColor: style.bgThemeColor,
-        paymentMethod: 'Chia sẻ sự kiện',
+        paymentMethod: map['event_id'] is num ? 'Chia sẻ sự kiện' : 'Chi tiêu cá nhân',
         note: map['note']?.toString() ?? '',
       );
     }));

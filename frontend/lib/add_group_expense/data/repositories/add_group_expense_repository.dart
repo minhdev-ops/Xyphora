@@ -1,16 +1,39 @@
 import '../datasources/add_group_expense_datasource.dart';
-import '../../domain/models/group_expense_model.dart';
 
 class AddGroupExpenseRepository {
   final AddGroupExpenseDatasource _datasource = AddGroupExpenseDatasource();
 
-  List<GroupExpenseModel> getMockExpenses() => _datasource.getMockExpenses();
+  Future<Map<String, dynamic>> fetchEvent(int eventId) {
+    return _datasource.fetchEvent(eventId);
+  }
 
-  List<GroupMember> getMockMembers() => _datasource.getMockMembers();
+  Future<Map<String, dynamic>> fetchCategories() {
+    return _datasource.fetchCategories();
+  }
 
-  GroupExpenseModel? getMockExpenseById(String id) =>
-      _datasource.getMockExpenseById(id);
-
-  GroupExpenseModel addMockExpense(GroupExpenseModel expense) =>
-      _datasource.addMockExpense(expense);
+  Future<Map<String, dynamic>> saveExpense({
+    required int eventId,
+    int? categoryId,
+    required String title,
+    required double amount,
+    String currency = 'VND',
+    String? description,
+    String? expenseDate,
+    String splitMethod = 'equal',
+    List<int> payerIds = const [],
+    List<Map<String, dynamic>> splits = const [],
+  }) {
+    return _datasource.createExpense(
+      eventId: eventId,
+      categoryId: categoryId,
+      title: title,
+      amount: amount,
+      currency: currency,
+      description: description,
+      expenseDate: expenseDate,
+      splitMethod: splitMethod,
+      payerIds: payerIds,
+      splits: splits,
+    );
+  }
 }

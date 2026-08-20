@@ -388,10 +388,24 @@ class ExpenseDetailPage extends GetView<ExpenseDetailController> {
           _buildInfoRow(
             icon: Icons.person_outline_rounded,
             label: 'Người trả',
-            value: detail.payerParticipantId == null
-                ? 'Bạn'
-                : (detail.payerName ?? 'Không xác định'),
+            value: detail.payers.isEmpty
+                ? (detail.payerParticipantId == null
+                    ? 'Bạn'
+                    : (detail.payerName ?? 'Không xác định'))
+                : detail.payers
+                    .map((p) => p.name)
+                    .join(', '),
           ),
+          if (detail.payers.isNotEmpty) ...[
+            const Divider(height: 24, color: Color(0xFFF0F4F1)),
+            ...detail.payers.map(
+              (payer) => _buildInfoRow(
+                icon: Icons.payments_outlined,
+                label: '',
+                value: ctrl.formatCurrency(payer.amount),
+              ),
+            ),
+          ],
           if (detail.description != null &&
               detail.description!.trim().isNotEmpty) ...[
             const Divider(height: 24, color: Color(0xFFF0F4F1)),

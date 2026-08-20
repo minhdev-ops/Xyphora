@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class SpendingModel {
   final int expenseId;
+  final int? eventId;
   final String title;
   final String category;
   final String date;
@@ -21,6 +22,7 @@ class SpendingModel {
     required this.icon,
     required this.themeColor,
     required this.bgThemeColor,
+    this.eventId,
     this.paymentMethod = 'Ví MoMo',
     this.note = '',
   });

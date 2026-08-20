@@ -82,6 +82,11 @@ class Expense extends Model
         return $this->hasMany(ExpenseSplit::class, 'expense_id', 'expense_id');
     }
 
+    public function payers(): HasMany
+    {
+        return $this->hasMany(ExpensePayer::class, 'expense_id', 'expense_id');
+    }
+
     public function history(): HasMany
     {
         return $this->hasMany(ExpenseHistory::class, 'expense_id', 'expense_id');

@@ -12,10 +12,6 @@ class AddExpenseRepository {
   ExpenseModel addMockExpense(ExpenseModel expense) =>
       _datasource.addMockExpense(expense);
 
-  Future<Map<String, dynamic>> fetchEvents() {
-    return _datasource.fetchEvents();
-  }
-
   Future<Map<String, dynamic>> fetchCategories() {
     return _datasource.fetchCategories();
   }

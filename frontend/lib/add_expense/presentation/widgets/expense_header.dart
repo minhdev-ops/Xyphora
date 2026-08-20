@@ -36,7 +36,7 @@ class ExpenseHeader extends GetView<AddExpenseController> {
             ),
             const SizedBox(width: 12),
             Text(
-              "Thêm Chi Tiêu",
+              "Thêm Chi Tiêu Cá Nhân",
               style: GoogleFonts.inter(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,

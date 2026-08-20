@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Event;
 use App\Models\Expense;
+use App\Models\ExpensePayer;
 use App\Models\ExpenseSplit;
 use App\Models\Notification;
 use App\Models\Participant;
@@ -25,6 +26,9 @@ class ExpenseController extends Controller
             'expense_date' => 'nullable|date',
             'split_method' => 'nullable|in:equal,exact,percentage,share',
             'payer_id' => 'nullable|integer|exists:participants,participant_id',
+            'payer_ids' => 'nullable|array',
+            'payer_ids.*' => 'integer|exists:participants,participant_id',
+            'splits' => 'nullable|array',
         ], [
             'event_id.exists' => 'Sự kiện không tồn tại.',
             'category_id.exists' => 'Danh mục không tồn tại.',
@@ -39,7 +43,7 @@ class ExpenseController extends Controller
 
         // Chi tieu ca nhan (khong thuoc su kien nao)
         $event = null;
-        $payer = null;
+        $payerIds = [];
         if ($request->filled('event_id')) {
             $event = Event::findOrFail($request->event_id);
 
@@ -56,8 +60,20 @@ class ExpenseController extends Controller
                 ], 403);
             }
 
-            // Payer: mac dinh la participant cua user, hoac theo payer_id duoc chi dinh
-            if ($request->filled('payer_id')) {
+            // Nguoi tra: uu tien payer_ids (nhieu nguoi), roi payer_id, mac dinh la participant cua user
+            if ($request->filled('payer_ids')) {
+                $payerIds = Participant::whereIn('participant_id', $request->payer_ids)
+                    ->where('event_id', $event->event_id)
+                    ->where('status', Participant::STATUS_ACTIVE)
+                    ->pluck('participant_id')
+                    ->all();
+
+                if (empty($payerIds)) {
+                    return response()->json([
+                        'message' => 'Người trả không hợp lệ cho sự kiện này.',
+                    ], 422);
+                }
+            } elseif ($request->filled('payer_id')) {
                 $payer = Participant::where('participant_id', $request->payer_id)
                     ->where('event_id', $event->event_id)
                     ->where('status', Participant::STATUS_ACTIVE)
@@ -68,13 +84,16 @@ class ExpenseController extends Controller
                         'message' => 'Người trả không hợp lệ cho sự kiện này.',
                     ], 422);
                 }
+
+                $payerIds = [$payer->participant_id];
             } else {
                 if (! $userParticipant) {
                     return response()->json([
                         'message' => 'Bạn chưa tham gia sự kiện này.',
                     ], 403);
                 }
-                $payer = $userParticipant;
+
+                $payerIds = [$userParticipant->participant_id];
             }
         }
 
@@ -120,12 +139,14 @@ class ExpenseController extends Controller
             $request,
             $event,
             $user,
-            $payer,
+            $payerIds,
             $category,
             $splitMethod,
             $expenseDate,
             $title
         ) {
+            $payer = $payerIds !== [] ? Participant::find($payerIds[0]) : null;
+
             $expense = Expense::create([
                 'event_id' => $event?->event_id,
                 'created_by' => $user->id,
@@ -142,9 +163,33 @@ class ExpenseController extends Controller
                 'is_deleted' => false,
             ]);
 
-            // Chi tieu thuoc su kien moi chia tien va thong bao
-            if ($event !== null && $payer !== null) {
-                $splits = $this->buildSplits($event, (float) $request->amount, $splitMethod);
+            // Chi tieu thuoc su kien moi chia tien, ghi nguoi tra va thong bao
+            if ($event !== null && $payerIds !== []) {
+                $totalAmount = (float) $request->amount;
+
+                // Ghi nguoi tra (nhieu nguoi thi chia deu so tien phai tra)
+                $perPayer = round($totalAmount / count($payerIds), 2);
+                $remaining = $totalAmount;
+                foreach ($payerIds as $index => $participantId) {
+                    $isLast = $index === count($payerIds) - 1;
+                    $payerAmount = $isLast ? round($remaining, 2) : $perPayer;
+
+                    ExpensePayer::create([
+                        'expense_id' => $expense->expense_id,
+                        'participant_id' => $participantId,
+                        'amount' => $payerAmount,
+                    ]);
+
+                    $remaining -= $perPayer;
+                }
+
+                // Chia tien theo phuong thuc da chon
+                $splits = $this->buildSplits(
+                    $event,
+                    $totalAmount,
+                    $splitMethod,
+                    $request->input('splits', [])
+                );
 
                 foreach ($splits as $split) {
                     ExpenseSplit::create([
@@ -174,6 +219,15 @@ class ExpenseController extends Controller
                 'expense_date' => $expense->expense_date,
                 'split_method' => $expense->split_method,
                 'category' => $category->name,
+                'payers' => $expense->payers()
+                    ->with('participant')
+                    ->get()
+                    ->map(fn (ExpensePayer $p) => [
+                        'participant_id' => $p->participant_id,
+                        'user_id' => $p->participant?->user_id,
+                        'display_name' => $p->participant?->display_name,
+                        'amount' => (float) $p->amount,
+                    ]),
             ],
         ], 201);
     }
@@ -222,7 +276,7 @@ class ExpenseController extends Controller
             ], 403);
         }
 
-        $query = Expense::with(['event', 'category', 'payer', 'splits'])
+        $query = Expense::with(['event', 'category', 'payer', 'splits', 'payers.participant'])
             ->where(function ($q) use ($user, $accessibleEventIds) {
                 $q->whereIn('event_id', $accessibleEventIds)
                     ->orWhere(function ($sub) use ($user) {
@@ -284,6 +338,12 @@ class ExpenseController extends Controller
                 ->sum('expense_splits.amount');
         }
 
+        // Chi tieu ca nhan (khong thuoc su kien): phan cua toi = toan bo so tien
+        $myTotalAmount += (clone $query)
+            ->whereNull('event_id')
+            ->where('created_by', $user->id)
+            ->sum('amount');
+
         $sort = $request->sort ?? 'desc';
         $query->orderBy('expense_date', $sort)->orderBy('created_at', $sort);
 
@@ -325,6 +385,15 @@ class ExpenseController extends Controller
                     'display_name' => $expense->payer->display_name,
                     'avatar' => $expense->payer->avatar,
                 ] : null,
+                'payers' => $expense->payers
+                    ->map(fn (ExpensePayer $p) => [
+                        'participant_id' => $p->participant_id,
+                        'user_id' => $p->participant?->user_id,
+                        'display_name' => $p->participant?->display_name,
+                        'avatar' => $p->participant?->avatar,
+                        'amount' => (float) $p->amount,
+                    ])
+                    ->values(),
                 'my_split' => $mySplit ? [
                     'amount' => (float) $mySplit->amount,
                     'status' => $mySplit->status,
@@ -341,6 +410,7 @@ class ExpenseController extends Controller
             'summary' => [
                 'total_amount' => round((float) $summaryAmount, 2),
                 'my_total_amount' => round($myTotalAmount, 2),
+                'member_since' => $user->created_at?->format('Y-m'),
             ],
             'meta' => [
                 'current_page' => $expenses->currentPage(),
@@ -357,7 +427,7 @@ class ExpenseController extends Controller
     {
         $user = $request->user();
 
-        $expense = Expense::with(['event', 'category', 'payer', 'splits.participant'])
+        $expense = Expense::with(['event', 'category', 'payer', 'splits.participant', 'payers.participant'])
             ->findOrFail($expense);
 
         $accessibleEventIds = Event::where('owner_id', $user->id)
@@ -433,6 +503,16 @@ class ExpenseController extends Controller
                     'display_name' => $expense->payer->display_name,
                     'avatar' => $expense->payer->avatar,
                 ] : null,
+                'payers' => $expense->payers
+                    ->sortBy('participant_id')
+                    ->values()
+                    ->map(fn (ExpensePayer $p) => [
+                        'participant_id' => $p->participant_id,
+                        'user_id' => $p->participant?->user_id,
+                        'display_name' => $p->participant?->display_name,
+                        'avatar' => $p->participant?->avatar,
+                        'amount' => (float) $p->amount,
+                    ]),
                 'my_split' => $mySplit ? [
                     'participant_id' => $mySplit->participant_id,
                     'amount' => (float) $mySplit->amount,
@@ -636,7 +716,7 @@ class ExpenseController extends Controller
     /**
      * Tao danh sach chia tien theo phuong thuc.
      */
-    private function buildSplits(Event $event, float $amount, string $method): array
+    private function buildSplits(Event $event, float $amount, string $method, array $splitData = []): array
     {
         $participants = $event->participants()
             ->where('status', Participant::STATUS_ACTIVE)
@@ -665,7 +745,51 @@ class ExpenseController extends Controller
             return $splits;
         }
 
-        // Cac phuong thuc khac (exact/percentage/share) chua ho tro: chia deu
+        // Chia theo phan tram / chinh xac: dung du lieu tu client (splits)
+        if (($method === Expense::SPLIT_PERCENTAGE || $method === Expense::SPLIT_EXACT)
+            && $splitData !== []) {
+            $splits = [];
+            $sum = 0.0;
+
+            foreach ($splitData as $split) {
+                $participantId = (int) ($split['participant_id'] ?? 0);
+                $participant = $participants->firstWhere('participant_id', $participantId);
+
+                if (! $participant) {
+                    continue;
+                }
+
+                if ($method === Expense::SPLIT_PERCENTAGE) {
+                    $percentage = (float) ($split['percentage'] ?? 0);
+                    $splitAmount = round($amount * $percentage / 100, 2);
+                } else {
+                    $splitAmount = round((float) ($split['amount'] ?? 0), 2);
+                }
+
+                $sum += $splitAmount;
+                $splits[] = [
+                    'participant_id' => $participantId,
+                    'amount' => $splitAmount,
+                ];
+            }
+
+            if ($splits !== []) {
+                // Dieu chinh sai so lam tron: gan hieu so vao nguoi cuoi cung
+                $diff = round($amount - $sum, 2);
+
+                if (abs($diff) > 0.01) {
+                    $lastIndex = count($splits) - 1;
+                    $splits[$lastIndex]['amount'] = round(
+                        $splits[$lastIndex]['amount'] + $diff,
+                        2
+                    );
+                }
+            }
+
+            return $splits;
+        }
+
+        // Cac phuong thuc khac chua ho tro: chia deu
         $count = $participants->count();
         $perPerson = round($amount / $count, 2);
 

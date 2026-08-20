@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\Expense;
+use App\Models\ExpensePayer;
 use App\Models\ExpenseSplit;
 use App\Models\Notification;
 use App\Models\Participant;
@@ -43,12 +44,9 @@ class DashboardController extends Controller
         );
         $monthlySpendingCount = $monthlySplits->count() + $personalExpenses->count();
 
-        // 2. So du: tong da tra - tong phan chia
-        $paid = (float) Expense::whereIn('payer_id', $participantIds)
-            ->orWhere(function ($q) use ($userId) {
-                $q->whereNull('payer_id')->where('created_by', $userId);
-            })
-            ->sum('amount');
+        // 2. So du: tong da tra (cho su kien) - tong phan chia
+        //    Chi tieu ca nhan (khong thuoc su kien) KHONG tinh vao so du/no.
+        $paid = (float) ExpensePayer::whereIn('participant_id', $participantIds)->sum('amount');
         $owed = (float) ExpenseSplit::whereIn('participant_id', $participantIds)->sum('amount');
         $net = round($paid - $owed, 2);
 
@@ -104,8 +102,8 @@ class DashboardController extends Controller
                 ->whereIn('participant_id', $participantIds)
                 ->pluck('participant_id');
 
-            $eventPaid = (float) Expense::where('event_id', $event->event_id)
-                ->whereIn('payer_id', $eventParticipantIds)
+            $eventPaid = (float) ExpensePayer::whereIn('participant_id', $eventParticipantIds)
+                ->whereHas('expense', fn ($q) => $q->where('event_id', $event->event_id))
                 ->sum('amount');
 
             $eventOwed = (float) ExpenseSplit::whereIn('participant_id', $eventParticipantIds)

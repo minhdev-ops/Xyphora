@@ -15,32 +15,120 @@ class AddGroupExpenseController extends GetxController {
     ('amount', 'Theo tiền'),
   ];
 
+  int? eventId;
+  String? eventTitle;
+
   final amount = 0.0.obs;
   final expression = ''.obs;
   final description = ''.obs;
   final selectedCurrency = 'VND'.obs;
+  final selectedDate = DateTime.now().obs;
   final isKeypadVisible = false.obs;
   final isCurrencyPickerVisible = false.obs;
   final selectedPayers = <String>[].obs;
   final selectedSplitMode = 'equal'.obs;
+  final isSaving = false.obs;
+  final isLoadingMembers = false.obs;
+  final isLoadingCategories = false.obs;
+
+  final members = <GroupMember>[].obs;
+  final categories = <Map<String, dynamic>>[].obs;
+  final selectedCategoryId = RxnInt();
+
+  final Map<String, TextEditingController> _splitControllers = {};
 
   List<String> get sortedCurrencies => [
     selectedCurrency.value,
     ...currencies.where((c) => c != selectedCurrency.value),
   ];
 
-  late final List<GroupMember> members = _repository.getMockMembers();
-
   final TextEditingController descriptionController = TextEditingController();
 
-  List<GroupExpenseModel> get mockExpenses => _repository.getMockExpenses();
+  TextEditingController splitControllerFor(String memberId) {
+    return _splitControllers.putIfAbsent(
+      memberId,
+      () => TextEditingController(),
+    );
+  }
 
   @override
   void onInit() {
     super.onInit();
-    if (members.isNotEmpty) {
-      selectedPayers.add(members.first.id);
+    final args = Get.arguments;
+    if (args is Map) {
+      eventId = args['event_id'] is int ? args['event_id'] as int : int.tryParse('${args['event_id']}');
+      eventTitle = args['event_title']?.toString();
     }
+    loadMembers();
+    loadCategories();
+  }
+
+  Future<void> loadMembers() async {
+    final id = eventId;
+    if (id == null) return;
+
+    isLoadingMembers.value = true;
+    update();
+
+    final result = await _repository.fetchEvent(id);
+
+    if (result['success'] == true) {
+      final data = result['data'] as Map<String, dynamic>? ?? const {};
+      final participants = (data['participants'] as List<dynamic>? ?? [])
+          .cast<Map<String, dynamic>>();
+      members.assignAll(participants.map(GroupMember.fromParticipant).toList());
+
+      // Mac dinh nguoi tra = nguoi dang dang nhap (is_me), neu khong co thi nguoi dau tien
+      final me = members.firstWhereOrNull((m) => m.isMe);
+      selectedPayers.assignAll([(me ?? members.firstOrNull)?.id].whereType<String>());
+    } else {
+      Get.snackbar(
+        'Lỗi',
+        result['message'] ?? 'Không thể tải danh sách thành viên',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
+
+    isLoadingMembers.value = false;
+    update();
+  }
+
+  Future<void> loadCategories() async {
+    isLoadingCategories.value = true;
+    update();
+
+    final result = await _repository.fetchCategories();
+
+    if (result['success'] == true) {
+      categories.assignAll(result['data'] as List<Map<String, dynamic>>);
+      if (selectedCategoryId.value == null && categories.isNotEmpty) {
+        selectedCategoryId.value =
+            (categories.first['category_id'] as num).toInt();
+      }
+    } else {
+      Get.snackbar(
+        'Lỗi',
+        result['message'] ?? 'Không thể tải danh sách danh mục',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
+
+    isLoadingCategories.value = false;
+    update();
+  }
+
+  void selectCategory(int? categoryId) {
+    selectedCategoryId.value = (categoryId == null || categoryId == 0)
+        ? null
+        : categoryId;
+    update();
+  }
+
+  void selectDate(DateTime date) {
+    selectedDate.value = date;
+    update();
   }
 
   void onKeyPressed(String key) {
@@ -192,9 +280,99 @@ class AddGroupExpenseController extends GetxController {
   void selectSplitMode(String mode) {
     HapticFeedback.lightImpact();
     selectedSplitMode.value = mode;
+    _autofillSplitValues();
   }
 
-  void saveExpense() {
+  void _autofillSplitValues() {
+    if (members.isEmpty) return;
+
+    final mode = selectedSplitMode.value;
+    if (mode == 'equal') return;
+
+    final count = members.length;
+    final base = mode == 'percent' ? 100.0 / count : amount.value / count;
+
+    for (final member in members) {
+      splitControllerFor(member.id).text = _fmtNum(base);
+    }
+  }
+
+  String _fmtNum(double value) {
+    if (value == value.roundToDouble()) {
+      return value.round().toString();
+    }
+    return value.toStringAsFixed(2);
+  }
+
+  List<Map<String, dynamic>> _buildSplitPayload() {
+    final mode = selectedSplitMode.value;
+    if (mode == 'equal' || members.isEmpty) return const [];
+
+    final splits = <Map<String, dynamic>>[];
+
+    if (mode == 'percent') {
+      for (final member in members) {
+        final value = double.tryParse(
+          splitControllerFor(member.id).text.replaceAll(',', '.'),
+        );
+        if (value == null || value < 0) return const [];
+        splits.add({
+          'participant_id': int.parse(member.id),
+          'percentage': value,
+        });
+      }
+    } else {
+      for (final member in members) {
+        final value = double.tryParse(
+          splitControllerFor(member.id).text.replaceAll(',', '.'),
+        );
+        if (value == null || value < 0) return const [];
+        splits.add({
+          'participant_id': int.parse(member.id),
+          'amount': value,
+        });
+      }
+    }
+
+    return splits;
+  }
+
+  bool _validateSplits() {
+    final mode = selectedSplitMode.value;
+    if (mode == 'equal' || members.isEmpty) return true;
+
+    if (mode == 'percent') {
+      final total = members.fold<double>(
+        0,
+        (sum, m) =>
+            sum +
+            (double.tryParse(
+                  splitControllerFor(m.id).text.replaceAll(',', '.'),
+                ) ??
+                0),
+      );
+      if ((total - 100).abs() > 0.5) {
+        return false;
+      }
+    } else {
+      final total = members.fold<double>(
+        0,
+        (sum, m) =>
+            sum +
+            (double.tryParse(
+                  splitControllerFor(m.id).text.replaceAll(',', '.'),
+                ) ??
+                0),
+      );
+      if ((total - amount.value).abs() > 0.5) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  Future<void> saveExpense() async {
     if (amount.value <= 0 && expression.value.isNotEmpty) {
       _calculateResult();
     }
@@ -219,27 +397,71 @@ class AddGroupExpenseController extends GetxController {
       return;
     }
 
-    final expense = GroupExpenseModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    if (!_validateSplits()) {
+      final mode = selectedSplitMode.value;
+      Get.snackbar(
+        'Lỗi',
+        mode == 'percent'
+            ? 'Tổng phần trăm phải bằng 100%'
+            : 'Tổng số tiền phải bằng tổng chi tiêu',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final id = eventId;
+    if (id == null) {
+      Get.snackbar(
+        'Lỗi',
+        'Không xác định được sự kiện',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    isSaving.value = true;
+    update();
+
+    final payerIds = selectedPayers
+        .map(int.tryParse)
+        .whereType<int>()
+        .toList();
+
+    final result = await _repository.saveExpense(
+      eventId: id,
+      categoryId: selectedCategoryId.value,
       title: description.value.isEmpty ? 'Chi tiêu nhóm' : description.value,
       amount: amount.value,
       currency: selectedCurrency.value,
       description: description.value,
-      date: DateTime.now().toIso8601String().split('T')[0],
-      payerIds: selectedPayers.toList(),
-      splitMode: selectedSplitMode.value,
+      expenseDate: selectedDate.value.toIso8601String().split('T').first,
+      splitMethod: selectedSplitMode.value,
+      payerIds: payerIds,
+      splits: _buildSplitPayload(),
     );
 
-    _repository.addMockExpense(expense);
+    isSaving.value = false;
+    update();
 
-    Get.back(result: expense);
-    Get.snackbar(
-      'Thành công',
-      'Đã thêm chi tiêu nhóm',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
-    clearAll();
+    if (result['success'] == true) {
+      Get.back(result: true);
+      Get.snackbar(
+        'Thành công',
+        result['message'] ?? 'Đã thêm chi tiêu nhóm',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      clearAll();
+    } else {
+      Get.snackbar(
+        'Thất bại',
+        result['message'] ?? 'Không thể thêm chi tiêu nhóm',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
   }
 
   void updateDescription(String value) {
@@ -280,16 +502,23 @@ class AddGroupExpenseController extends GetxController {
     expression.value = '';
     description.value = '';
     descriptionController.clear();
-    selectedPayers.clear();
-    if (members.isNotEmpty) {
-      selectedPayers.add(members.first.id);
-    }
+    selectedDate.value = DateTime.now();
+    selectedCategoryId.value =
+        categories.isEmpty ? null : (categories.first['category_id'] as num).toInt();
     selectedSplitMode.value = 'equal';
+    for (final controller in _splitControllers.values) {
+      controller.clear();
+    }
+    final me = members.firstWhereOrNull((m) => m.isMe);
+    selectedPayers.assignAll([me?.id].whereType<String>());
   }
 
   @override
   void onClose() {
     descriptionController.dispose();
+    for (final controller in _splitControllers.values) {
+      controller.dispose();
+    }
     super.onClose();
   }
 }

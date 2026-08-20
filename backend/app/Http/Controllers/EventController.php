@@ -44,4 +44,59 @@ class EventController extends Controller
             'data' => $events,
         ]);
     }
+
+    public function show(Request $request, int $event)
+    {
+        $user = $request->user();
+
+        $event = Event::with(['participants.user'])->find($event);
+
+        if (! $event) {
+            return response()->json([
+                'message' => 'Sự kiện không tồn tại.',
+            ], 404);
+        }
+
+        $isOwner = $event->owner_id === $user->id;
+        $isParticipant = $event->participants()
+            ->where('user_id', $user->id)
+            ->where('status', Participant::STATUS_ACTIVE)
+            ->exists();
+
+        if (! $isOwner && ! $isParticipant) {
+            return response()->json([
+                'message' => 'Bạn không phải thành viên của sự kiện này.',
+            ], 403);
+        }
+
+        $participants = $event->participants()
+            ->where('status', Participant::STATUS_ACTIVE)
+            ->orderBy('participant_id')
+            ->get()
+            ->map(fn (Participant $p) => [
+                'participant_id' => $p->participant_id,
+                'user_id' => $p->user_id,
+                'display_name' => $p->display_name ?: ($p->user?->name ?? $p->email),
+                'email' => $p->email ?: $p->user?->email,
+                'avatar' => $p->avatar ?: $p->user?->avatar,
+                'is_me' => $p->user_id === $user->id,
+                'role' => $p->role,
+            ]);
+
+        return response()->json([
+            'message' => 'Lấy chi tiết sự kiện thành công',
+            'data' => [
+                'event_id' => $event->event_id,
+                'title' => $event->title,
+                'icon' => $event->icon,
+                'currency' => $event->currency,
+                'description' => $event->description,
+                'status' => $event->status,
+                'start_date' => $event->start_date?->toDateString(),
+                'end_date' => $event->end_date?->toDateString(),
+                'is_owner' => $isOwner,
+                'participants' => $participants,
+            ],
+        ]);
+    }
 }

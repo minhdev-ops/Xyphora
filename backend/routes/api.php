@@ -32,6 +32,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'home']);
 
     Route::get('/events', [EventController::class, 'index']);
+    Route::get('/events/{event}', [EventController::class, 'show']);
     Route::post('/expenses/create', [ExpenseController::class, 'create']);
     Route::get('/expenses', [ExpenseController::class, 'index']);
     Route::get('/expenses/{expense}', [ExpenseController::class, 'show']);

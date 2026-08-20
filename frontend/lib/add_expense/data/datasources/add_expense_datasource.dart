@@ -74,36 +74,6 @@ class AddExpenseDatasource {
     return newExpense;
   }
 
-  Future<Map<String, dynamic>> fetchEvents() async {
-    try {
-      final token = await TokenStorage.read();
-      if (token == null) {
-        return {'success': false, 'message': 'Chưa đăng nhập'};
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/events'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'data': (body['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>(),
-        };
-      }
-      return {'success': false, 'message': body['message'] ?? 'Lỗi tải sự kiện'};
-    } catch (e) {
-      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
-    }
-  }
-
   Future<Map<String, dynamic>> fetchCategories() async {
     try {
       final token = await TokenStorage.read();
