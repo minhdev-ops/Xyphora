@@ -13,7 +13,7 @@ class EventApiException implements Exception {
 }
 
 class EventService {
-  static const String baseUrl = ApiConfig.baseUrl;
+  static String get baseUrl => ApiConfig.baseUrl;
 
   static Map<String, String> _headers(String token) => {
         'Content-Type': 'application/json',
