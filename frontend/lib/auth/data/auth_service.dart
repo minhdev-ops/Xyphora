@@ -110,7 +110,10 @@ class AuthService {
 
   late final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    serverClientId: ApiConfig.googleServerClientId.isNotEmpty
+    clientId: kIsWeb && ApiConfig.googleServerClientId.isNotEmpty
+        ? ApiConfig.googleServerClientId
+        : null,
+    serverClientId: !kIsWeb && ApiConfig.googleServerClientId.isNotEmpty
         ? ApiConfig.googleServerClientId
         : null,
   );
