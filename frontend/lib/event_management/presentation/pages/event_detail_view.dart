@@ -53,7 +53,10 @@ class EventDetailView extends GetView<EventDetailController> {
         );
         return;
       }
-      Get.bottomSheet(InviteSheet(link: link));
+      Get.bottomSheet(
+        InviteSheet(link: link),
+        isScrollControlled: true,
+      );
     } on EventApiException catch (e) {
       Get.snackbar(
         'Lỗi',
