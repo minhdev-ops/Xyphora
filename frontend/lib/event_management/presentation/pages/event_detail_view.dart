@@ -241,11 +241,16 @@ class EventDetailView extends GetView<EventDetailController> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(
-      EventDetailController(Get.find<EventRepository>()),
-    );
-    if (event != null && controller.event.value.id != event!.id) {
-      controller.loadEvent(event!);
+    final EventDetailController controller;
+    if (Get.isRegistered<EventDetailController>()) {
+      controller = Get.find<EventDetailController>();
+      if (event != null && controller.event.value.id != event!.id) {
+        controller.loadEvent(event!);
+      }
+    } else {
+      controller = Get.put(
+        EventDetailController(Get.find<EventRepository>(), initialEvent: event),
+      );
     }
 
     return Scaffold(
@@ -298,12 +303,25 @@ class EventDetailView extends GetView<EventDetailController> {
       ),
       body: Column(
         children: [
-          Obx(() => _EventInfo(event: controller.event.value)),
+          Obx(
+            () => controller.isLoading.value
+                ? const Padding(
+                    padding: EdgeInsets.only(top: 48),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF0A4226),
+                      ),
+                    ),
+                  )
+                : _EventInfo(event: controller.event.value),
+          ),
           const SizedBox(height: 20),
           _CustomTabBar(currentTab: controller.currentTab, onSwitch: controller.switchTab),
           const SizedBox(height: 8),
           Expanded(
             child: Obx(() {
+              // Track event change so tabs rebuild after API load.
+              controller.event.value;
               switch (controller.currentTab.value) {
                 case 0:
                   return const ExpensesTab();
