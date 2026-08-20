@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -29,6 +30,16 @@ return new class extends Migration
                 ->references('participant_id')->on('participants')
                 ->cascadeOnDelete()->cascadeOnUpdate();
         });
+
+        DB::statement('ALTER TABLE `expense_splits` ADD CONSTRAINT `chk_splits_amount` CHECK (`amount` > 0)');
+        DB::statement(
+            'ALTER TABLE `expense_splits` ADD CONSTRAINT `chk_splits_percentage` '
+            . 'CHECK ((`percentage` IS NULL) OR (`percentage` >= 0 AND `percentage` <= 100))'
+        );
+        DB::statement(
+            'ALTER TABLE `expense_splits` ADD CONSTRAINT `chk_splits_share` '
+            . 'CHECK ((`share` IS NULL) OR (`share` > 0))'
+        );
     }
 
     public function down(): void

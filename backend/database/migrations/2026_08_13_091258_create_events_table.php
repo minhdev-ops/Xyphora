@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -29,6 +30,11 @@ return new class extends Migration
                 ->references('id')->on('users')
                 ->restrictOnDelete()->cascadeOnUpdate();
         });
+
+        DB::statement(
+            "ALTER TABLE `events` ADD CONSTRAINT `chk_events_dates` "
+            . "CHECK ((`start_date` IS NULL) OR (`end_date` IS NULL) OR (`end_date` >= `start_date`))"
+        );
     }
 
     public function down(): void

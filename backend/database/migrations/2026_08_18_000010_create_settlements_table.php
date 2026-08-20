@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -23,19 +24,27 @@ return new class extends Migration
             $table->index(['event_id', 'status'], 'idx_settlements_event_status');
             $table->index('from_participant', 'idx_settlements_from');
             $table->index('to_participant', 'idx_settlements_to');
-            $table->index(['event_id', 'from_participant'], 'idx_settlements_event_from');
-            $table->index(['event_id', 'to_participant'], 'idx_settlements_event_to');
 
             $table->foreign('event_id', 'fk_settlements_event')
                 ->references('event_id')->on('events')
                 ->cascadeOnDelete()->cascadeOnUpdate();
-            $table->foreign('from_participant', 'fk_settlements_from')
-                ->references('participant_id')->on('participants')
-                ->restrictOnDelete()->cascadeOnUpdate();
-            $table->foreign('to_participant', 'fk_settlements_to')
-                ->references('participant_id')->on('participants')
-                ->restrictOnDelete()->cascadeOnUpdate();
+            $table->foreign(['event_id', 'from_participant'], 'fk_settlements_from')
+                ->references(['event_id', 'participant_id'])->on('participants')
+                ->restrictOnDelete();
+            $table->foreign(['event_id', 'to_participant'], 'fk_settlements_to')
+                ->references(['event_id', 'participant_id'])->on('participants')
+                ->restrictOnDelete();
         });
+
+        DB::statement('ALTER TABLE `settlements` ADD CONSTRAINT `chk_settlements_amount` CHECK (`amount` > 0)');
+        DB::statement(
+            'ALTER TABLE `settlements` ADD CONSTRAINT `chk_settlements_party` '
+            . 'CHECK (`from_participant` <> `to_participant`)'
+        );
+        DB::statement(
+            "ALTER TABLE `settlements` ADD CONSTRAINT `chk_settlements_status` "
+            . "CHECK ((`status` = 'completed') = (`settled_at` IS NOT NULL))"
+        );
     }
 
     public function down(): void

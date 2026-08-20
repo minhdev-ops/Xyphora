@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -25,6 +26,11 @@ return new class extends Migration
                 ->references('event_id')->on('events')
                 ->cascadeOnDelete()->cascadeOnUpdate();
         });
+
+        DB::statement(
+            "ALTER TABLE `invitations` ADD CONSTRAINT `chk_invitations_used` "
+            . "CHECK ((`status` = 'accepted') = (`used_at` IS NOT NULL))"
+        );
     }
 
     public function down(): void
