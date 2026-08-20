@@ -6,6 +6,7 @@ import '../../domain/models/event_model.dart';
 
 class EventController extends GetxController {
   final EventRepository _repository;
+  final AuthService _authService = Get.find<AuthService>();
 
   EventController(this._repository);
 
@@ -53,9 +54,8 @@ class EventController extends GetxController {
   Future<void> loadEvents({String? token}) async {
     isLoading.value = true;
     try {
-      final authService = AuthService();
-      final authToken = token ?? await authService.getToken();
-      final user = await authService.getCurrentUser();
+      final authToken = token ?? await _authService.getToken();
+      final user = await _authService.getCurrentUser();
       if (user != null) myUserId = user.id;
       final result = await _repository.getEvents(token: authToken);
       events.assignAll(result);

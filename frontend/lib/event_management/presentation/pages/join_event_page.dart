@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../bindings/event_binding.dart';
 import '../controllers/join_event_controller.dart';
 
 class JoinEventPage extends GetView<JoinEventController> {
@@ -9,7 +10,10 @@ class JoinEventPage extends GetView<JoinEventController> {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(JoinEventController(token));
+    EventBinding().dependencies();
+    if (!Get.isRegistered<JoinEventController>()) {
+      Get.put(JoinEventController(token));
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6),

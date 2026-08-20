@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class InviteSheet extends StatelessWidget {
@@ -94,11 +95,13 @@ class InviteSheet extends StatelessWidget {
                       GestureDetector(
                         onTap: () async {
                           await Clipboard.setData(ClipboardData(text: link));
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Đã sao chép link mời')),
-                            );
-                          }
+                          Get.snackbar(
+                            'Đã sao chép',
+                            'Đã sao chép link mời',
+                            backgroundColor: const Color(0xFF0C3D2B),
+                            colorText: Colors.white,
+                            duration: const Duration(seconds: 2),
+                          );
                         },
                         child: Container(
                           padding: const EdgeInsets.all(8),

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../../../auth/data/auth_service.dart';
+import '../../data/event_service.dart';
 import '../../data/repositories/event_repository.dart';
 import '../../domain/models/event_detail_model.dart';
 import '../../domain/models/event_model.dart';
@@ -9,6 +10,7 @@ import 'event_controller.dart';
 
 class EventDetailController extends GetxController {
   final EventRepository _repository;
+  final AuthService _authService = Get.find<AuthService>();
   final EventModel? initialEvent;
 
   EventDetailController(this._repository, {this.initialEvent});
@@ -87,10 +89,9 @@ class EventDetailController extends GetxController {
     isLoading.value = true;
     event.value = initialEvent;
     try {
-      final authService = AuthService();
-      final user = await authService.getCurrentUser();
+      final user = await _authService.getCurrentUser();
       if (user != null) myUserId.value = user.id;
-      final token = await authService.getToken();
+      final token = await _authService.getToken();
       if (token == null || initialEvent.id.startsWith('ev')) return;
       final detail = await _repository.getEvent(token: token, eventId: initialEvent.id);
       event.value = detail;
@@ -101,13 +102,32 @@ class EventDetailController extends GetxController {
     }
   }
 
+  Future<String> getInviteLink() async {
+    final current = event.value;
+    if (current.id.startsWith('ev')) {
+      throw EventApiException('Không thể tạo link mời cho dữ liệu mẫu');
+    }
+    final token = await _authService.getToken();
+    if (token == null) {
+      throw EventApiException('Vui lòng đăng nhập để tạo link mời');
+    }
+    final response = await _repository.getInviteLink(
+        token: token, eventId: current.id);
+    final data = response['data'] as Map<String, dynamic>? ?? {};
+    final link = data['invite_link'] as String? ?? '';
+    if (link.isEmpty) {
+      throw EventApiException('Không lấy được link mời');
+    }
+    return link;
+  }
+
   Future<void> updateEvent({
     required String title,
     required String description,
     required String icon,
   }) async {
     final current = event.value;
-    final token = await AuthService().getToken();
+    final token = await _authService.getToken();
     if (token == null || current.id.startsWith('ev')) return;
     final updated = await _repository.updateEvent(
       token: token,
@@ -120,7 +140,7 @@ class EventDetailController extends GetxController {
 
   Future<void> deleteEvent() async {
     final current = event.value;
-    final token = await AuthService().getToken();
+    final token = await _authService.getToken();
     if (token == null || current.id.startsWith('ev')) return;
     await _repository.deleteEvent(token: token, eventId: current.id);
     Get.find<EventController>().removeEvent(current.id);

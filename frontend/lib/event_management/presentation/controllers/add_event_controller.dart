@@ -11,6 +11,9 @@ class AddEventController extends GetxController {
     '🎉', '⛰️', '🍽️', '🎂', '🏖️', '🏠', '🎊', '⚽',
   ];
 
+  final AuthService _authService = Get.find<AuthService>();
+  final EventService _eventService = Get.find<EventService>();
+
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController participantController = TextEditingController();
@@ -74,8 +77,7 @@ class AddEventController extends GetxController {
       return;
     }
 
-    final authService = AuthService();
-    final token = await authService.getToken();
+    final token = await _authService.getToken();
     if (token == null) {
       Get.snackbar(
         'Lỗi',
@@ -89,7 +91,7 @@ class AddEventController extends GetxController {
 
     isCreating.value = true;
     try {
-      final response = await EventService().createEvent(token, {
+      final response = await _eventService.createEvent(token, {
         'title': title,
         'description': descriptionController.text.trim(),
         'icon': selectedEmoji.value,

@@ -6,7 +6,8 @@ import '../pages/event_page.dart';
 
 class JoinEventController extends GetxController {
   final String token;
-  final EventService _service = EventService();
+  final AuthService _authService = Get.find<AuthService>();
+  final EventService _eventService = Get.find<EventService>();
 
   JoinEventController(this.token);
 
@@ -26,7 +27,7 @@ class JoinEventController extends GetxController {
   Future<void> load() async {
     isLoading.value = true;
     try {
-      final authToken = await AuthService().getToken();
+      final authToken = await _authService.getToken();
       if (authToken == null) {
         Get.snackbar(
           'Lỗi',
@@ -36,7 +37,7 @@ class JoinEventController extends GetxController {
         );
         return;
       }
-      final response = await _service.joinEvent(authToken, token);
+      final response = await _eventService.joinEvent(authToken, token);
       final data = response['data'] as Map<String, dynamic>? ?? {};
       final event = data['event'] as Map<String, dynamic>? ?? {};
       eventTitle.value = event['title'] as String? ?? '';
@@ -69,7 +70,7 @@ class JoinEventController extends GetxController {
     if (isClaiming.value) return;
     isClaiming.value = true;
     try {
-      final authToken = await AuthService().getToken();
+      final authToken = await _authService.getToken();
       if (authToken == null) {
         Get.snackbar(
           'Lỗi',
@@ -79,7 +80,7 @@ class JoinEventController extends GetxController {
         );
         return;
       }
-      await _service.claimParticipant(
+      await _eventService.claimParticipant(
           authToken, token, participantId.toString());
       Get.snackbar(
         'Thành công',

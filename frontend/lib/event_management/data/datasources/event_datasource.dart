@@ -42,6 +42,13 @@ class EventDatasource {
     throw EventApiException('Không tìm thấy sự kiện');
   }
 
+  Future<Map<String, dynamic>> getInviteLink({
+    required String token,
+    required String eventId,
+  }) {
+    return _service.getInviteLink(token, eventId);
+  }
+
   Future<EventModel> updateEvent({
     required String token,
     required String eventId,

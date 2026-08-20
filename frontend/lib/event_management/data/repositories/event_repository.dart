@@ -17,6 +17,13 @@ class EventRepository {
     return _datasource.getEvent(token: token, eventId: eventId);
   }
 
+  Future<Map<String, dynamic>> getInviteLink({
+    required String token,
+    required String eventId,
+  }) {
+    return _datasource.getInviteLink(token: token, eventId: eventId);
+  }
+
   Future<EventModel> updateEvent({
     required String token,
     required String eventId,

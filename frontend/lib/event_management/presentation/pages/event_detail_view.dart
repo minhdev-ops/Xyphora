@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../add_group_expense/presentation/bindings/add_group_expense_binding.dart';
 import '../../../add_group_expense/presentation/pages/add_group_expense_page.dart';
-import '../../../auth/data/auth_service.dart';
 import '../../data/event_service.dart';
 import '../../data/repositories/event_repository.dart';
+import '../bindings/event_binding.dart';
 import '../controllers/event_detail_controller.dart';
 import '../widgets/expenses_tab.dart';
 import '../widgets/balances_tab.dart';
@@ -17,42 +17,11 @@ class EventDetailView extends GetView<EventDetailController> {
 
   const EventDetailView({super.key, this.event});
 
-  Future<void> _showInviteSheet() async {
-    final eventId = event?.id;
-    if (eventId == null || eventId.startsWith('ev')) {
-      Get.snackbar(
-        'Mời người tham gia',
-        'Không thể tạo link mời cho dữ liệu mẫu',
-        backgroundColor: const Color(0xFF0A4226),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
-      return;
-    }
-
+  Future<void> _showInviteSheet(BuildContext context) async {
+    final controller = Get.find<EventDetailController>();
     try {
-      final token = await AuthService().getToken();
-      if (token == null) {
-        Get.snackbar(
-          'Lỗi',
-          'Vui lòng đăng nhập để tạo link mời',
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-        );
-        return;
-      }
-      final response = await EventService().getInviteLink(token, eventId);
-      final data = response['data'] as Map<String, dynamic>? ?? {};
-      final link = data['invite_link'] as String? ?? '';
-      if (link.isEmpty) {
-        Get.snackbar(
-          'Lỗi',
-          'Không lấy được link mời',
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-        );
-        return;
-      }
+      final link = await controller.getInviteLink();
+      if (!context.mounted) return;
       Get.bottomSheet(
         InviteSheet(link: link),
         isScrollControlled: true,
@@ -244,6 +213,7 @@ class EventDetailView extends GetView<EventDetailController> {
 
   @override
   Widget build(BuildContext context) {
+    EventBinding().dependencies();
     final EventDetailController controller;
     if (Get.isRegistered<EventDetailController>()) {
       controller = Get.find<EventDetailController>();
@@ -285,7 +255,7 @@ class EventDetailView extends GetView<EventDetailController> {
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.person_add_alt,
                     color: Color(0xFF0A4226), size: 20),
-                onPressed: _showInviteSheet,
+                onPressed: () => _showInviteSheet(context),
               ),
             ),
           ),
