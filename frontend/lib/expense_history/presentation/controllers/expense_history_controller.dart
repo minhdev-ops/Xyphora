@@ -27,16 +27,37 @@ class ExpenseHistoryController extends GetxController {
   final ScrollController scrollController = ScrollController();
 
   int _page = 1;
+  final memberSince = RxnString();
 
   List<Map<String, String>> get months {
     final now = DateTime.now();
-    return List.generate(12, (i) {
+    final list = <Map<String, String>>[];
+
+    // Chi tinh tu thang tao tai khoan tro di
+    String? since;
+    final sinceRaw = memberSince.value;
+    if (sinceRaw != null) {
+      final parts = sinceRaw.split('-');
+      if (parts.length == 2) {
+        final y = int.tryParse(parts[0]);
+        final m = int.tryParse(parts[1]);
+        if (y != null && m != null) {
+          since = '$y-${m.toString().padLeft(2, '0')}';
+        }
+      }
+    }
+
+    for (int i = 0; i < 12; i++) {
       final d = DateTime(now.year, now.month - i, 1);
-      return {
-        'value': '${d.year}-${d.month.toString().padLeft(2, '0')}',
+      final value = '${d.year}-${d.month.toString().padLeft(2, '0')}';
+      if (since != null && value.compareTo(since) < 0) break;
+      list.add({
+        'value': value,
         'label': 'Tháng ${d.month}/${d.year}',
-      };
-    });
+      });
+    }
+
+    return list;
   }
 
   DateTimeRange? get _selectedDateRange {
@@ -122,6 +143,13 @@ class ExpenseHistoryController extends GetxController {
       myTotalAmount.value = result.myTotalAmount;
       totalCount.value = result.total;
       hasMore.value = result.currentPage < result.lastPage;
+      if (result.memberSince != null) {
+        memberSince.value = result.memberSince;
+        final m = selectedMonth.value;
+        if (m != null && !months.any((e) => e['value'] == m)) {
+          selectedMonth.value = null;
+        }
+      }
     } catch (e) {
       final msg = e.toString().replaceFirst('Exception: ', '');
       if (append) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../config/category_icons.dart';
 import '../controllers/expense_history_controller.dart';
 
 class ExpenseHistoryFilterBar extends GetView<ExpenseHistoryController> {
@@ -238,35 +239,51 @@ class ExpenseHistoryFilterBar extends GetView<ExpenseHistoryController> {
                       final id = (category['category_id'] as num).toInt();
                       final isActive =
                           controller.selectedCategoryId.value == id;
+                      final categoryColor = categoryColorFor(
+                        category['color']?.toString(),
+                      );
                       return GestureDetector(
                         onTap: () => controller.selectCategory(
                           isActive ? null : id,
                         ),
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          curve: Curves.easeOut,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: isActive
-                                ? const Color(0xFF0C3D2B)
-                                : Colors.white,
+                            color: isActive ? categoryColor : Colors.white,
                             borderRadius: BorderRadius.circular(50),
                             border: isActive
                                 ? null
-                                : Border.all(
-                                    color: const Color(0xFFD0D0D0),
-                                  ),
+                                : Border.all(color: const Color(0xFFD0D0D0)),
                           ),
-                          child: Text(
-                            category['name']?.toString() ?? '',
-                            style: GoogleFonts.nunito(
-                              color: isActive
-                                  ? Colors.white
-                                  : const Color(0xFF555555),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                categoryIconFor(
+                                  category['icon']?.toString(),
+                                ),
+                                size: 15,
+                                color: isActive
+                                    ? Colors.white
+                                    : categoryColor,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                category['name']?.toString() ?? '',
+                                style: GoogleFonts.nunito(
+                                  color: isActive
+                                      ? Colors.white
+                                      : const Color(0xFF555555),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );

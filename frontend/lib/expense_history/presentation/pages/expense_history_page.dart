@@ -139,10 +139,7 @@ class _ExpenseListView extends StatelessWidget {
         rows.add(
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: ExpenseHistoryItemCard(
-              item: item,
-              formatCurrency: controller.formatCurrency,
-            ),
+            child: ExpenseHistoryItemCard(item: item),
           ),
         );
       }

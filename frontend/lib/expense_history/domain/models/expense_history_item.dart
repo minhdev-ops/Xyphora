@@ -84,6 +84,7 @@ class ExpensePageResult {
   final int lastPage;
   final double totalAmount;
   final double myTotalAmount;
+  final String? memberSince;
 
   const ExpensePageResult({
     required this.items,
@@ -93,6 +94,7 @@ class ExpensePageResult {
     required this.lastPage,
     required this.totalAmount,
     required this.myTotalAmount,
+    this.memberSince,
   });
 
   factory ExpensePageResult.fromJson(Map<String, dynamic> json) {
@@ -109,6 +111,7 @@ class ExpensePageResult {
       lastPage: (meta['last_page'] as num).toInt(),
       totalAmount: (summary['total_amount'] as num?)?.toDouble() ?? 0,
       myTotalAmount: (summary['my_total_amount'] as num?)?.toDouble() ?? 0,
+      memberSince: summary['member_since'] as String?,
     );
   }
 }

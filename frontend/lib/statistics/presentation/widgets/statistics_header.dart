@@ -72,25 +72,6 @@ class StatisticsHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4FAF6),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFF0C3D2B).withValues(alpha: 0.15),
-                ),
-              ),
-              child: Text(
-                "Tháng 7/2026",
-                style: GoogleFonts.nunito(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF0C3D2B),
-                ),
-              ),
-            ),
           ],
         ),
       ),
