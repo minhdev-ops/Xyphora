@@ -2,16 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../bindings/event_binding.dart';
-import '../controllers/add_event_controller.dart';
+import '../controllers/edit_event_controller.dart';
+import '../../domain/models/event_model.dart';
 
-class AddEventPage extends GetView<AddEventController> {
-  const AddEventPage({super.key});
+class EditEventPage extends StatefulWidget {
+  final EventModel event;
 
+  const EditEventPage({super.key, required this.event});
+
+  @override
+  State<EditEventPage> createState() => _EditEventPageState();
+}
+
+class _EditEventPageState extends State<EditEventPage> {
   static const Color _green = Color(0xFF0C3D2B);
+
+  late final EditEventController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    EventBinding().dependencies();
+    _controller = EditEventController(
+      Get.find(),
+      event: widget.event,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.onClose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    EventBinding().dependencies();
+    final controller = _controller;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6),
@@ -41,7 +67,7 @@ class AddEventPage extends GetView<AddEventController> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'Thêm sự kiện mới',
+                      'Chỉnh sửa sự kiện',
                       style: GoogleFonts.nunito(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
@@ -68,7 +94,7 @@ class AddEventPage extends GetView<AddEventController> {
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
-                          children: AddEventController.emojis.map((emoji) {
+                          children: controller.emojis.map((emoji) {
                             final isSelected =
                                 emoji == controller.selectedEmoji.value;
                             return Padding(
@@ -169,10 +195,10 @@ class AddEventPage extends GetView<AddEventController> {
                               name: 'Bạn',
                               isCreator: true,
                             ),
-...controller.participants.map(
-              (p) => _buildParticipantRow(
-                name: p.name,
-                isCreator: false,
+                            ...controller.participants.map(
+                              (p) => _buildParticipantRow(
+                                name: p.name,
+                                isCreator: false,
                                 onRemove: () =>
                                     controller.removeParticipant(p),
                               ),
@@ -194,9 +220,9 @@ class AddEventPage extends GetView<AddEventController> {
                     const SizedBox(height: 28),
                     Obx(
                       () => ElevatedButton(
-                        onPressed: controller.isCreating.value
+                        onPressed: controller.isSaving.value
                             ? null
-                            : controller.createEvent,
+                            : controller.save,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _green,
                           foregroundColor: Colors.white,
@@ -206,7 +232,7 @@ class AddEventPage extends GetView<AddEventController> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: controller.isCreating.value
+                        child: controller.isSaving.value
                             ? const SizedBox(
                                 width: 22,
                                 height: 22,
@@ -216,7 +242,7 @@ class AddEventPage extends GetView<AddEventController> {
                                 ),
                               )
                             : Text(
-                                'Tạo sự kiện',
+                                'Lưu thay đổi',
                                 style: GoogleFonts.nunito(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
@@ -338,7 +364,7 @@ class AddEventPage extends GetView<AddEventController> {
 
   Widget _buildAddParticipantRow() {
     return InkWell(
-      onTap: controller.startAddParticipant,
+      onTap: _controller.startAddParticipant,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -379,10 +405,10 @@ class AddEventPage extends GetView<AddEventController> {
         children: [
           Expanded(
             child: TextField(
-              controller: controller.participantController,
+              controller: _controller.participantController,
               autofocus: true,
               textInputAction: TextInputAction.done,
-              onSubmitted: (_) => controller.confirmAddParticipant(),
+              onSubmitted: (_) => _controller.confirmAddParticipant(),
               style: GoogleFonts.nunito(
                 color: _green,
                 fontSize: 15,
@@ -410,7 +436,7 @@ class AddEventPage extends GetView<AddEventController> {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: controller.confirmAddParticipant,
+            onTap: _controller.confirmAddParticipant,
             child: Container(
               width: 40,
               height: 40,
@@ -427,7 +453,7 @@ class AddEventPage extends GetView<AddEventController> {
           ),
           const SizedBox(width: 4),
           GestureDetector(
-            onTap: controller.cancelAddParticipant,
+            onTap: _controller.cancelAddParticipant,
             child: const Padding(
               padding: EdgeInsets.all(8),
               child: Icon(

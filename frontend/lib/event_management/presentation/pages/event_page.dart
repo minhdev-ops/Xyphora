@@ -14,27 +14,40 @@ import '../../../home_dashboard/presentation/widgets/custom_bottom_nav_bar.dart'
 class EventPage extends GetView<EventController> {
   const EventPage({super.key});
 
+  String _formatVND(double amount) {
+    final str = amount.abs().toStringAsFixed(0);
+    final buf = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
+      buf.write(str[i]);
+    }
+    return '${buf.toString()}đ';
+  }
+
   @override
   Widget build(BuildContext context) {
     EventBinding().dependencies();
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: const Color(0xFFF2F7F4),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('Sự kiện',
-            style: AppTextStyles.heading1),
+        title: const Text('Sự kiện',
+            style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0A4226))),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20),
             child: CircleAvatar(
-              backgroundColor: AppColors.cardBg,
+              backgroundColor: Colors.white,
               radius: 20,
               child: IconButton(
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.search,
-                    color: AppColors.primary, size: 20),
+                    color: Color(0xFF0A4226), size: 20),
                 onPressed: () {},
               ),
             ),
@@ -53,15 +66,15 @@ class EventPage extends GetView<EventController> {
                         Expanded(
                           child: SummaryCard(
                               label: 'Bạn được nhận',
-                              amount: '+${AppFormat.currency(controller.getTotalOwed())}',
-                              amountColor: AppColors.success),
+                              amount: '+${_formatVND(controller.getTotalOwed())}',
+                              amountColor: const Color(0xFF1B9B5A)),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: SummaryCard(
                               label: 'Bạn còn nợ',
-                              amount: '-${AppFormat.currency(controller.getTotalDebt())}',
-                              amountColor: AppColors.error),
+                              amount: '-${_formatVND(controller.getTotalDebt())}',
+                              amountColor: const Color(0xFFFF3B30)),
                         ),
                       ],
                     )),
@@ -91,7 +104,7 @@ class EventPage extends GetView<EventController> {
                     child: Padding(
                   padding: EdgeInsets.all(32),
                   child: CircularProgressIndicator(
-                      color: AppColors.primary),
+                      color: Color(0xFF0A4226)),
                 ));
               }
               return ListView(
@@ -100,10 +113,7 @@ class EventPage extends GetView<EventController> {
                     .map((e) => EventCard(
                         event: e,
                         balance: e.getUserBalance(controller.myUserId),
-                        onTap: () => Get.to(
-                          () => const EventDetailView(),
-                          arguments: {'event_id': 10},
-                        )))
+                        onTap: () => Get.to(() => EventDetailView(event: e))))
                     .toList(),
               );
             }),
@@ -111,7 +121,7 @@ class EventPage extends GetView<EventController> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
+        backgroundColor: const Color(0xFF0A4226),
         onPressed: () => Get.to(() => const AddEventPage()),
         child: const Icon(Icons.add, color: Colors.white),
       ),

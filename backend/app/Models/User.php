@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
@@ -51,28 +51,15 @@ class User extends Authenticatable
         ];
     }
 
-    public function events(): HasMany
+    public function participatingEvents(): HasManyThrough
     {
-        return $this->hasMany(Event::class, 'owner_id', 'id');
-    }
-
-    public function participants(): HasMany
-    {
-        return $this->hasMany(Participant::class, 'user_id', 'id');
-    }
-
-    public function photos(): HasMany
-    {
-        return $this->hasMany(Photo::class, 'uploaded_by', 'id');
-    }
-
-    public function notifications(): HasMany
-    {
-        return $this->hasMany(Notification::class, 'user_id', 'id');
-    }
-
-    public function refreshTokens(): HasMany
-    {
-        return $this->hasMany(RefreshToken::class, 'user_id', 'id');
+        return $this->hasManyThrough(
+            Event::class,
+            Participant::class,
+            'user_id',
+            'event_id',
+            'id',
+            'event_id'
+        );
     }
 }

@@ -1,162 +1,162 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import '../../../expense_history/data/repositories/expense_history_repository.dart';
-import '../../../expense_history/domain/models/expense_history_item.dart';
+import '../../../auth/data/auth_service.dart';
+import '../../data/event_service.dart';
+import '../../data/repositories/event_repository.dart';
 import '../../domain/models/event_detail_model.dart';
 import '../../domain/models/event_model.dart';
 import '../../domain/models/expense_model.dart';
+import 'event_controller.dart';
 
 class EventDetailController extends GetxController {
-  final ExpenseHistoryRepository _expenseRepository =
-      ExpenseHistoryRepository();
+  final EventRepository _repository;
+  final AuthService _authService = Get.find<AuthService>();
+  final EventModel? initialEvent;
+
+  EventDetailController(this._repository, {this.initialEvent});
 
   final RxInt currentTab = 0.obs;
+  final RxBool isLoading = false.obs;
+  final RxString myUserId = ''.obs;
+  final Rx<EventModel> event = EventDetailMock.event.obs;
 
-  final expenseGroups = <ExpenseGroup>[].obs;
-  final myTotalExpense = 0.0.obs;
-  final totalExpense = 0.0.obs;
-  final isLoadingExpenses = false.obs;
-  final hasExpensesError = false.obs;
-  final expensesErrorMessage = ''.obs;
+  bool get _isDummy => event.value.id.startsWith('ev');
 
-  final Map<int, String> _payerNames = {};
-  final Map<int, String?> _categoryIcons = {};
-  final List<ExpenseHistoryItem> _allItems = [];
-  int _page = 1;
-  bool _hasMore = true;
-  int? _eventId;
-
-  EventModel? get event => null;
-  List<BalanceItem> get balances => const [];
-  List<String> get photos => const [];
-
-  double get totalOwed => 0.0;
-  String get myUserId => '';
-
-  int? get eventId => _eventId;
-
-  static const List<String> _months = [
-    'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4', 'tháng 5', 'tháng 6',
-    'tháng 7', 'tháng 8', 'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12',
-  ];
-
-  @override
-  void onInit() {
-    super.onInit();
-    final args = Get.arguments;
-    final eventId = args is Map ? args['event_id'] : null;
-    if (eventId is int) {
-      _eventId = eventId;
-      loadExpenses();
-    } else {
-      expenseGroups.clear();
-      myTotalExpense.value = 0.0;
-      totalExpense.value = 0.0;
-    }
+  List<ExpenseGroup> get expenseGroups {
+    if (_isDummy) return EventDetailMock.expenseGroups;
+    return _buildExpenseGroups(event.value.expenses);
   }
 
-  Future<void> loadExpenses() async {
-    final eventId = _eventId;
-    if (eventId == null) return;
-
-    isLoadingExpenses.value = true;
-    hasExpensesError.value = false;
-    _allItems.clear();
-    _page = 1;
-    _hasMore = true;
-
-    try {
-      final result = await _expenseRepository.fetchExpenses(
-        eventId: eventId,
-        page: _page,
-        perPage: 50,
-      );
-      _allItems.addAll(result.items);
-      _hasMore = result.currentPage < result.lastPage;
-      _applyData(result.myTotalAmount, result.totalAmount);
-    } catch (e) {
-      hasExpensesError.value = true;
-      expensesErrorMessage.value = e.toString().replaceFirst('Exception: ', '');
-    } finally {
-      isLoadingExpenses.value = false;
-    }
+  List<BalanceItem> get balances {
+    if (_isDummy) return EventDetailMock.balances;
+    return _computeBalances(event.value);
   }
 
-  Future<void> loadMoreExpenses() async {
-    final eventId = _eventId;
-    if (eventId == null || isLoadingExpenses.value || !_hasMore) return;
-
-    _page++;
-    try {
-      final result = await _expenseRepository.fetchExpenses(
-        eventId: eventId,
-        page: _page,
-        perPage: 50,
-      );
-      _allItems.addAll(result.items);
-      _hasMore = result.currentPage < result.lastPage;
-      _applyData(result.myTotalAmount, result.totalAmount);
-    } catch (e) {
-      _page--;
-    }
+  List<String> get photos {
+    if (_isDummy) return EventDetailMock.photos;
+    return const [];
   }
 
-  void _applyData(double myTotal, double total) {
-    _payerNames.clear();
-    _categoryIcons.clear();
-
-    final byDate = <DateTime, List<ExpenseModel>>{};
-    for (final item in _allItems) {
-      final date = DateTime.tryParse(item.expenseDate ?? '');
-      if (date == null) continue;
-      if (item.payerParticipantId != null) {
-        _payerNames[item.payerParticipantId!] = item.payerName ?? 'Ai đó';
+  double get myTotalExpense {
+    if (_isDummy) return EventDetailMock.myTotalExpense;
+    double total = 0;
+    for (final expense in event.value.expenses) {
+      for (final split in expense.splits) {
+        final p = event.value.participants
+            .firstWhereOrNull((p) => p.id == split.participantId);
+        if (p != null && p.userId == myUserId.value) {
+          total += split.amount;
+        }
       }
-      _categoryIcons[item.expenseId] = item.categoryIcon;
-
-      byDate.putIfAbsent(date, () => []).add(ExpenseModel(
-            id: '${item.expenseId}',
-            eventId: '${_eventId ?? item.eventId}',
-            title: item.title,
-            amount: item.amount,
-            dayPaid: date,
-            payerId: '${item.payerParticipantId ?? 0}',
-            splits: const [],
-          ));
     }
-
-    final groups = byDate.entries
-        .map((e) => ExpenseGroup(
-              date: e.key,
-              formattedDate: _formatGroupDate(e.key),
-              expenses: e.value,
-            ))
-        .toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-
-    expenseGroups.assignAll(groups);
-    myTotalExpense.value = myTotal;
-    totalExpense.value = total;
+    return total;
   }
 
-  String _formatGroupDate(DateTime date) {
-    return '${date.day} ${_months[date.month - 1]}, ${date.year}';
+  double get totalExpense {
+    if (_isDummy) return EventDetailMock.totalExpense;
+    return event.value.expenses.fold(0, (sum, e) => sum + e.amount);
+  }
+
+  double get totalOwed {
+    if (_isDummy) return EventDetailMock.totalOwed;
+    return balances
+        .where((b) => b.amount > 0)
+        .fold(0, (sum, b) => sum + b.amount);
   }
 
   String payerName(String payerId) {
-    final id = int.tryParse(payerId);
-    if (id != null && _payerNames.containsKey(id)) {
-      return _payerNames[id] ?? 'Unknown';
-    }
-    final p = event?.participants.firstWhereOrNull((p) => p.userId == payerId);
-    return p?.user?.name ?? 'Ai đó';
-  }
-
-  String? categoryIconFor(String expenseId) {
-    final id = int.tryParse(expenseId);
-    return id != null ? _categoryIcons[id] : null;
+    final p = event.value.participants.firstWhereOrNull((p) => p.userId == payerId);
+    if (p == null) return 'Unknown';
+    final name = p.user?.name ?? p.displayName;
+    return name.isNotEmpty ? name : 'Unknown';
   }
 
   void switchTab(int index) {
     currentTab.value = index;
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    final initial = initialEvent;
+    if (initial != null) {
+      event.value = initial;
+      loadEvent(initial);
+    }
+  }
+
+  Future<void> loadEvent(EventModel initialEvent) async {
+    isLoading.value = true;
+    event.value = initialEvent;
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user != null) myUserId.value = user.id;
+      final token = await _authService.getToken();
+      if (token == null || initialEvent.id.startsWith('ev')) return;
+      final detail = await _repository.getEvent(token: token, eventId: initialEvent.id);
+      event.value = detail;
+    } catch (e) {
+      debugPrint('EventDetailController.loadEvent error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<String> getInviteLink() async {
+    final current = event.value;
+    if (current.id.startsWith('ev')) {
+      throw EventApiException('Không thể tạo link mời cho dữ liệu mẫu');
+    }
+    final token = await _authService.getToken();
+    if (token == null) {
+      throw EventApiException('Vui lòng đăng nhập để tạo link mời');
+    }
+    final response = await _repository.getInviteLink(
+        token: token, eventId: current.id);
+    final data = response['data'] as Map<String, dynamic>? ?? {};
+    final link = data['invite_link'] as String? ?? '';
+    if (link.isEmpty) {
+      throw EventApiException('Không lấy được link mời');
+    }
+    return link;
+  }
+
+  Future<void> deleteEvent() async {
+    final current = event.value;
+    final token = await _authService.getToken();
+    if (token == null || current.id.startsWith('ev')) return;
+    await _repository.deleteEvent(token: token, eventId: current.id);
+    Get.find<EventController>().removeEvent(current.id);
+  }
+
+  List<ExpenseGroup> _buildExpenseGroups(List<ExpenseModel> expenses) {
+    final map = <DateTime, List<ExpenseModel>>{};
+    for (final e in expenses) {
+      final day = DateTime(e.dayPaid.year, e.dayPaid.month, e.dayPaid.day);
+      map.putIfAbsent(day, () => []);
+      map[day]!.add(e);
+    }
+    final sortedDays = map.keys.toList()..sort((a, b) => b.compareTo(a));
+    return sortedDays.map((day) => ExpenseGroup(
+          date: day,
+          formattedDate: EventDetailMock.formatDate(day),
+          expenses: map[day]!,
+        )).toList();
+  }
+
+  List<BalanceItem> _computeBalances(EventModel e) {
+    final net = <String, double>{};
+    for (final expense in e.expenses) {
+      net[expense.payerId] = (net[expense.payerId] ?? 0) + expense.amount;
+      for (final split in expense.splits) {
+        net[split.participantId] =
+            (net[split.participantId] ?? 0) - split.amount;
+      }
+    }
+    return net.entries.map((entry) {
+      final p = e.participants.firstWhereOrNull((p) => p.id == entry.key);
+      final name = p?.user?.name ?? p?.displayName ?? 'Thành viên';
+      return BalanceItem(name: name, amount: entry.value);
+    }).toList();
   }
 }

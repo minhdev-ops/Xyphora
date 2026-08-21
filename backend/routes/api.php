@@ -44,4 +44,14 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::post('/events/join', [EventController::class, 'join']);
+    Route::post('/events/join/claim', [EventController::class, 'claim']);
+    Route::get('/events/{event}/invite', [EventController::class, 'invite']);
+
+    Route::post('/events/create', [EventController::class, 'store']);
+    Route::put('/events/{event}/update', [EventController::class, 'update']);
+    Route::delete('/events/{event}/delete', [EventController::class, 'destroy']);
+
+    Route::resource('events', EventController::class)->except(['create', 'edit']);
 });

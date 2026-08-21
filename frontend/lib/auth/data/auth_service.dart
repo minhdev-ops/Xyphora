@@ -3,11 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../config/api_config.dart';
+import '../domain/models/user.dart';
 import '../../config/token_storage.dart';
 
 
 class AuthService {
-  static final String baseUrl = ApiConfig.baseUrl;
+  static String get baseUrl => ApiConfig.baseUrl;
+  static final _storage = FlutterSecureStorage();
 
   Future<Map<String, dynamic>> register(String name, String email, String password) async {
     try {
@@ -87,6 +89,32 @@ class AuthService {
 
   Future<String?> getToken() async {
     return await TokenStorage.read();
+  }
+
+  Future<UserModel?> getCurrentUser() async {
+    try {
+      final token = await getToken();
+      if (token == null) return null;
+      final response = await http.get(
+        Uri.parse('$baseUrl/user'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode != 200) return null;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return UserModel(
+        id: data['id'].toString(),
+        name: data['name'] as String? ?? '',
+        email: data['email'] as String? ?? '',
+        avatarUrl: data['avatar'] as String?,
+      );
+    } catch (e) {
+      debugPrint('getCurrentUser error: $e');
+      return null;
+    }
   }
 
   Future<void> logout() async {

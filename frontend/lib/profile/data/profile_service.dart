@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import '../../config/token_storage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../config/api_config.dart';
 
 class ProfileService {
-  static final String baseUrl = ApiConfig.baseUrl;
-
+  static String get baseUrl => ApiConfig.baseUrl;
+  static final _storage = FlutterSecureStorage();
 
   Future<String?> _getToken() async {
-    return await TokenStorage.read();
+    return await _storage.read(key: 'auth_token');
   }
 
   Future<Map<String, dynamic>> getProfile() async {
@@ -52,7 +52,7 @@ class ProfileService {
             'Authorization': 'Bearer $token',
           },
         );
-        await TokenStorage.delete();
+        await _storage.delete(key: 'auth_token');
       }
     } catch (e) {
       debugPrint('Logout error: $e');

@@ -12,6 +12,25 @@ class EventCard extends StatelessWidget {
 
   const EventCard({super.key, required this.event, required this.balance, this.onTap});
 
+  String _formatVND(double amount) {
+    final str = amount.abs().toStringAsFixed(0);
+    final buf = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
+      buf.write(str[i]);
+    }
+    return '${buf.toString()}đ';
+  }
+
+  String _formatDate(DateTime dt) {
+    const months = [
+      'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4',
+      'tháng 5', 'tháng 6', 'tháng 7', 'tháng 8',
+      'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12',
+    ];
+    return '${dt.day} ${months[dt.month - 1]}, ${dt.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final subtitle =
