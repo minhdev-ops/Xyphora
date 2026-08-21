@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import '../../../config/app_theme.dart';
 import '../pages/home_dashboard_page.dart';
 import '../../../statistics/presentation/pages/statistics_page.dart';
 import '../../../event_management/presentation/pages/event_page.dart';
@@ -85,7 +85,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
                 index: 0,
               ),
               _buildNavItem(
-                icon: Icons.bar_chart_rounded,
+                icon: _selectedIndex == 1 ? Icons.bar_chart_rounded : Icons.bar_chart_outlined,
                 label: 'Thống kê',
                 index: 1,
               ),
@@ -111,8 +111,6 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     required int index,
   }) {
     final isSelected = _selectedIndex == index;
-    final activeColor = const Color(0xFF0C3D2B); // Premium Dark Green
-    final inactiveColor = const Color(0xFF8A8A8A); // Slate Grey
 
     return GestureDetector(
       onTap: () => _onTap(index),
@@ -125,17 +123,13 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           children: [
             Icon(
               icon,
-              color: isSelected ? activeColor : inactiveColor,
+              color: isSelected ? AppColors.primary : AppColors.textTertiary,
               size: 24,
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: GoogleFonts.nunito(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? activeColor : inactiveColor,
-              ),
+              style: isSelected ? AppTextStyles.navActive : AppTextStyles.navInactive,
             ),
           ],
         ),

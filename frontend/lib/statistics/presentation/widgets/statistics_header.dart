@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import '../../../config/app_theme.dart';
 import '../../../expense_history/presentation/bindings/expense_history_binding.dart';
 import '../../../expense_history/presentation/pages/expense_history_page.dart';
 import '../../../home_dashboard/presentation/pages/home_dashboard_page.dart';
@@ -27,24 +27,20 @@ class StatisticsHeader extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF2F7F2),
+                  color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.arrow_back_ios_new,
                   size: 20,
-                  color: Color(0xFF1D1D1D),
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Text(
               "Thống kê",
-              style: GoogleFonts.inter(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1D1D1D),
-              ),
+              style: AppTextStyles.amountMedium,
             ),
             const Spacer(),
             GestureDetector(
@@ -55,20 +51,18 @@ class StatisticsHeader extends StatelessWidget {
               child: Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF4FAF6),
+                decoration: BoxDecoration(
+                  color: AppColors.scaffoldBg,
                   shape: BoxShape.circle,
-                  border: Border.fromBorderSide(
-                    BorderSide(
-                      color: Color(0xFF0C3D2B),
-                      width: 1.2,
-                    ),
+                  border: Border.all(
+                    color: AppColors.primary,
+                    width: 1.2,
                   ),
                 ),
                 child: const Icon(
                   Icons.receipt_long_rounded,
                   size: 20,
-                  color: Color(0xFF0C3D2B),
+                  color: AppColors.primary,
                 ),
               ),
             ),

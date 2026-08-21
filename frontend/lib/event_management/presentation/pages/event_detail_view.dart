@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../config/app_theme.dart';
+import '../../../config/app_format.dart';
 import '../../../add_expense/presentation/bindings/add_expense_binding.dart';
 import '../../../add_expense/presentation/pages/add_expense_page.dart';
 import '../controllers/event_detail_controller.dart';
@@ -16,19 +19,19 @@ class EventDetailView extends GetView<EventDetailController> {
     Get.put(EventDetailController());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F4),
+      backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: CircleAvatar(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.cardBg,
             radius: 20,
             child: IconButton(
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.arrow_back,
-                  color: Color(0xFF0A4226), size: 20),
+                  color: AppColors.primary, size: 20),
               onPressed: () => Get.back(),
             ),
           ),
@@ -38,12 +41,12 @@ class EventDetailView extends GetView<EventDetailController> {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: CircleAvatar(
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.cardBg,
               radius: 20,
               child: IconButton(
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.person_add_alt,
-                    color: Color(0xFF0A4226), size: 20),
+                    color: AppColors.primary, size: 20),
                 onPressed: () {},
               ),
             ),
@@ -51,12 +54,12 @@ class EventDetailView extends GetView<EventDetailController> {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: CircleAvatar(
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.cardBg,
               radius: 20,
               child: IconButton(
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.more_vert,
-                    color: Color(0xFF0A4226), size: 20),
+                    color: AppColors.primary, size: 20),
                 onPressed: () {},
               ),
             ),
@@ -91,13 +94,13 @@ class EventDetailView extends GetView<EventDetailController> {
           mainAxisSize: MainAxisSize.min,
           children: [
             FloatingActionButton(
-              backgroundColor: const Color(0xFF0A4226),
+              backgroundColor: AppColors.primary,
               onPressed: () {
                 if (isPhotoTab) {
                   Get.snackbar(
                     'Thêm ảnh',
-                    'Chức năng thêm ảnh đang phát triển',
-                    backgroundColor: const Color(0xFF0A4226),
+                    'Tính năng thêm ảnh đang phát triển',
+                    backgroundColor: AppColors.primary,
                     colorText: Colors.white,
                     duration: const Duration(seconds: 2),
                   );
@@ -125,11 +128,7 @@ class EventDetailView extends GetView<EventDetailController> {
             const SizedBox(height: 4),
             Text(
               isPhotoTab ? 'Thêm ảnh' : 'Thêm chi tiêu',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF0A4226),
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTextStyles.caption,
             ),
           ],
         );
@@ -146,13 +145,8 @@ class _EventInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const months = [
-      'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4',
-      'tháng 5', 'tháng 6', 'tháng 7', 'tháng 8',
-      'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12',
-    ];
     final dateStr =
-        '${event.participants.length} thành viên • ${months[event.createdAt.month - 1]}, ${event.createdAt.year}';
+        '${event.participants.length} thành viên, ${AppFormat.monthYear(event.createdAt)}';
 
     return Column(
       children: [
@@ -160,19 +154,12 @@ class _EventInfo extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           event.title,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF0A4226),
-          ),
+          style: AppTextStyles.heading2,
         ),
         const SizedBox(height: 4),
         Text(
           dateStr,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Color(0xFF9E9E9E),
-          ),
+          style: AppTextStyles.caption,
         ),
       ],
     );
@@ -197,9 +184,9 @@ class _CustomTabBar extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F9F8),
-          borderRadius: BorderRadius.circular(50),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
+          color: AppColors.inputBg,
+          borderRadius: AppRadius.rPill,
+          border: Border.all(color: AppColors.borderLight),
         ),
         child: Obx(() => Row(
               children: List.generate(labels.length, (i) {
@@ -212,17 +199,17 @@ class _CustomTabBar extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: isActive
-                            ? const Color(0xFF0A4226)
+                            ? AppColors.primary
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(50),
+                        borderRadius: AppRadius.rPill,
                       ),
                       child: Text(
                         labels[i],
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: GoogleFonts.nunito(
                           color: isActive
                               ? Colors.white
-                              : const Color(0xFF0A4226),
+                              : AppColors.primary,
                           fontSize: 14,
                           fontWeight:
                               isActive ? FontWeight.bold : FontWeight.w500,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../config/app_theme.dart';
+import '../../../config/app_format.dart';
 import '../controllers/expense_history_controller.dart';
 import '../widgets/expense_history_filter_bar.dart';
 import '../widgets/expense_history_item_card.dart';
@@ -9,15 +11,10 @@ import '../widgets/expense_history_summary.dart';
 class ExpenseHistoryPage extends GetView<ExpenseHistoryController> {
   const ExpenseHistoryPage({super.key});
 
-  static const List<String> _months = [
-    'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4', 'tháng 5', 'tháng 6',
-    'tháng 7', 'tháng 8', 'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12',
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F4),
+      backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -26,13 +23,13 @@ class ExpenseHistoryPage extends GetView<ExpenseHistoryController> {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.cardBg,
                     radius: 20,
                     child: IconButton(
                       padding: EdgeInsets.zero,
                       icon: const Icon(
                         Icons.arrow_back,
-                        color: Color(0xFF0A4226),
+                        color: AppColors.primary,
                         size: 20,
                       ),
                       onPressed: () => Get.back(),
@@ -41,11 +38,7 @@ class ExpenseHistoryPage extends GetView<ExpenseHistoryController> {
                   const SizedBox(width: 12),
                   Text(
                     'Lịch sử chi tiêu',
-                    style: GoogleFonts.nunito(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0A4226),
-                    ),
+                    style: AppTextStyles.titleLarge,
                   ),
                 ],
               ),
@@ -65,7 +58,7 @@ class ExpenseHistoryPage extends GetView<ExpenseHistoryController> {
                   if (controller.isLoading.value) {
                     return const Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF0C3D2B),
+                        color: AppColors.primary,
                       ),
                     );
                   }
@@ -82,7 +75,7 @@ class ExpenseHistoryPage extends GetView<ExpenseHistoryController> {
                   }
 
                   return RefreshIndicator(
-                    color: const Color(0xFF0C3D2B),
+                    color: AppColors.primary,
                     onRefresh: controller.refresh,
                     child: _ExpenseListView(controller: controller),
                   );
@@ -104,11 +97,12 @@ class _ExpenseListView extends StatelessWidget {
   String _formatDateHeader(String? date) {
     if (date == null) return 'Không rõ ngày';
     final parts = date.split('-');
+    if (parts.length != 3) return date;
+    final day = int.tryParse(parts[2]);
     final month = int.tryParse(parts[1]);
     final year = int.tryParse(parts[0]);
-    final day = int.tryParse(parts[2]);
-    if (month == null || year == null || day == null) return date;
-    return '$day ${ExpenseHistoryPage._months[month - 1]}, $year';
+    if (day == null || month == null || year == null) return date;
+    return AppFormat.date(DateTime(year, month, day));
   }
 
   @override
@@ -130,7 +124,7 @@ class _ExpenseListView extends StatelessWidget {
             style: GoogleFonts.nunito(
               fontSize: 13,
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF0A4226),
+              color: AppColors.primary,
             ),
           ),
         ),
@@ -150,13 +144,13 @@ class _ExpenseListView extends StatelessWidget {
             ? const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Center(
-                  child: SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF0C3D2B),
-                    ),
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
                   ),
                 ),
               )
@@ -184,16 +178,12 @@ class _EmptyState extends StatelessWidget {
           const Icon(
             Icons.receipt_long_rounded,
             size: 56,
-            color: Color(0xFFB8CFC0),
+            color: AppColors.textTertiary,
           ),
           const SizedBox(height: 12),
           Text(
             'Chưa có chi tiêu nào',
-            style: GoogleFonts.nunito(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF5A7563),
-            ),
+            style: AppTextStyles.titleMedium,
           ),
         ],
       ),
@@ -216,7 +206,7 @@ class _ErrorState extends StatelessWidget {
           const Icon(
             Icons.cloud_off_rounded,
             size: 48,
-            color: Color(0xFFB8CFC0),
+            color: AppColors.textTertiary,
           ),
           const SizedBox(height: 12),
           Padding(
@@ -224,18 +214,14 @@ class _ErrorState extends StatelessWidget {
             child: Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.nunito(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF5A7563),
-              ),
+              style: AppTextStyles.bodySecondary,
             ),
           ),
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: onRetry,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0C3D2B),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(

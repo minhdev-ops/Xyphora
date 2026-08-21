@@ -1,7 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../domain/models/faqItem_model.dart';
+import '../../domain/models/faq_item_model.dart';
 
 class FaqItemWidget extends StatefulWidget {
   final FAQItem faq;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../config/app_theme.dart';
+import '../../../config/app_format.dart';
 import '../../../config/category_icons.dart';
 import '../../../expense_detail/presentation/bindings/expense_detail_binding.dart';
 import '../../../expense_detail/presentation/pages/expense_detail_page.dart';
@@ -13,25 +15,6 @@ class ExpenseHistoryItemCard extends StatelessWidget {
     super.key,
     required this.item,
   });
-
-  String _formatAmount(double amount, String currency) {
-    final digits = amount.round().toString();
-    final buffer = StringBuffer();
-    for (int i = 0; i < digits.length; i++) {
-      buffer.write(digits[i]);
-      final remaining = digits.length - i - 1;
-      if (remaining > 0 && remaining % 3 == 0) {
-        buffer.write('.');
-      }
-    }
-    final symbol = switch (currency) {
-      'USD' => '\$',
-      'EUR' => '€',
-      'JPY' => '¥',
-      _ => 'đ',
-    };
-    return '${buffer.toString()}$symbol';
-  }
 
   String _splitMethodLabel(String method) {
     return switch (method) {
@@ -63,15 +46,9 @@ class ExpenseHistoryItemCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: AppColors.cardBg,
+          borderRadius: AppRadius.rLg,
+          boxShadow: AppShadow.card,
         ),
         child: Row(
           children: [
@@ -80,7 +57,7 @@ class ExpenseHistoryItemCard extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadius.rSm,
               ),
               alignment: Alignment.center,
               child: Icon(
@@ -101,7 +78,7 @@ class ExpenseHistoryItemCard extends StatelessWidget {
                     style: GoogleFonts.nunito(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1A4331),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -109,11 +86,7 @@ class ExpenseHistoryItemCard extends StatelessWidget {
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.nunito(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF8A8A8A),
-                    ),
+                    style: AppTextStyles.caption,
                   ),
                   if (!isPersonal && item.splitCount > 0) ...[
                     const SizedBox(height: 2),
@@ -138,11 +111,11 @@ class ExpenseHistoryItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _formatAmount(item.amount, item.currency),
+                  AppFormat.currency(item.amount, currencyCode: item.currency),
                   style: GoogleFonts.nunito(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1A4331),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -174,7 +147,7 @@ class _StatusBadge extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFE8D9),
+          color: AppColors.warningBg,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -182,7 +155,7 @@ class _StatusBadge extends StatelessWidget {
           style: GoogleFonts.nunito(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFFE8590C),
+            color: AppColors.warning,
           ),
         ),
       );
@@ -191,7 +164,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFE2F0E5),
+        color: AppColors.primaryLight,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -199,7 +172,7 @@ class _StatusBadge extends StatelessWidget {
         style: GoogleFonts.nunito(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF0C3D2B),
+          color: AppColors.primary,
         ),
       ),
     );

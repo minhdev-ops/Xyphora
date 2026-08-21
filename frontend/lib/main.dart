@@ -1,21 +1,14 @@
-// import 'package:flutter/foundation.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:device_preview/device_preview.dart';
-import 'package:flutter/gestures.dart';
 import 'package:xyphora_frontend/add_expense/presentation/controllers/add_expense_controller.dart';
 import 'package:xyphora_frontend/home_dashboard/presentation/pages/home_dashboard_page.dart';
 import 'package:xyphora_frontend/statistics/presentation/controllers/statistics_controller.dart';
-import 'package:xyphora_frontend/statistics/presentation/pages/statistics_page.dart';
-import 'auth/presentation/pages/home_page.dart';
 import 'auth/presentation/controllers/auth_controller.dart';
-import 'event_management/presentation/pages/event_page.dart';
 import 'home_dashboard/presentation/controllers/dashboard_controller.dart';
 import 'profile/presentation/controllers/profile_controller.dart';
 import 'notification/presentation/controllers/notification_controller.dart';
-import 'setting/presentation/bindings/settings_binding.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

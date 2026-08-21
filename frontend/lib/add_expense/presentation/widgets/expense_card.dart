@@ -15,37 +15,39 @@ class ExpenseCard extends StatelessWidget {
     required this.chipKey,
   });
 
-  static const double _chipHeight = 44;
+  static const double _chipHeight = 48;
+  static const Color _fieldBgColor = Color(0xFFE8F3EC);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Currency & Amount Row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               GestureDetector(
                 onTap: controller.toggleCurrencyPicker,
                 child: Container(
                   key: chipKey,
                   height: _chipHeight,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2F0E5),
+                    color: _fieldBgColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -55,7 +57,7 @@ class ExpenseCard extends StatelessWidget {
                         () => Text(
                           controller.selectedCurrency.value,
                           style: GoogleFonts.nunito(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             fontSize: 16,
                             color: const Color(0xFF0C3D2B),
                           ),
@@ -78,15 +80,15 @@ class ExpenseCard extends StatelessWidget {
                   child: Obx(
                     () => Container(
                       height: _chipHeight,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE2F0E5),
+                        color: _fieldBgColor,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           width: 1.5,
                           color: controller.isKeypadVisible.value
-                              ? const Color(0xFF0C3D2B).withValues(alpha: 0.35)
-                              : const Color(0xFF0C3D2B).withValues(alpha: 0.06),
+                              ? const Color(0xFF0C3D2B).withValues(alpha: 0.4)
+                              : Colors.transparent,
                         ),
                       ),
                       child: Row(
@@ -101,7 +103,7 @@ class ExpenseCard extends StatelessWidget {
                                       ? '0'
                                       : controller.expression.value,
                                   style: GoogleFonts.nunito(
-                                    fontSize: 22,
+                                    fontSize: 24,
                                     fontWeight: FontWeight.w800,
                                     color: controller.expression.value.isEmpty
                                         ? const Color(0xFF5A7563)
@@ -119,8 +121,10 @@ class ExpenseCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          // Su kien selector
+
+          const SizedBox(height: 18),
+
+          // 1. Sự kiện
           Text(
             'Sự kiện',
             style: GoogleFonts.nunito(
@@ -129,11 +133,11 @@ class ExpenseCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Obx(() {
             if (controller.isLoadingEvents.value) {
               return const SizedBox(
-                height: 44,
+                height: 48,
                 child: Center(
                   child: SizedBox(
                     width: 20,
@@ -147,72 +151,77 @@ class ExpenseCard extends StatelessWidget {
               );
             }
             return Container(
-              height: 44,
+              height: 48,
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFE2F0E5),
+                color: _fieldBgColor,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: DropdownButton<int>(
-                value: controller.events.any(
-                  (e) =>
-                      (e['event_id'] as num).toInt() ==
-                      controller.selectedEventId.value,
-                )
-                    ? controller.selectedEventId.value
-                    : -1,
-                isExpanded: true,
-                isDense: true,
-                icon: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF0C3D2B),
-                ),
-                items: [
-                  DropdownMenuItem<int>(
-                    value: -1,
-                    child: Text(
-                      'Không có sự kiện',
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.nunito(
-                        color: const Color(0xFF5A7563),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.event_note_rounded,
+                    size: 20,
+                    color: Color(0xFF0C3D2B),
                   ),
-                  ...controller.events.map(
-                    (event) => DropdownMenuItem<int>(
-                      value: (event['event_id'] as num).toInt(),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.event_rounded,
-                            size: 18,
-                            color: Color(0xFF0C3D2B),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: controller.events.any(
+                          (e) =>
+                              (e['event_id'] as num).toInt() ==
+                              controller.selectedEventId.value,
+                        )
+                            ? controller.selectedEventId.value
+                            : -1,
+                        isExpanded: true,
+                        isDense: true,
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Color(0xFF0C3D2B),
+                          size: 22,
+                        ),
+                        items: [
+                          DropdownMenuItem<int>(
+                            value: -1,
                             child: Text(
-                              event['title']?.toString() ?? '',
+                              'Không có sự kiện',
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.nunito(
-                                color: const Color(0xFF0C3D2B),
+                                color: const Color(0xFF5A7563),
                                 fontSize: 14,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          ...controller.events.map(
+                            (event) => DropdownMenuItem<int>(
+                              value: (event['event_id'] as num).toInt(),
+                              child: Text(
+                                event['title']?.toString() ?? '',
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.nunito(
+                                  color: const Color(0xFF0C3D2B),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ),
                         ],
+                        onChanged: controller.selectEvent,
                       ),
                     ),
                   ),
                 ],
-                onChanged: controller.selectEvent,
               ),
             );
           }),
+
           const SizedBox(height: 16),
-          // Ngay chi tieu
+
+          // 2. Ngày chi tiêu
           Text(
             'Ngày',
             style: GoogleFonts.nunito(
@@ -221,7 +230,7 @@ class ExpenseCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Obx(() {
             final date = controller.selectedDate.value;
             return GestureDetector(
@@ -249,29 +258,30 @@ class ExpenseCard extends StatelessWidget {
                 }
               },
               child: Container(
-                height: 44,
+                height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2F0E5),
+                  color: _fieldBgColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
                     const Icon(
                       Icons.calendar_today_rounded,
-                      size: 18,
+                      size: 19,
                       color: Color(0xFF0C3D2B),
                     ),
                     const SizedBox(width: 10),
-                    Text(
-                      '${date.day} tháng ${date.month}, ${date.year}',
-                      style: GoogleFonts.nunito(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0C3D2B),
+                    Expanded(
+                      child: Text(
+                        '${date.day} tháng ${date.month}, ${date.year}',
+                        style: GoogleFonts.nunito(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0C3D2B),
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     const Icon(
                       Icons.keyboard_arrow_down_rounded,
                       size: 22,
@@ -282,8 +292,10 @@ class ExpenseCard extends StatelessWidget {
               ),
             );
           }),
+
           const SizedBox(height: 16),
-          // Danh muc selector
+
+          // 3. Danh mục
           Text(
             'Danh mục',
             style: GoogleFonts.nunito(
@@ -292,11 +304,11 @@ class ExpenseCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Obx(() {
             if (controller.isLoadingCategories.value) {
               return const SizedBox(
-                height: 44,
+                height: 48,
                 child: Center(
                   child: SizedBox(
                     width: 20,
@@ -309,98 +321,145 @@ class ExpenseCard extends StatelessWidget {
                 ),
               );
             }
+
+            final selectedCat = controller.categories.firstWhereOrNull(
+              (c) =>
+                  (c['category_id'] as num).toInt() ==
+                  controller.selectedCategoryId.value,
+            );
+
             return Container(
-              height: 44,
+              height: 48,
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFE2F0E5),
+                color: _fieldBgColor,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: DropdownButton<int>(
-                value: controller.categories.any(
-                  (category) =>
-                      (category['category_id'] as num).toInt() ==
-                      controller.selectedCategoryId.value,
-                )
-                    ? controller.selectedCategoryId.value
-                    : null,
-                isExpanded: true,
-                isDense: true,
-                hint: Text(
-                  'Chọn danh mục',
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.nunito(
-                    color: const Color(0xFF5A7563),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+              child: Row(
+                children: [
+                  Icon(
+                    selectedCat != null
+                        ? categoryIconFor(selectedCat['icon']?.toString())
+                        : Icons.category_outlined,
+                    size: 20,
+                    color: selectedCat != null
+                        ? categoryColorFor(selectedCat['color']?.toString())
+                        : const Color(0xFF0C3D2B),
                   ),
-                ),
-                icon: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF0C3D2B),
-                ),
-                items: [
-                  ...controller.categories
-                      .map(
-                        (category) => DropdownMenuItem<int>(
-                          value: (category['category_id'] as num).toInt(),
-                          child: Row(
-                            children: [
-                              Icon(
-                                categoryIconFor(
-                                  category['icon']?.toString(),
-                                ),
-                                size: 18,
-                                color: categoryColorFor(
-                                  category['color']?.toString(),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  category['name']?.toString() ?? '',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.nunito(
-                                    color: const Color(0xFF0C3D2B),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: selectedCat != null
+                            ? controller.selectedCategoryId.value
+                            : null,
+                        isExpanded: true,
+                        isDense: true,
+                        hint: Text(
+                          'Chọn danh mục',
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.nunito(
+                            color: const Color(0xFF5A7563),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Color(0xFF0C3D2B),
+                          size: 22,
+                        ),
+                        selectedItemBuilder: (context) {
+                          return controller.categories.map((category) {
+                            return Container(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                category['name']?.toString() ?? '',
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.nunito(
+                                  color: const Color(0xFF0C3D2B),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            );
+                          }).toList();
+                        },
+                        items: [
+                          ...controller.categories.map(
+                            (category) => DropdownMenuItem<int>(
+                              value: (category['category_id'] as num).toInt(),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    categoryIconFor(
+                                      category['icon']?.toString(),
+                                    ),
+                                    size: 18,
+                                    color: categoryColorFor(
+                                      category['color']?.toString(),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      category['name']?.toString() ?? '',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.nunito(
+                                        color: const Color(0xFF0C3D2B),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: controller.selectCategory,
                       ),
+                    ),
+                  ),
                 ],
-                onChanged: controller.selectCategory,
               ),
             );
           }),
+
           const SizedBox(height: 16),
+
+          // 4. Mô tả khoản chi
           TextField(
             controller: controller.descriptionController,
             onTap: controller.hideKeypad,
             onChanged: (value) => controller.updateDescription(value),
             minLines: 1,
-            maxLines: 5,
+            maxLines: 4,
             maxLength: 500,
             decoration: InputDecoration(
               hintText: "Mô tả khoản chi tiêu...",
               hintStyle: GoogleFonts.nunito(
                 color: const Color(0xFF5A7563),
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
               filled: true,
-              fillColor: const Color(0xFFE2F0E5),
+              fillColor: _fieldBgColor,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 18,
+                horizontal: 16,
+                vertical: 14,
               ),
               counterText: '',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: const Color(0xFF0C3D2B).withValues(alpha: 0.35),
+                  width: 1.5,
+                ),
               ),
             ),
           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../config/app_theme.dart';
+import '../../../config/app_format.dart';
 import '../../../config/category_icons.dart';
 import '../../../expense_detail/presentation/bindings/expense_detail_binding.dart';
 import '../../../expense_detail/presentation/pages/expense_detail_page.dart';
@@ -9,16 +11,6 @@ import '../controllers/event_detail_controller.dart';
 
 class ExpensesTab extends GetView<EventDetailController> {
   const ExpensesTab({super.key});
-
-  String _formatVND(double amount) {
-    final str = amount.abs().toStringAsFixed(0);
-    final buf = StringBuffer();
-    for (int i = 0; i < str.length; i++) {
-      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
-      buf.write(str[i]);
-    }
-    return '${buf.toString()}đ';
-  }
 
   static const Map<String, String> _fallbackEmojis = {
     'Khách sạn 2 đêm': '🏨',
@@ -38,14 +30,13 @@ class ExpensesTab extends GetView<EventDetailController> {
         _SummarySection(
           myTotal: controller.myTotalExpense.value,
           totalExpense: controller.totalExpense.value,
-          formatVND: _formatVND,
         ),
         const SizedBox(height: 20),
         Expanded(
           child: Obx(() {
             if (controller.isLoadingExpenses.value) {
               return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF0A4226)),
+                child: CircularProgressIndicator(color: AppColors.primary),
               );
             }
 
@@ -57,7 +48,7 @@ class ExpensesTab extends GetView<EventDetailController> {
             }
 
             return RefreshIndicator(
-              color: const Color(0xFF0A4226),
+              color: AppColors.primary,
               onRefresh: controller.loadExpenses,
               child: NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
@@ -74,10 +65,10 @@ class ExpensesTab extends GetView<EventDetailController> {
                     for (final group in controller.expenseGroups) ...[
                       Text(
                         group.formattedDate,
-                        style: const TextStyle(
+                        style: GoogleFonts.nunito(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0A4226),
+                          color: AppColors.primary,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -87,7 +78,6 @@ class ExpensesTab extends GetView<EventDetailController> {
                           child: _ExpenseItemView(
                             expense: expense,
                             controller: controller,
-                            formatVND: _formatVND,
                             emojiFor: _emojiFor,
                           ),
                         ),
@@ -107,13 +97,11 @@ class ExpensesTab extends GetView<EventDetailController> {
 class _ExpenseItemView extends StatelessWidget {
   final ExpenseModel expense;
   final EventDetailController controller;
-  final String Function(double) formatVND;
   final String Function(String) emojiFor;
 
   const _ExpenseItemView({
     required this.expense,
     required this.controller,
-    required this.formatVND,
     required this.emojiFor,
   });
 
@@ -135,15 +123,9 @@ class _ExpenseItemView extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: AppColors.cardBg,
+          borderRadius: AppRadius.rLg,
+          boxShadow: AppShadow.card,
         ),
         child: Row(
           children: [
@@ -153,8 +135,8 @@ class _ExpenseItemView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: icon != null
                     ? color.withValues(alpha: 0.12)
-                    : const Color(0xFFF0F0F0),
-                borderRadius: BorderRadius.circular(12),
+                    : AppColors.inputBg,
+                borderRadius: AppRadius.rSm,
               ),
               alignment: Alignment.center,
               child: icon != null
@@ -171,30 +153,19 @@ class _ExpenseItemView extends StatelessWidget {
                 children: [
                   Text(
                     expense.title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                    style: AppTextStyles.titleMedium,
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Paid by ${controller.payerName(expense.payerId)}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF9E9E9E),
-                    ),
+                    'Trả bởi ${controller.payerName(expense.payerId)}',
+                    style: AppTextStyles.caption,
                   ),
                 ],
               ),
             ),
             Text(
-              formatVND(expense.amount),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+              AppFormat.currency(expense.amount),
+              style: AppTextStyles.amountSmall,
             ),
           ],
         ),
@@ -206,12 +177,10 @@ class _ExpenseItemView extends StatelessWidget {
 class _SummarySection extends StatelessWidget {
   final double myTotal;
   final double totalExpense;
-  final String Function(double) formatVND;
 
   const _SummarySection({
     required this.myTotal,
     required this.totalExpense,
-    required this.formatVND,
   });
 
   @override
@@ -221,32 +190,26 @@ class _SummarySection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: AppColors.cardBg,
+          borderRadius: AppRadius.rLg,
+          boxShadow: AppShadow.card,
         ),
         child: Row(
           children: [
             Expanded(
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Chi tiêu của tôi',
-                    style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 12),
+                    style: AppTextStyles.caption,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    formatVND(myTotal),
-                    style: const TextStyle(
+                    AppFormat.currency(myTotal),
+                    style: GoogleFonts.nunito(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0A4226),
+                      color: AppColors.primary,
                     ),
                   ),
                 ],
@@ -255,24 +218,24 @@ class _SummarySection extends StatelessWidget {
             SizedBox(
               height: 40,
               child: VerticalDivider(
-                color: Colors.grey.withValues(alpha: 0.2),
+                color: AppColors.borderLight,
                 thickness: 1,
               ),
             ),
             Expanded(
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Tổng chi tiêu',
-                    style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 12),
+                    style: AppTextStyles.caption,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    formatVND(totalExpense),
-                    style: const TextStyle(
+                    AppFormat.currency(totalExpense),
+                    style: GoogleFonts.nunito(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0A4226),
+                      color: AppColors.primary,
                     ),
                   ),
                 ],
@@ -300,7 +263,7 @@ class _ErrorState extends StatelessWidget {
           const Icon(
             Icons.cloud_off_rounded,
             size: 44,
-            color: Color(0xFFB8CFC0),
+            color: AppColors.textTertiary,
           ),
           const SizedBox(height: 10),
           Padding(
@@ -311,7 +274,7 @@ class _ErrorState extends StatelessWidget {
               style: GoogleFonts.nunito(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF5A7563),
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -319,7 +282,7 @@ class _ErrorState extends StatelessWidget {
           ElevatedButton(
             onPressed: onRetry,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0A4226),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
