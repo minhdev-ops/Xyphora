@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../home_dashboard/presentation/controllers/dashboard_controller.dart';
 import '../../data/repositories/add_expense_repository.dart';
-import '../../domain/models/expense_model.dart';
 import '../../domain/models/group_member.dart';
 
 class AddExpenseController extends GetxController {
@@ -54,7 +53,7 @@ class AddExpenseController extends GetxController {
 
   final TextEditingController descriptionController = TextEditingController();
 
-  List<ExpenseModel> get mockExpenses => _repository.getMockExpenses();
+
 
   TextEditingController splitControllerFor(String memberId) {
     return _splitControllers.putIfAbsent(

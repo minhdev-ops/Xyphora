@@ -11,10 +11,6 @@ class EventDetailController extends GetxController {
 
   final RxInt currentTab = 0.obs;
 
-  final EventModel event = EventDetailMock.event;
-  final List<BalanceItem> balances = EventDetailMock.balances;
-  final List<String> photos = EventDetailMock.photos;
-
   final expenseGroups = <ExpenseGroup>[].obs;
   final myTotalExpense = 0.0.obs;
   final totalExpense = 0.0.obs;
@@ -29,8 +25,12 @@ class EventDetailController extends GetxController {
   bool _hasMore = true;
   int? _eventId;
 
-  double get totalOwed => EventDetailMock.totalOwed;
-  String get myUserId => EventDetailMock.myUserId;
+  EventModel? get event => null;
+  List<BalanceItem> get balances => const [];
+  List<String> get photos => const [];
+
+  double get totalOwed => 0.0;
+  String get myUserId => '';
 
   int? get eventId => _eventId;
 
@@ -48,9 +48,9 @@ class EventDetailController extends GetxController {
       _eventId = eventId;
       loadExpenses();
     } else {
-      expenseGroups.assignAll(EventDetailMock.expenseGroups);
-      myTotalExpense.value = EventDetailMock.myTotalExpense;
-      totalExpense.value = EventDetailMock.totalExpense;
+      expenseGroups.clear();
+      myTotalExpense.value = 0.0;
+      totalExpense.value = 0.0;
     }
   }
 
@@ -147,8 +147,8 @@ class EventDetailController extends GetxController {
     if (id != null && _payerNames.containsKey(id)) {
       return _payerNames[id] ?? 'Unknown';
     }
-    final p = event.participants.firstWhereOrNull((p) => p.userId == payerId);
-    return p?.user?.name ?? 'Unknown';
+    final p = event?.participants.firstWhereOrNull((p) => p.userId == payerId);
+    return p?.user?.name ?? 'Ai đó';
   }
 
   String? categoryIconFor(String expenseId) {

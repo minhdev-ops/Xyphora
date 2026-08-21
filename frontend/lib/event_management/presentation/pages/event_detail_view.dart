@@ -111,7 +111,7 @@ class EventDetailView extends GetView<EventDetailController> {
                     binding: AddExpenseBinding(),
                     arguments: {
                       'event_id': eventId,
-                      'event_title': controller.event.title,
+                      'event_title': controller.event?.title ?? 'Sự kiện',
                     },
                   )?.then((result) {
                     if (result == true) {
@@ -139,21 +139,30 @@ class EventDetailView extends GetView<EventDetailController> {
 }
 
 class _EventInfo extends StatelessWidget {
-  final EventModel event;
+  final EventModel? event;
 
   const _EventInfo({required this.event});
 
   @override
   Widget build(BuildContext context) {
+    if (event == null) {
+      return Column(
+        children: [
+          const Text('🎉', style: TextStyle(fontSize: 40)),
+          const SizedBox(height: 8),
+          Text('Chi tiết sự kiện', style: AppTextStyles.heading2),
+        ],
+      );
+    }
     final dateStr =
-        '${event.participants.length} thành viên, ${AppFormat.monthYear(event.createdAt)}';
+        '${event!.participants.length} thành viên, ${AppFormat.monthYear(event!.createdAt)}';
 
     return Column(
       children: [
-        Text(event.emoji, style: const TextStyle(fontSize: 40)),
+        Text(event!.emoji, style: const TextStyle(fontSize: 40)),
         const SizedBox(height: 8),
         Text(
-          event.title,
+          event!.title,
           style: AppTextStyles.heading2,
         ),
         const SizedBox(height: 4),

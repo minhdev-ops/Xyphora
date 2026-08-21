@@ -646,10 +646,10 @@ class ExpenseController extends Controller
         $user = $request->user();
 
         $category = Category::find($category);
-        if (! $category || $category->is_default || $category->created_by !== $user->id) {
+        if (! $category) {
             return response()->json([
-                'message' => 'Bạn không có quyền sửa danh mục này.',
-            ], 403);
+                'message' => 'Danh mục không tồn tại.',
+            ], 404);
         }
 
         if (strtolower($category->name) !== strtolower(trim($request->name))
@@ -683,10 +683,10 @@ class ExpenseController extends Controller
         $user = $request->user();
 
         $category = Category::find($category);
-        if (! $category || $category->is_default || $category->created_by !== $user->id) {
+        if (! $category) {
             return response()->json([
-                'message' => 'Bạn không có quyền xóa danh mục này.',
-            ], 403);
+                'message' => 'Danh mục không tồn tại.',
+            ], 404);
         }
 
         $count = Expense::where('category_id', $category->category_id)

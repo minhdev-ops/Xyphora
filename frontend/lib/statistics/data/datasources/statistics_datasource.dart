@@ -1,327 +1,173 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import '../../../config/api_config.dart';
+import '../../../config/token_storage.dart';
 import '../../domain/models/statistics_model.dart';
 
+class StatisticsData {
+  final double totalExpense;
+  final double changeRate;
+  final List<CategoryStat> categoryStats;
+  final List<MonthlyStat> monthlyStats;
+  final Map<String, List<TransactionItem>> monthlyTransactions;
+
+  StatisticsData({
+    required this.totalExpense,
+    required this.changeRate,
+    required this.categoryStats,
+    required this.monthlyStats,
+    required this.monthlyTransactions,
+  });
+}
+
 class StatisticsDatasource {
-  static const double _totalExpense = 2670000;
-  static const double _changeRate = 18.5;
+  static final String baseUrl = ApiConfig.baseUrl;
 
-  static const List<CategoryStat> _categoryStats = [
-    CategoryStat(
-      name: 'Chỗ ở',
-      amount: 1200000,
-      color: 0xFFA5D6A7,
-      percent: 45,
-    ),
-    CategoryStat(
-      name: 'Ăn uống',
-      amount: 800000,
-      color: 0xFF4CAF50,
-      percent: 30,
-    ),
-    CategoryStat(
-      name: 'Di chuyển',
-      amount: 450000,
-      color: 0xFF2E7D32,
-      percent: 17,
-    ),
-    CategoryStat(
-      name: 'Vui chơi',
-      amount: 150000,
-      color: 0xFF1B5E20,
-      percent: 4,
-    ),
-    CategoryStat(name: 'Khác', amount: 70000, color: 0xFF1A4331, percent: 4),
-  ];
+  Future<StatisticsData> fetchStatistics() async {
+    try {
+      final token = await TokenStorage.read();
+      if (token == null || token.isEmpty) {
+        return _emptyData();
+      }
 
-  static const List<MonthlyStat> _monthlyStats = [
-    MonthlyStat(label: 'T1', value: 520000),
-    MonthlyStat(label: 'T2', value: 450000),
-    MonthlyStat(label: 'T3', value: 620000),
-    MonthlyStat(label: 'T4', value: 380000),
-    MonthlyStat(label: 'T5', value: 790000),
-    MonthlyStat(label: 'T6', value: 540000),
-    MonthlyStat(label: 'T7', value: 1050000),
-    MonthlyStat(label: 'T8', value: 700000),
-    MonthlyStat(label: 'T9', value: 610000),
-    MonthlyStat(label: 'T10', value: 830000),
-    MonthlyStat(label: 'T11', value: 470000),
-    MonthlyStat(label: 'T12', value: 890000),
-  ];
+      final response = await http.get(
+        Uri.parse('$baseUrl/expenses?per_page=100'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
 
-  static const Map<String, List<TransactionItem>> _monthlyTransactions = {
-    'T1': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 350000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 170000,
-        color: 0xFF4CAF50,
-      ),
-    ],
-    'T2': [
-      TransactionItem(
-        name: 'Tiền điện nước',
-        categoryName: 'Chỗ ở',
-        amount: 200000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Đi chợ',
-        categoryName: 'Ăn uống',
-        amount: 150000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 100000,
-        color: 0xFF2E7D32,
-      ),
-    ],
-    'T3': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 350000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 180000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 90000,
-        color: 0xFF2E7D32,
-      ),
-    ],
-    'T4': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 300000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 80000,
-        color: 0xFF4CAF50,
-      ),
-    ],
-    'T5': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 350000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 240000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 120000,
-        color: 0xFF2E7D32,
-      ),
-      TransactionItem(
-        name: 'Xem phim',
-        categoryName: 'Vui chơi',
-        amount: 80000,
-        color: 0xFF1B5E20,
-      ),
-    ],
-    'T6': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 350000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 130000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 60000,
-        color: 0xFF2E7D32,
-      ),
-    ],
-    'T7': [
-      TransactionItem(
-        name: 'Homestay Đà Lạt',
-        categoryName: 'Chỗ ở',
-        amount: 400000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn vặt Bảo Lộc',
-        categoryName: 'Ăn uống',
-        amount: 250000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 150000,
-        color: 0xFF2E7D32,
-      ),
-      TransactionItem(
-        name: 'Cà phê vỉa hè',
-        categoryName: 'Ăn uống',
-        amount: 150000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Vé tham quan',
-        categoryName: 'Vui chơi',
-        amount: 100000,
-        color: 0xFF1B5E20,
-      ),
-    ],
-    'T8': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 350000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 200000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 100000,
-        color: 0xFF2E7D32,
-      ),
-      TransactionItem(
-        name: 'Xem phim',
-        categoryName: 'Vui chơi',
-        amount: 50000,
-        color: 0xFF1B5E20,
-      ),
-    ],
-    'T9': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 350000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 160000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 100000,
-        color: 0xFF2E7D32,
-      ),
-    ],
-    'T10': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 350000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 280000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 120000,
-        color: 0xFF2E7D32,
-      ),
-      TransactionItem(
-        name: 'Xem phim',
-        categoryName: 'Vui chơi',
-        amount: 80000,
-        color: 0xFF1B5E20,
-      ),
-    ],
-    'T11': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 300000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 120000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 50000,
-        color: 0xFF2E7D32,
-      ),
-    ],
-    'T12': [
-      TransactionItem(
-        name: 'Tiền thuê nhà',
-        categoryName: 'Chỗ ở',
-        amount: 400000,
-        color: 0xFFA5D6A7,
-      ),
-      TransactionItem(
-        name: 'Ăn uống ngoài',
-        categoryName: 'Ăn uống',
-        amount: 290000,
-        color: 0xFF4CAF50,
-      ),
-      TransactionItem(
-        name: 'Xăng xe',
-        categoryName: 'Di chuyển',
-        amount: 130000,
-        color: 0xFF2E7D32,
-      ),
-      TransactionItem(
-        name: 'Xem phim',
-        categoryName: 'Vui chơi',
-        amount: 70000,
-        color: 0xFF1B5E20,
-      ),
-    ],
-  };
+      if (response.statusCode != 200) {
+        return _emptyData();
+      }
 
-  double getTotalExpense() => _totalExpense;
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final rawItems =
+          (body['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+      final summary = body['summary'] as Map<String, dynamic>? ?? {};
 
-  double getChangeRate() => _changeRate;
+      if (rawItems.isEmpty) {
+        return _emptyData();
+      }
 
-  List<CategoryStat> getCategoryStats() => _categoryStats;
+      double total = (summary['my_total_amount'] as num?)?.toDouble() ??
+          (summary['total_amount'] as num?)?.toDouble() ??
+          0.0;
 
-  List<MonthlyStat> getMonthlyStats() => _monthlyStats;
+      if (total == 0.0) {
+        total = rawItems.fold(
+          0.0,
+          (sum, item) => sum + ((item['amount'] as num?)?.toDouble() ?? 0.0),
+        );
+      }
 
-  List<TransactionItem> getMonthlyTransactions(String monthLabel) =>
-      _monthlyTransactions[monthLabel] ?? const [];
+      final categoryTotals = <String, Map<String, dynamic>>{};
+      final monthlyTotals = <int, double>{};
+      final monthlyTxMap = <String, List<TransactionItem>>{};
+
+      for (var i = 1; i <= 12; i++) {
+        monthlyTotals[i] = 0.0;
+        monthlyTxMap['T$i'] = [];
+      }
+
+      final colorPalette = [
+        0xFF4CAF50,
+        0xFF3B82F6,
+        0xFF8B5CF6,
+        0xFFF59E0B,
+        0xFFEF4444,
+        0xFF10B981,
+        0xFFEC4899,
+      ];
+      int colorIdx = 0;
+
+      for (final item in rawItems) {
+        final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
+        final catName = item['category_name'] as String? ?? 'Khác';
+        final title = item['title'] as String? ?? 'Chi tiêu';
+        final dateStr = item['expense_date'] as String?;
+
+        if (!categoryTotals.containsKey(catName)) {
+          categoryTotals[catName] = {
+            'amount': 0.0,
+            'color': colorPalette[colorIdx % colorPalette.length],
+          };
+          colorIdx++;
+        }
+        categoryTotals[catName]!['amount'] =
+            (categoryTotals[catName]!['amount'] as double) + amount;
+
+        if (dateStr != null) {
+          final date = DateTime.tryParse(dateStr);
+          if (date != null) {
+            final m = date.month;
+            monthlyTotals[m] = (monthlyTotals[m] ?? 0.0) + amount;
+            final label = 'T$m';
+            monthlyTxMap[label]?.add(
+              TransactionItem(
+                name: title,
+                categoryName: catName,
+                amount: amount,
+                color: categoryTotals[catName]!['color'] as int,
+              ),
+            );
+          }
+        }
+      }
+
+      final categoryStats = <CategoryStat>[];
+      categoryTotals.forEach((name, map) {
+        final amt = map['amount'] as double;
+        final pct = total > 0 ? ((amt / total) * 100).round() : 0;
+        categoryStats.add(
+          CategoryStat(
+            name: name,
+            amount: amt,
+            color: map['color'] as int,
+            percent: pct,
+          ),
+        );
+      });
+
+      final monthlyStats = <MonthlyStat>[];
+      for (var i = 1; i <= 12; i++) {
+        monthlyStats.add(
+          MonthlyStat(
+            label: 'T$i',
+            value: monthlyTotals[i] ?? 0.0,
+          ),
+        );
+      }
+
+      return StatisticsData(
+        totalExpense: total,
+        changeRate: 0.0,
+        categoryStats: categoryStats,
+        monthlyStats: monthlyStats,
+        monthlyTransactions: monthlyTxMap,
+      );
+    } catch (e) {
+      debugPrint('Error fetching statistics: $e');
+      return _emptyData();
+    }
+  }
+
+  StatisticsData _emptyData() {
+    final monthlyStats = <MonthlyStat>[];
+    final monthlyTxMap = <String, List<TransactionItem>>{};
+    for (var i = 1; i <= 12; i++) {
+      monthlyStats.add(MonthlyStat(label: 'T$i', value: 0.0));
+      monthlyTxMap['T$i'] = [];
+    }
+    return StatisticsData(
+      totalExpense: 0.0,
+      changeRate: 0.0,
+      categoryStats: const [],
+      monthlyStats: monthlyStats,
+      monthlyTransactions: monthlyTxMap,
+    );
+  }
 }
