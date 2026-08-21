@@ -9,6 +9,7 @@ class EventModel {
   final String currency;
   final String description;
   final DateTime createdAt;
+  final int participantCount;
   final List<ParticipantModel> participants;
   final List<ExpenseModel> expenses;
 
@@ -20,9 +21,10 @@ class EventModel {
     this.currency = 'VND',
     this.description = '',
     required this.createdAt,
-    required this.participants,
-    required this.expenses,
-  });
+    int? participantCount,
+    this.participants = const [],
+    this.expenses = const [],
+  }) : participantCount = participantCount ?? participants.length;
 
   double getUserBalance(String myUserId) {
     double balance = 0;

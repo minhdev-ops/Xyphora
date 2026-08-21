@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../auth/data/auth_service.dart';
 import '../../data/event_service.dart';
+import '../../data/repositories/event_repository.dart';
 import '../../domain/models/event_model.dart';
 import '../../domain/models/participant_model.dart';
+import 'add_event_controller.dart';
 import 'event_controller.dart';
+import 'event_detail_controller.dart';
 
-class AddEventController extends GetxController {
-  static const List<String> emojis = [
-    '🎉', '⛰️', '🍽️', '🎂', '🏖️', '🏠', '🎊', '⚽',
-  ];
-
+class EditEventController extends GetxController {
+  final EventRepository _repository;
   final AuthService _authService = Get.find<AuthService>();
-  final EventService _eventService = Get.find<EventService>();
+  final EventModel event;
 
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -20,8 +20,20 @@ class AddEventController extends GetxController {
   final RxString selectedEmoji = '🎉'.obs;
   final RxList<ParticipantModel> participants = <ParticipantModel>[].obs;
   final RxBool isAddingParticipant = false.obs;
-  final RxBool isCreating = false.obs;
+  final RxBool isSaving = false.obs;
   int _participantCounter = 0;
+
+  EditEventController(this._repository, {required this.event}) {
+    titleController.text = event.title;
+    descriptionController.text = event.description;
+    selectedEmoji.value = event.emoji.isNotEmpty ? event.emoji : '🎉';
+    participants.addAll(
+      event.participants.where((p) => p.userId != event.ownerId),
+    );
+    _participantCounter = event.participants.length;
+  }
+
+  List<String> get emojis => AddEventController.emojis;
 
   void selectEmoji(String emoji) => selectedEmoji.value = emoji;
 
@@ -52,7 +64,7 @@ class AddEventController extends GetxController {
     participants.add(
       ParticipantModel(
         id: 'draft_p$_participantCounter',
-        eventId: 'draft',
+        eventId: event.id,
         userId: 'guest_$_participantCounter',
         displayName: name,
       ),
@@ -64,7 +76,7 @@ class AddEventController extends GetxController {
     participants.remove(participant);
   }
 
-  Future<void> createEvent() async {
+  Future<void> save() async {
     final title = titleController.text.trim();
     if (title.isEmpty) {
       Get.snackbar(
@@ -81,7 +93,7 @@ class AddEventController extends GetxController {
     if (token == null) {
       Get.snackbar(
         'Lỗi',
-        'Vui lòng đăng nhập để tạo sự kiện',
+        'Vui lòng đăng nhập để chỉnh sửa sự kiện',
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
         duration: const Duration(seconds: 2),
@@ -89,25 +101,32 @@ class AddEventController extends GetxController {
       return;
     }
 
-    isCreating.value = true;
+    isSaving.value = true;
     try {
-      final response = await _eventService.createEvent(token, {
-        'title': title,
-        'description': descriptionController.text.trim(),
-        'icon': selectedEmoji.value,
-        'participants': participants
-            .map((p) => {'display_name': p.displayName})
-            .toList(),
-      });
+      final updated = await _repository.updateEvent(
+        token: token,
+        eventId: event.id,
+        data: {
+          'title': title,
+          'description': descriptionController.text.trim(),
+          'icon': selectedEmoji.value,
+          'participants': participants.map((p) {
+            final id = int.tryParse(p.id);
+            return id != null
+                ? {'participant_id': id, 'display_name': p.name}
+                : {'display_name': p.name};
+          }).toList(),
+        },
+      );
 
-      final data = response['data'] as Map<String, dynamic>? ?? {};
-      final event = _eventFromResponse(data);
-
-      Get.find<EventController>().addEvent(event);
+      if (Get.isRegistered<EventDetailController>()) {
+        Get.find<EventDetailController>().event.value = updated;
+      }
+      Get.find<EventController>().updateEvent(updated);
       Get.back();
       Get.snackbar(
         'Thành công',
-        'Đã tạo sự kiện mới',
+        'Đã cập nhật sự kiện',
         backgroundColor: const Color(0xFF0C3D2B),
         colorText: Colors.white,
         duration: const Duration(seconds: 2),
@@ -129,31 +148,8 @@ class AddEventController extends GetxController {
         duration: const Duration(seconds: 3),
       );
     } finally {
-      isCreating.value = false;
+      isSaving.value = false;
     }
-  }
-
-  EventModel _eventFromResponse(Map<String, dynamic> json) {
-    final id = json['event_id'].toString();
-    return EventModel(
-      id: id,
-      ownerId: json['owner_id'].toString(),
-      emoji: json['icon'] as String? ?? '',
-      title: json['title'] as String? ?? '',
-      currency: json['currency'] as String? ?? 'VND',
-      description: json['description'] as String? ?? '',
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
-          DateTime.now(),
-      participants: (json['participants'] as List? ?? [])
-          .map((p) => ParticipantModel(
-                id: p['participant_id'].toString(),
-                eventId: id,
-                userId: p['user_id']?.toString() ?? '',
-                displayName: p['display_name'] as String? ?? '',
-              ))
-          .toList(),
-      expenses: [],
-    );
   }
 
   @override
