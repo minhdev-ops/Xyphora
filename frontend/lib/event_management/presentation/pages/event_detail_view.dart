@@ -257,10 +257,13 @@ class EventDetailView extends GetView<EventDetailController> {
                     duration: const Duration(seconds: 2),
                   );
                 } else {
-                  final eventId = controller.eventId;
                   Get.to(
                     () => GroupExpensePage(),
                     binding: AddGroupExpenseBinding(),
+                    arguments: {
+                      'event_id': int.tryParse(controller.eventId),
+                      'event_title': controller.event.value.title,
+                    },
                   );
                 }
               },

@@ -652,6 +652,13 @@ class ExpenseController extends Controller
             ], 404);
         }
 
+        // Chỉ người tạo danh mục hoặc danh mục mặc định (dùng chung) mới được sửa
+        if (! $category->is_default && (int) $category->created_by !== $user->id) {
+            return response()->json([
+                'message' => 'Bạn không có quyền chỉnh sửa danh mục này.',
+            ], 403);
+        }
+
         if (strtolower($category->name) !== strtolower(trim($request->name))
             && $this->categoryNameExists($user->id, $request->name)) {
             return response()->json([
@@ -687,6 +694,20 @@ class ExpenseController extends Controller
             return response()->json([
                 'message' => 'Danh mục không tồn tại.',
             ], 404);
+        }
+
+        // Không thể xóa danh mục mặc định (dùng chung)
+        if ($category->is_default) {
+            return response()->json([
+                'message' => 'Không thể xóa danh mục mặc định.',
+            ], 422);
+        }
+
+        // Chỉ người tạo mới được xóa
+        if ((int) $category->created_by !== $user->id) {
+            return response()->json([
+                'message' => 'Bạn không có quyền xóa danh mục này.',
+            ], 403);
         }
 
         $count = Expense::where('category_id', $category->category_id)

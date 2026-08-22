@@ -9,7 +9,6 @@ import '../../config/token_storage.dart';
 
 class AuthService {
   static String get baseUrl => ApiConfig.baseUrl;
-  static final _storage = FlutterSecureStorage();
 
   Future<Map<String, dynamic>> register(String name, String email, String password) async {
     try {

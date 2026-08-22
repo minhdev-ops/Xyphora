@@ -27,10 +27,10 @@ class ExpensesTab extends GetView<EventDetailController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SummarySection(
-          myTotal: controller.myTotalExpense.value,
-          totalExpense: controller.totalExpense.value,
-        ),
+        Obx(() => _SummarySection(
+          myTotal: controller.myTotalExpense,
+          totalExpense: controller.totalExpense,
+        )),
         const SizedBox(height: 20),
         Expanded(
           child: Obx(() {

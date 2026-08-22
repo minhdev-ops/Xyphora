@@ -1,7 +1,6 @@
 import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import '../../../auth/domain/models/user.dart';
-import '../../../config/token_storage.dart';
 import '../../domain/models/participant_model.dart';
 import '../../domain/models/expense_split_model.dart';
 import '../../domain/models/expense_model.dart';
