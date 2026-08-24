@@ -260,6 +260,10 @@ class EventDetailView extends GetView<EventDetailController> {
                   Get.to(
                     () => GroupExpensePage(),
                     binding: AddGroupExpenseBinding(),
+                    arguments: {
+                      'event_id': int.tryParse(controller.eventId),
+                      'event_title': controller.event.value.title,
+                    },
                   );
                 }
               },

@@ -1,15 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../config/api_config.dart';
 import '../domain/models/user.dart';
+import '../../config/token_storage.dart';
 
 
 class AuthService {
   static String get baseUrl => ApiConfig.baseUrl;
-  static final _storage = FlutterSecureStorage();
 
   Future<Map<String, dynamic>> register(String name, String email, String password) async {
     try {
@@ -82,11 +81,13 @@ class AuthService {
   }
 
   Future<void> _saveToken(String token) async {
-    await _storage.write(key: 'auth_token', value: token);
+    await TokenStorage.write(token);
+    final check = await TokenStorage.read();
+    debugPrint('[Auth] token saved, read-back: ${check != null ? 'OK (${check.substring(0, 12)}...)' : 'NULL!'}');
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: 'auth_token');
+    return await TokenStorage.read();
   }
 
   Future<UserModel?> getCurrentUser() async {
@@ -127,7 +128,7 @@ class AuthService {
             'Authorization': 'Bearer $token',
           },
         );
-        await _storage.delete(key: 'auth_token');
+        await TokenStorage.delete();
       }
     } catch (e) {
       // Bỏ qua lỗi kết nối khi logout
@@ -136,7 +137,10 @@ class AuthService {
 
   late final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    serverClientId: ApiConfig.googleServerClientId.isNotEmpty
+    clientId: kIsWeb && ApiConfig.googleServerClientId.isNotEmpty
+        ? ApiConfig.googleServerClientId
+        : null,
+    serverClientId: !kIsWeb && ApiConfig.googleServerClientId.isNotEmpty
         ? ApiConfig.googleServerClientId
         : null,
   );

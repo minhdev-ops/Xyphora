@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import '../../../config/app_theme.dart';
 import '../../../home_dashboard/presentation/pages/home_dashboard_page.dart';
 import '../../../home_dashboard/presentation/widgets/custom_bottom_nav_bar.dart';
 import '../../../auth/data/auth_service.dart';
@@ -18,13 +18,13 @@ class ProfilePage extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4FAF6),
+      backgroundColor: AppColors.scaffoldBg,
       bottomNavigationBar: const CustomBottomNavBar(initialIndex: 3),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF4FAF6),
+        backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1D1D1D), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 20),
           onPressed: () => Get.offAll(
             () => const HomeDashboardPage(),
             transition: Transition.fadeIn,
@@ -33,12 +33,8 @@ class ProfilePage extends GetView<ProfileController> {
         ),
         centerTitle: true,
         title: Text(
-          'Cài đặt & Hồ sơ',
-          style: GoogleFonts.inter(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1D1D1D),
-          ),
+          'Ca nhat & Ho so',
+          style: AppTextStyles.amountMedium,
         ),
       ),
       body: SingleChildScrollView(
@@ -69,20 +65,12 @@ class ProfilePage extends GetView<ProfileController> {
                   const SizedBox(height: 12),
                   Text(
                     name,
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1D1D1D),
-                    ),
+                    style: AppTextStyles.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     email,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF5A7563),
-                    ),
+                    style: AppTextStyles.bodySecondary,
                   ),
                 ],
               );
@@ -118,7 +106,7 @@ class ProfilePage extends GetView<ProfileController> {
         width: width,
         height: 14,
         decoration: BoxDecoration(
-          color: const Color(0xFFD9E8DF),
+          color: AppColors.primarySubtle,
           borderRadius: BorderRadius.circular(7),
         ),
       ),

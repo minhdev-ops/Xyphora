@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../config/app_theme.dart';
+import '../../../config/app_format.dart';
 import '../../domain/models/event_model.dart';
 import 'overlap_avatars.dart';
 
@@ -9,29 +12,10 @@ class EventCard extends StatelessWidget {
 
   const EventCard({super.key, required this.event, required this.balance, this.onTap});
 
-  String _formatVND(double amount) {
-    final str = amount.abs().toStringAsFixed(0);
-    final buf = StringBuffer();
-    for (int i = 0; i < str.length; i++) {
-      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
-      buf.write(str[i]);
-    }
-    return '${buf.toString()}đ';
-  }
-
-  String _formatDate(DateTime dt) {
-    const months = [
-      'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4',
-      'tháng 5', 'tháng 6', 'tháng 7', 'tháng 8',
-      'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12',
-    ];
-    return '${dt.day} ${months[dt.month - 1]}, ${dt.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final subtitle =
-        '${_formatDate(event.createdAt)} • ${event.participantCount} thành viên';
+        '${AppFormat.date(event.createdAt)} - ${event.participants.length} thành viên';
 
     return GestureDetector(
       onTap: onTap,
@@ -39,15 +23,9 @@ class EventCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.rLg,
+        boxShadow: AppShadow.card,
       ),
       child: Row(
         children: [
@@ -55,8 +33,8 @@ class EventCard extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.successBg,
+              borderRadius: AppRadius.rSm,
             ),
             alignment: Alignment.center,
             child: Text(event.emoji, style: const TextStyle(fontSize: 24)),
@@ -67,15 +45,11 @@ class EventCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(event.title,
-                    style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black),
+                    style: AppTextStyles.title,
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
                 Text(subtitle,
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF9E9E9E))),
+                    style: AppTextStyles.caption),
                 const SizedBox(height: 8),
                 OverlapAvatars(participants: event.participants),
               ],
@@ -86,41 +60,36 @@ class EventCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (balance > 0) ...[
-                Text('+${_formatVND(balance)}',
-                    style: const TextStyle(
-                        color: Color(0xFF1B9B5A),
+                Text('+${AppFormat.currency(balance)}',
+                    style: GoogleFonts.nunito(
+                        color: AppColors.success,
                         fontSize: 15,
                         fontWeight: FontWeight.bold)),
-                const Text('bạn được nhận',
-                    style: TextStyle(
-                        color: Color(0xFF9E9E9E), fontSize: 11)),
+                Text('bạn được nhận',
+                    style: AppTextStyles.small),
               ] else if (balance < 0) ...[
-                Text('-${_formatVND(balance)}',
-                    style: const TextStyle(
-                        color: Color(0xFFFF3B30),
+                Text('-${AppFormat.currency(balance)}',
+                    style: GoogleFonts.nunito(
+                        color: AppColors.error,
                         fontSize: 15,
                         fontWeight: FontWeight.bold)),
-                const Text('bạn nợ',
-                    style: TextStyle(
-                        color: Color(0xFF9E9E9E), fontSize: 11)),
+                Text('bạn nợ',
+                    style: AppTextStyles.small),
               ] else ...[
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0F0F0),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.inputBg,
+                    borderRadius: AppRadius.rXs,
                   ),
-                  child: const Text('Đã xong',
-                      style: TextStyle(
-                          color: Color(0xFF9E9E9E),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500)),
+                  child: Text('Đã xong',
+                      style: AppTextStyles.caption),
                 ),
               ],
               const SizedBox(height: 8),
               const Icon(Icons.chevron_right,
-                  color: Color(0xFF9E9E9E), size: 20),
+                  color: AppColors.textTertiary, size: 20),
             ],
           ),
         ],

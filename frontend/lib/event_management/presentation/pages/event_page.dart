@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../config/app_format.dart';
 import '../bindings/event_binding.dart';
 import '../controllers/event_controller.dart';
 import '../widgets/summary_card.dart';
@@ -12,15 +13,6 @@ import '../../../home_dashboard/presentation/widgets/custom_bottom_nav_bar.dart'
 class EventPage extends GetView<EventController> {
   const EventPage({super.key});
 
-  String _formatVND(double amount) {
-    final str = amount.abs().toStringAsFixed(0);
-    final buf = StringBuffer();
-    for (int i = 0; i < str.length; i++) {
-      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
-      buf.write(str[i]);
-    }
-    return '${buf.toString()}đ';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,14 +56,14 @@ class EventPage extends GetView<EventController> {
                         Expanded(
                           child: SummaryCard(
                               label: 'Bạn được nhận',
-                              amount: '+${_formatVND(controller.getTotalOwed())}',
+                              amount: '+${AppFormat.currency(controller.getTotalOwed())}',
                               amountColor: const Color(0xFF1B9B5A)),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: SummaryCard(
                               label: 'Bạn còn nợ',
-                              amount: '-${_formatVND(controller.getTotalDebt())}',
+                              amount: '-${AppFormat.currency(controller.getTotalDebt())}',
                               amountColor: const Color(0xFFFF3B30)),
                         ),
                       ],

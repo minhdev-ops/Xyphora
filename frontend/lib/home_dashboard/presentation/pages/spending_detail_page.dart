@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import '../../../config/app_theme.dart';
+import '../../../config/app_format.dart';
 import '../../domain/models/spending_model.dart';
 import '../controllers/dashboard_controller.dart';
 
@@ -9,23 +11,10 @@ class SpendingDetailPage extends GetView<DashboardController> {
 
   const SpendingDetailPage({super.key, required this.spending});
 
-  String _formatCurrency(double amount) {
-    final absAmount = amount.abs().toInt();
-    final str = absAmount.toString();
-    final buffer = StringBuffer();
-    for (int i = 0; i < str.length; i++) {
-      if (i > 0 && (str.length - i) % 3 == 0) {
-        buffer.write('.');
-      }
-      buffer.write(str[i]);
-    }
-    return '${buffer.toString()}đ';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4FAF6), // Match background color
+      backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -39,25 +28,21 @@ class SpendingDetailPage extends GetView<DashboardController> {
               width: 40,
               height: 40,
               decoration: const BoxDecoration(
-                color: Color(0xFFE2F0E5), // Light green circular background
+                color: AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
               child: const Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: Color(0xFF0C3D2B),
+                color: AppColors.primary,
                 size: 16,
               ),
             ),
           ),
         ),
         title: Text(
-          'Chi tiết chi tiêu',
-          style: GoogleFonts.nunito(
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            color: const Color(0xFF0C3D2B),
-          ),
+          'Chi tiet chi tieu',
+          style: AppTextStyles.titleLarge,
         ),
         actions: [
           Padding(
@@ -70,13 +55,13 @@ class SpendingDetailPage extends GetView<DashboardController> {
                 width: 40,
                 height: 40,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFE2F0E5),
+                  color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
                 child: const Icon(
                   Icons.more_vert_rounded,
-                  color: Color(0xFF0C3D2B),
+                  color: AppColors.primary,
                   size: 20,
                 ),
               ),
@@ -95,22 +80,21 @@ class SpendingDetailPage extends GetView<DashboardController> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2F0E5), // Light green background
+                  color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFFCBE0D1),
+                    color: AppColors.divider,
                     width: 1,
                   ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Icon Container
                     Container(
                       width: 76,
                       height: 76,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.cardBg,
                         borderRadius: BorderRadius.circular(22),
                       ),
                       alignment: Alignment.center,
@@ -121,35 +105,23 @@ class SpendingDetailPage extends GetView<DashboardController> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Title
                     Text(
                       spending.title,
-                      style: GoogleFonts.nunito(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0C3D2B),
-                      ),
+                      style: AppTextStyles.heading3,
                     ),
                     const SizedBox(height: 8),
-                    // Amount
                     Text(
-                      _formatCurrency(spending.amount),
-                      style: GoogleFonts.nunito(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF0C3D2B),
-                        letterSpacing: -0.5,
-                      ),
+                      AppFormat.currency(spending.amount),
+                      style: AppTextStyles.amountLarge,
                     ),
                     const SizedBox(height: 12),
-                    // Category Badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFCBE0D1),
+                        color: AppColors.divider,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -157,7 +129,7 @@ class SpendingDetailPage extends GetView<DashboardController> {
                         style: GoogleFonts.nunito(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0C3D2B),
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -171,15 +143,9 @@ class SpendingDetailPage extends GetView<DashboardController> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  color: AppColors.cardBg,
+                  borderRadius: AppRadius.rXl,
+                  boxShadow: AppShadow.cardSoft,
                 ),
                 child: Column(
                   children: [
@@ -191,10 +157,9 @@ class SpendingDetailPage extends GetView<DashboardController> {
                     ),
                     const Divider(
                       height: 24,
-                      color: Color(0xFFECEFF1),
+                      color: AppColors.divider,
                       thickness: 1,
                     ),
-                    // Row 2: Phương thức
                     _buildDetailRow(
                       icon: Icons.wallet_giftcard_outlined,
                       label: 'PHƯƠNG THỨC',
@@ -202,10 +167,9 @@ class SpendingDetailPage extends GetView<DashboardController> {
                     ),
                     const Divider(
                       height: 24,
-                      color: Color(0xFFECEFF1),
+                      color: AppColors.divider,
                       thickness: 1,
                     ),
-                    // Row 3: Ghi chú
                     _buildDetailRow(
                       icon: Icons.chat_bubble_outline_rounded,
                       label: 'GHI CHÚ',
@@ -219,13 +183,12 @@ class SpendingDetailPage extends GetView<DashboardController> {
               const SizedBox(height: 24),
 
               // 3. Action Buttons
-              // Button 1: Chỉnh sửa chi tiêu
               GestureDetector(
                 onTap: () {
                   Get.snackbar(
                     'Chỉnh sửa',
                     'Tính năng chỉnh sửa chi tiêu đang phát triển',
-                    backgroundColor: const Color(0xFF0C3D2B).withValues(alpha: 0.8),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.8),
                     colorText: Colors.white,
                   );
                 },
@@ -233,10 +196,10 @@ class SpendingDetailPage extends GetView<DashboardController> {
                   width: double.infinity,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.cardBg,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFF0C3D2B),
+                      color: AppColors.primary,
                       width: 1,
                     ),
                   ),
@@ -245,25 +208,19 @@ class SpendingDetailPage extends GetView<DashboardController> {
                     children: [
                       const Icon(
                         Icons.edit_note_rounded,
-                        color: Color(0xFF0C3D2B),
+                        color: AppColors.primary,
                         size: 24,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         'Chỉnh sửa chi tiêu',
-                        style: GoogleFonts.nunito(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0C3D2B),
-                        ),
+                        style: AppTextStyles.title,
                       ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-
-              // Button 2: Xoá chi tiêu
               GestureDetector(
                 onTap: () {
                   Get.defaultDialog(
@@ -272,7 +229,7 @@ class SpendingDetailPage extends GetView<DashboardController> {
                     textCancel: 'Hủy',
                     textConfirm: 'Xóa',
                     confirmTextColor: Colors.white,
-                    buttonColor: const Color(0xFFD32F2F),
+                    buttonColor: AppColors.error,
                     onConfirm: () {
                       controller.spendings.removeWhere((s) => 
                         s.title == spending.title && 
@@ -282,12 +239,12 @@ class SpendingDetailPage extends GetView<DashboardController> {
                       controller.monthlySpendingTotal.value -= spending.amount;
                       controller.spendingCount.value = controller.spendings.length;
 
-                      Get.back(); // close dialog
-                      Get.back(); // return to dashboard
+                      Get.back();
+                      Get.back();
                       Get.snackbar(
                         'Thành công',
                         'Đã xóa khoản chi tiêu thành công',
-                        backgroundColor: const Color(0xFFD32F2F).withValues(alpha: 0.8),
+                        backgroundColor: AppColors.error.withValues(alpha: 0.8),
                         colorText: Colors.white,
                       );
                     },
@@ -297,20 +254,20 @@ class SpendingDetailPage extends GetView<DashboardController> {
                   width: double.infinity,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFBEBEB),
+                    color: AppColors.errorBg,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFFEFD7D7),
+                      color: AppColors.errorBorder,
                       width: 1,
                     ),
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    'Xoá chi tiêu',
+                    'Xóa chi tiêu',
                     style: GoogleFonts.nunito(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFFD32F2F),
+                      color: AppColors.error,
                     ),
                   ),
                 ),
@@ -330,18 +287,17 @@ class SpendingDetailPage extends GetView<DashboardController> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Grey round container for icon
         Container(
           width: 36,
           height: 36,
           decoration: const BoxDecoration(
-            color: Color(0xFFEDEFEF),
+            color: AppColors.inputBg,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Icon(
             icon,
-            color: const Color(0xFF5A7563),
+            color: AppColors.textSecondary,
             size: 18,
           ),
         ),
@@ -351,21 +307,12 @@ class SpendingDetailPage extends GetView<DashboardController> {
           children: [
             Text(
               label,
-              style: GoogleFonts.nunito(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF8A8A8A),
-                letterSpacing: 0.5,
-              ),
+              style: AppTextStyles.small,
             ),
             const SizedBox(height: 2),
             Text(
               value,
-              style: GoogleFonts.nunito(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF0C3D2B),
-              ),
+              style: AppTextStyles.titleMedium,
             ),
           ],
         ),

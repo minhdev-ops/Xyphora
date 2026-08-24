@@ -48,7 +48,7 @@ class PushNotificationPage extends GetView<PushNotificationController> {
                             ),
                             Switch(
                               value: controller.settings[key]!,
-                              activeColor: Colors.white,
+                              activeThumbColor: Colors.white,
                               activeTrackColor: const Color(0xFF0C3D2B), // Gạt sang màu xanh đậm
                               inactiveThumbColor: Colors.white,
                               inactiveTrackColor: const Color(0xFFD0D0D0),

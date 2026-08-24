@@ -15,6 +15,35 @@ class DonutChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (categories.isEmpty) {
+      return StatisticsCardBox(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Theo danh mục",
+              style: GoogleFonts.nunito(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1A4331),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: Text(
+                "Chưa có dữ liệu chi tiêu",
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  color: const Color(0xFF8A8A8A),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      );
+    }
+
     return StatisticsCardBox(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,9 +158,11 @@ class _BarChartCardState extends State<BarChartCard> {
   @override
   Widget build(BuildContext context) {
     final monthlyStats = widget.monthlyStats;
-    final maxValue = monthlyStats
-        .map((stat) => stat.value)
-        .reduce((a, b) => max(a, b));
+    double maxValue = 1.0;
+    if (monthlyStats.isNotEmpty) {
+      final maxVal = monthlyStats.map((stat) => stat.value).reduce((a, b) => max(a, b));
+      if (maxVal > 0) maxValue = maxVal;
+    }
 
     final selected = _selectedIndex;
     final selectedStat = (selected != null && selected < monthlyStats.length)

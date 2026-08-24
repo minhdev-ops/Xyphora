@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Invitation extends Model
 {
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_ACCEPTED = 'accepted';
+
+    public const STATUS_EXPIRED = 'expired';
+
+    public const STATUS_REVOKED = 'revoked';
+
+    protected $table = 'invitations';
+
     protected $primaryKey = 'invitation_id';
 
     public $timestamps = false;
@@ -19,10 +29,13 @@ class Invitation extends Model
         'status',
     ];
 
-    protected $casts = [
-        'expired_at' => 'datetime',
-        'used_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'expired_at' => 'datetime',
+            'used_at' => 'datetime',
+        ];
+    }
 
     public function event(): BelongsTo
     {

@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Participant extends Model
 {
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_REMOVED = 'removed';
+
+    public const STATUS_LEFT = 'left';
+
     protected $primaryKey = 'participant_id';
 
     public $timestamps = false;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../domain/models/faqItem_model.dart';
+import '../../domain/models/faq_item_model.dart';
 
 class SupportFeedbackController extends GetxController {
   var rating = 0.obs;

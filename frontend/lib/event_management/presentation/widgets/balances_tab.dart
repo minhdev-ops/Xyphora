@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../config/app_theme.dart';
+import '../../../config/app_format.dart';
 import '../controllers/event_detail_controller.dart';
 
 class BalancesTab extends GetView<EventDetailController> {
   const BalancesTab({super.key});
-
-  String _formatVND(double amount) {
-    final str = amount.abs().toStringAsFixed(0);
-    final buf = StringBuffer();
-    for (int i = 0; i < str.length; i++) {
-      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
-      buf.write(str[i]);
-    }
-    return '${buf.toString()}đ';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +18,6 @@ class BalancesTab extends GetView<EventDetailController> {
           const SizedBox(height: 8),
           _StatusCard(
             totalOwed: controller.totalOwed,
-            formatVND: _formatVND,
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -33,16 +25,16 @@ class BalancesTab extends GetView<EventDetailController> {
             child: OutlinedButton(
               onPressed: () {},
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF0A4226),
-                side: const BorderSide(color: Color(0xFF0A4226)),
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
+                  borderRadius: AppRadius.rPill,
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: const Text(
+              child: Text(
                 'Xem tất cả gợi ý thanh toán',
-                style: TextStyle(
+                style: GoogleFonts.nunito(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -50,13 +42,9 @@ class BalancesTab extends GetView<EventDetailController> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Số dư',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0A4226),
-            ),
+            style: AppTextStyles.title,
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -67,7 +55,6 @@ class BalancesTab extends GetView<EventDetailController> {
                         child: BalanceItem(
                           name: b.name,
                           amount: b.amount,
-                          formatVND: _formatVND,
                         ),
                       ))
                   .toList(),
@@ -81,11 +68,9 @@ class BalancesTab extends GetView<EventDetailController> {
 
 class _StatusCard extends StatelessWidget {
   final double totalOwed;
-  final String Function(double) formatVND;
 
   const _StatusCard({
     required this.totalOwed,
-    required this.formatVND,
   });
 
   @override
@@ -93,15 +78,9 @@ class _StatusCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.rLg,
+        boxShadow: AppShadow.card,
       ),
       child: Row(
         children: [
@@ -112,25 +91,22 @@ class _StatusCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bạn được nhận ${formatVND(totalOwed)}',
-                  style: const TextStyle(
+                  'Bạn được nhận ${AppFormat.currency(totalOwed)}',
+                  style: GoogleFonts.nunito(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B9B5A),
+                    color: AppColors.success,
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
+                Text(
                   'Xem ai cần trả tiền cho bạn',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF9E9E9E),
-                  ),
+                  style: AppTextStyles.caption,
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Color(0xFF9E9E9E), size: 20),
+          const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
         ],
       ),
     );
@@ -140,47 +116,39 @@ class _StatusCard extends StatelessWidget {
 class BalanceItem extends StatelessWidget {
   final String name;
   final double amount;
-  final String Function(double) formatVND;
 
   const BalanceItem({
     super.key,
     required this.name,
     required this.amount,
-    required this.formatVND,
   });
 
   @override
   Widget build(BuildContext context) {
     final isPositive = amount >= 0;
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final color = isPositive ? const Color(0xFF1B9B5A) : const Color(0xFFFF3B30);
+    final color = isPositive ? AppColors.success : AppColors.error;
     final sign = isPositive ? '+' : '-';
-    final displayAmount = formatVND(amount);
+    final displayAmount = AppFormat.currency(amount);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.rLg,
+        boxShadow: AppShadow.card,
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: const Color(0xFFF0F0F0),
+            backgroundColor: AppColors.inputBg,
             child: Text(
               initial,
-              style: const TextStyle(
+              style: GoogleFonts.nunito(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF555555),
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -188,16 +156,12 @@ class BalanceItem extends StatelessWidget {
           Expanded(
             child: Text(
               name,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
+              style: AppTextStyles.titleMedium,
             ),
           ),
           Text(
             '$sign$displayAmount',
-            style: TextStyle(
+            style: GoogleFonts.nunito(
               fontSize: 15,
               fontWeight: FontWeight.bold,
               color: color,
