@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
+import '../../../config/app_theme.dart';
 import '../controllers/add_expense_controller.dart';
 
 class ExpenseHeader extends GetView<AddExpenseController> {
@@ -24,31 +24,42 @@ class ExpenseHeader extends GetView<AddExpenseController> {
                 width: 44,
                 height: 44,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF2F7F2),
+                  color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.close_rounded,
                   size: 24,
-                  color: Color(0xFF424242),
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              "Thêm Chi Tiêu",
-              style: GoogleFonts.inter(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1D1D1D),
+            Obx(
+              () => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Thêm chi tiêu",
+                    style: AppTextStyles.amountMedium,
+                  ),
+                  if (controller.eventTitle.value != null)
+                    Text(
+                      controller.eventTitle.value!,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption,
+                    ),
+                ],
               ),
             ),
             const Spacer(),
             ElevatedButton(
-              onPressed: () => controller.saveExpense(),
+              onPressed: controller.isSaving.value
+                  ? null
+                  : () => controller.saveExpense(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0C3D2B),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 28,
@@ -58,12 +69,20 @@ class ExpenseHeader extends GetView<AddExpenseController> {
                   borderRadius: BorderRadius.circular(24),
                 ),
               ),
-              child: Text(
-                "Lưu",
-                style: GoogleFonts.nunito(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
+              child: Obx(
+                () => controller.isSaving.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        "Lưu",
+                        style: AppTextStyles.buttonPrimary,
+                      ),
               ),
             ),
           ],

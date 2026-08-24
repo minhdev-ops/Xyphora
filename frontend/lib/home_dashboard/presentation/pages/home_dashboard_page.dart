@@ -1,40 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import '../../../config/app_theme.dart';
+import '../../../config/app_format.dart';
 import '../../../add_expense/presentation/bindings/add_expense_binding.dart';
 import '../../../add_expense/presentation/pages/add_expense_page.dart';
+import '../../../category_list/presentation/bindings/category_list_binding.dart';
+import '../../../category_list/presentation/pages/category_list_page.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../domain/models/transaction_model.dart';
 import '../../domain/models/spending_model.dart';
 import '../widgets/balance_card.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-import 'spending_detail_page.dart';
+import '../../../expense_detail/presentation/bindings/expense_detail_binding.dart';
+import '../../../expense_detail/presentation/pages/expense_detail_page.dart';
 import '../../../notification/presentation/pages/notification_page.dart';
-import '../../../setting/presentation/bindings/settings_binding.dart';
-import '../../../setting/presentation/pages/settings_page.dart';
 
 class HomeDashboardPage extends GetView<DashboardController> {
   const HomeDashboardPage({super.key});
 
-  String _formatCurrency(double amount) {
-    final absAmount = amount.abs().toInt();
-    final str = absAmount.toString();
-    final buffer = StringBuffer();
-    for (int i = 0; i < str.length; i++) {
-      if (i > 0 && (str.length - i) % 3 == 0) {
-        buffer.write('.');
-      }
-      buffer.write(str[i]);
-    }
-    return '${buffer.toString()}đ';
-  }
-
   Color _getAvatarColor(int index) {
     final colors = [
-      const Color(0xFF083C25), // Dark Green 'B'
-      const Color(0xFF004D40), // Dark Teal 'M'
-      const Color(0xFF4A6B82), // Slate Blue 'L'
-      const Color(0xFF2E7D32), // Forest Green 'H'
+      const Color(0xFF083C25),
+      const Color(0xFF004D40),
+      const Color(0xFF4A6B82),
+      const Color(0xFF2E7D32),
     ];
     return colors[index % colors.length];
   }
@@ -42,7 +32,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4FAF6), // Pale light-green background
+      backgroundColor: AppColors.scaffoldBg,
       bottomNavigationBar: const CustomBottomNavBar(initialIndex: 0),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -53,14 +43,10 @@ class HomeDashboardPage extends GetView<DashboardController> {
             duration: const Duration(milliseconds: 300),
           );
         },
-        backgroundColor: const Color(0xFF0C3D2B), // Deep Green FAB
+        backgroundColor: AppColors.primary,
         shape: const CircleBorder(),
         elevation: 4,
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 32,
-        ),
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -78,19 +64,20 @@ class HomeDashboardPage extends GetView<DashboardController> {
               // Dynamic view switcher based on tab selection
               GetBuilder<DashboardController>(
                 builder: (ctrl) {
-                if (ctrl.selectedTab.value == 'my_spending') {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSpendingSummaryCard(ctrl),
-                      const SizedBox(height: 16),
-                      _buildSpendingList(ctrl),
-                    ],
-                  );
-                } else {
-                  return _buildEventList(ctrl);
-                }
-              }),
+                  if (ctrl.selectedTab.value == 'my_spending') {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSpendingSummaryCard(ctrl),
+                        const SizedBox(height: 16),
+                        _buildSpendingList(ctrl),
+                      ],
+                    );
+                  } else {
+                    return _buildEventList(ctrl);
+                  }
+                },
+              ),
               const SizedBox(height: 32),
             ],
           ),
@@ -108,22 +95,15 @@ class HomeDashboardPage extends GetView<DashboardController> {
           children: [
             Text(
               'Xin chào,',
-              style: GoogleFonts.nunito(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF5A7563),
-              ),
+              style: AppTextStyles.bodySecondary,
             ),
             const SizedBox(height: 4),
             GetBuilder<DashboardController>(
               builder: (ctrl) => Text(
-                    '${ctrl.userName.value} 👋',
-                    style: GoogleFonts.nunito(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF0C3D2B),
-                    ),
-                  )),
+                ctrl.userName.value,
+                style: AppTextStyles.heading2,
+              ),
+            ),
           ],
         ),
         const Spacer(),
@@ -139,13 +119,11 @@ class HomeDashboardPage extends GetView<DashboardController> {
         ),
         const SizedBox(width: 12),
         _buildHeaderIcon(
-          icon: Icons.settings_outlined,
+          icon: Icons.category_rounded,
           onTap: () {
             Get.to(
-              () => const SettingsPage(),
-              binding: SettingsBinding(),
-              transition: Transition.rightToLeft,
-              duration: const Duration(milliseconds: 300),
+              () => const CategoryListPage(),
+              binding: CategoryListBinding(),
             );
           },
         ),
@@ -163,25 +141,15 @@ class HomeDashboardPage extends GetView<DashboardController> {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBg,
           shape: BoxShape.circle,
           border: Border.all(
-            color: const Color(0xFFE0E0E0).withValues(alpha: 0.8),
+            color: AppColors.borderLight.withValues(alpha: 0.8),
             width: 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: AppShadow.card,
         ),
-        child: Icon(
-          icon,
-          color: const Color(0xFF5A7563),
-          size: 22,
-        ),
+        child: Icon(icon, color: AppColors.textSecondary, size: 22),
       ),
     );
   }
@@ -191,72 +159,67 @@ class HomeDashboardPage extends GetView<DashboardController> {
       width: double.infinity,
       height: 50,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.rPill,
+        boxShadow: AppShadow.card,
       ),
       child: GetBuilder<DashboardController>(
         builder: (ctrl) {
-        final currentTab = ctrl.selectedTab.value;
-        return Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => ctrl.changeTab('all'),
-                child: Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: currentTab == 'all'
-                        ? const Color(0xFF0C3D2B)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: Text(
-                    'Tất cả',
-                    style: GoogleFonts.nunito(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+          final currentTab = ctrl.selectedTab.value;
+          return Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => ctrl.changeTab('all'),
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
                       color: currentTab == 'all'
-                          ? Colors.white
-                          : const Color(0xFF5A7563),
+                          ? AppColors.primary
+                          : Colors.transparent,
+                      borderRadius: AppRadius.rPill,
+                    ),
+                    child: Text(
+                      'Tất cả',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: currentTab == 'all'
+                            ? Colors.white
+                            : AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => ctrl.changeTab('my_spending'),
-                child: Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: currentTab == 'my_spending'
-                        ? const Color(0xFF0C3D2B)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: Text(
-                    'Chi tiêu của tôi',
-                    style: GoogleFonts.nunito(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => ctrl.changeTab('my_spending'),
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
                       color: currentTab == 'my_spending'
-                          ? Colors.white
-                          : const Color(0xFF5A7563),
+                          ? AppColors.primary
+                          : Colors.transparent,
+                      borderRadius: AppRadius.rPill,
+                    ),
+                    child: Text(
+                      'Chi tiêu của tôi',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: currentTab == 'my_spending'
+                            ? Colors.white
+                            : AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        );
-      }),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -265,15 +228,9 @@ class HomeDashboardPage extends GetView<DashboardController> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.rXl,
+        boxShadow: AppShadow.cardSoft,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -283,21 +240,12 @@ class HomeDashboardPage extends GetView<DashboardController> {
             children: [
               Text(
                 'Tổng tháng này',
-                style: GoogleFonts.nunito(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF5A7563),
-                ),
+                style: AppTextStyles.subtitle,
               ),
               const SizedBox(height: 4),
               Text(
-                _formatCurrency(controller.monthlySpendingTotal.value),
-                style: GoogleFonts.nunito(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF0C3D2B),
-                  letterSpacing: -0.5,
-                ),
+                AppFormat.currency(controller.monthlySpendingTotal.value),
+                style: AppTextStyles.amountLarge,
               ),
             ],
           ),
@@ -306,20 +254,12 @@ class HomeDashboardPage extends GetView<DashboardController> {
             children: [
               Text(
                 'Số khoản',
-                style: GoogleFonts.nunito(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF5A7563),
-                ),
+                style: AppTextStyles.subtitle,
               ),
               const SizedBox(height: 4),
               Text(
                 '${controller.spendingCount.value}',
-                style: GoogleFonts.nunito(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF0C3D2B),
-                ),
+                style: AppTextStyles.amountLarge,
               ),
             ],
           ),
@@ -336,11 +276,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
           padding: const EdgeInsets.only(top: 40.0),
           child: Text(
             'Không có dữ liệu chi tiêu',
-            style: GoogleFonts.nunito(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF5A7563),
-            ),
+            style: AppTextStyles.titleMedium,
           ),
         ),
       );
@@ -355,7 +291,8 @@ class HomeDashboardPage extends GetView<DashboardController> {
         final SpendingModel item = list[index];
         return GestureDetector(
           onTap: () => Get.to(
-            () => SpendingDetailPage(spending: item),
+            () => ExpenseDetailPage(expenseId: item.expenseId),
+            binding: ExpenseDetailBinding(item.expenseId),
             transition: Transition.rightToLeft,
             duration: const Duration(milliseconds: 300),
           ),
@@ -363,15 +300,9 @@ class HomeDashboardPage extends GetView<DashboardController> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              color: AppColors.cardBg,
+              borderRadius: AppRadius.rXl,
+              boxShadow: AppShadow.cardSoft,
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -381,14 +312,10 @@ class HomeDashboardPage extends GetView<DashboardController> {
                   height: 44,
                   decoration: BoxDecoration(
                     color: item.bgThemeColor,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: AppRadius.rMd,
                   ),
                   alignment: Alignment.center,
-                  child: Icon(
-                    item.icon,
-                    color: item.themeColor,
-                    size: 22,
-                  ),
+                  child: Icon(item.icon, color: item.themeColor, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -397,38 +324,32 @@ class HomeDashboardPage extends GetView<DashboardController> {
                     children: [
                       Text(
                         item.title,
-                        style: GoogleFonts.nunito(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0C3D2B),
-                        ),
+                        style: AppTextStyles.titleMedium,
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: item.bgThemeColor,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: AppRadius.rXs,
                             ),
                             child: Text(
                               item.category,
-                              style: GoogleFonts.nunito(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: item.themeColor,
-                              ),
+                              style: AppTextStyles.badge,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            item.date,
-                            style: GoogleFonts.nunito(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF5A7563),
+                          Expanded(
+                            child: Text(
+                              item.date,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.caption,
                             ),
                           ),
                         ],
@@ -441,17 +362,13 @@ class HomeDashboardPage extends GetView<DashboardController> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _formatCurrency(item.amount),
-                      style: GoogleFonts.nunito(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0C3D2B),
-                      ),
+                      AppFormat.currency(item.amount),
+                      style: AppTextStyles.amountSmall,
                     ),
                     const SizedBox(width: 6),
                     const Icon(
                       Icons.arrow_forward_ios_rounded,
-                      color: Color(0xFF8A8A8A),
+                      color: AppColors.textTertiary,
                       size: 12,
                     ),
                   ],
@@ -472,11 +389,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
           padding: const EdgeInsets.only(top: 40.0),
           child: Text(
             'Không có dữ liệu hiển thị',
-            style: GoogleFonts.nunito(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF5A7563),
-            ),
+            style: AppTextStyles.titleMedium,
           ),
         ),
       );
@@ -498,15 +411,9 @@ class HomeDashboardPage extends GetView<DashboardController> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.rXl,
+        boxShadow: AppShadow.cardSoft,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -517,20 +424,12 @@ class HomeDashboardPage extends GetView<DashboardController> {
               children: [
                 Text(
                   tx.title,
-                  style: GoogleFonts.nunito(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF0C3D2B),
-                  ),
+                  style: AppTextStyles.title,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${tx.date} • ${tx.memberCount} thành viên',
-                  style: GoogleFonts.nunito(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF5A7563),
-                  ),
+                  '${tx.date} - ${tx.memberCount} thành viên',
+                  style: AppTextStyles.subtitle,
                 ),
                 const SizedBox(height: 12),
                 _buildAvatarRow(tx),
@@ -545,7 +444,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
               const SizedBox(width: 8),
               const Icon(
                 Icons.arrow_forward_ios_rounded,
-                color: Color(0xFF8A8A8A),
+                color: AppColors.textTertiary,
                 size: 14,
               ),
             ],
@@ -596,7 +495,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: const Color(0xFFD9E8DF),
+              color: AppColors.primarySubtle,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 1.5),
             ),
@@ -606,7 +505,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
               style: GoogleFonts.nunito(
                 fontSize: 9,
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF0C3D2B),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -617,10 +516,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
     return SizedBox(
       height: 24,
       width: (displayCount + (tx.memberCount > limit ? 1 : 0)) * 18.0 + 8.0,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: avatarWidgets,
-      ),
+      child: Stack(clipBehavior: Clip.none, children: avatarWidgets),
     );
   }
 
@@ -629,24 +525,24 @@ class HomeDashboardPage extends GetView<DashboardController> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFFD9E8DF),
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.primarySubtle,
+          borderRadius: AppRadius.rSm,
         ),
         child: Text(
           'Đã xong',
           style: GoogleFonts.nunito(
             fontSize: 12,
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF0C3D2B),
+            color: AppColors.primary,
           ),
         ),
       );
     }
 
     final isBorrow = tx.status == TransactionStatus.borrow;
-    final color = isBorrow ? const Color(0xFFD32F2F) : const Color(0xFF0C3D2B);
+    final color = isBorrow ? AppColors.error : AppColors.primary;
     final sign = isBorrow ? '-' : '+';
-    final amountText = _formatCurrency(tx.amount);
+    final amountText = AppFormat.currency(tx.amount);
     final statusText = isBorrow ? 'bạn nợ' : 'bạn được nhận';
 
     return Column(
@@ -664,11 +560,7 @@ class HomeDashboardPage extends GetView<DashboardController> {
         const SizedBox(height: 2),
         Text(
           statusText,
-          style: GoogleFonts.nunito(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF5A7563),
-          ),
+          style: AppTextStyles.caption,
         ),
       ],
     );

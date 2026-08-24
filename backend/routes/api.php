@@ -1,9 +1,11 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\ExpenseController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,9 +28,28 @@ Route::post('/auth/google', [AuthController::class, 'googleLogin']);
 // Protected routes (Requires token)
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-    
+    Route::get('/home/dashboard', [DashboardController::class, 'home']);
+    Route::get('/dashboard', [DashboardController::class, 'home']);
+
+    Route::get('/events', [EventController::class, 'index']);
+    Route::post('/events', [EventController::class, 'store']);
+    Route::get('/events/{event}', [EventController::class, 'show']);
+    Route::post('/expenses/create', [ExpenseController::class, 'create']);
+    Route::get('/expenses', [ExpenseController::class, 'index']);
+    Route::get('/expenses/{expense}', [ExpenseController::class, 'show']);
+    Route::get('/categories', [ExpenseController::class, 'categories']);
+    Route::post('/categories', [ExpenseController::class, 'storeCategory']);
+    Route::put('/categories/{category}', [ExpenseController::class, 'updateCategory']);
+    Route::delete('/categories/{category}', [ExpenseController::class, 'deleteCategory']);
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::post('/events/join', [EventController::class, 'join']);
+    Route::post('/events/join/claim', [EventController::class, 'claim']);
+    Route::get('/events/{event}/invite', [EventController::class, 'invite']);
+
+    Route::put('/events/{event}', [EventController::class, 'update']);
+    Route::delete('/events/{event}', [EventController::class, 'destroy']);
 });

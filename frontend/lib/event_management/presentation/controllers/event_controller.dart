@@ -1,13 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import '../../../auth/data/auth_service.dart';
 import '../../data/repositories/event_repository.dart';
 import '../../domain/models/event_model.dart';
 
 class EventController extends GetxController {
   final EventRepository _repository;
+  final AuthService _authService = Get.find<AuthService>();
 
   EventController(this._repository);
 
-  final String myUserId = 'user_1';
+  String myUserId = '';
 
   final RxList<EventModel> events = <EventModel>[].obs;
   final RxString currentFilter = 'Tất cả'.obs;
@@ -51,8 +54,13 @@ class EventController extends GetxController {
   Future<void> loadEvents({String? token}) async {
     isLoading.value = true;
     try {
-      final result = await _repository.getEvents(token: token);
+      final authToken = token ?? await _authService.getToken();
+      final user = await _authService.getCurrentUser();
+      if (user != null) myUserId = user.id;
+      final result = await _repository.getEvents(token: authToken);
       events.assignAll(result);
+    } catch (e) {
+      debugPrint('EventController.loadEvents error: $e');
     } finally {
       isLoading.value = false;
     }
@@ -60,5 +68,18 @@ class EventController extends GetxController {
 
   void addEvent(EventModel event) {
     events.insert(0, event);
+  }
+
+  void updateEvent(EventModel event) {
+    final index = events.indexWhere((e) => e.id == event.id);
+    if (index != -1) {
+      events[index] = event;
+    } else {
+      events.insert(0, event);
+    }
+  }
+
+  void removeEvent(String eventId) {
+    events.removeWhere((e) => e.id == eventId);
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import '../../../config/app_theme.dart';
 import '../controllers/profile_controller.dart';
 
 class MascotStyleCard extends StatelessWidget {
@@ -14,15 +14,9 @@ class MascotStyleCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.rXl,
+        boxShadow: AppShadow.cardSoft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,12 +29,8 @@ class MascotStyleCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Phong cách Linh vật',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1D1D1D),
-                  ),
+                  'Phong cach Linh vat',
+                  style: AppTextStyles.title,
                 ),
                 Obx(() => AnimatedRotation(
                   turns: controller.isMascotExpanded.value ? 0.5 : 0,
@@ -63,9 +53,9 @@ class MascotStyleCard extends StatelessWidget {
                 children: [
                   _buildMascotOption(controller, 0, const Color(0xFFFFCA28)),
                   const SizedBox(width: 16),
-                  _buildMascotOption(controller, 1, const Color(0xFF0F5C43)),
+                  _buildMascotOption(controller, 1, AppColors.primary),
                   const SizedBox(width: 16),
-                  _buildMascotOption(controller, 2, const Color(0xFFE53935)),
+                  _buildMascotOption(controller, 2, AppColors.error),
                 ],
               ),
             ),
@@ -93,13 +83,13 @@ class MascotStyleCard extends StatelessWidget {
           color: accentColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0F5C43) : Colors.transparent,
+            color: isSelected ? AppColors.primary : Colors.transparent,
             width: 2.5,
           ),
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: const Color(0xFF0F5C43).withValues(alpha: 0.2),
+                color: AppColors.primary.withValues(alpha: 0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),

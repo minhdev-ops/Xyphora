@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/auth_service.dart';
+import '../../../home_dashboard/presentation/controllers/dashboard_controller.dart';
 import '../../../home_dashboard/presentation/pages/home_dashboard_page.dart';
 import '../pages/login_pages.dart';
 
@@ -67,6 +68,9 @@ class AuthController extends GetxController {
 
     if (result['success']) {
       clearFields();
+      // Xoa controller dashboard cu (duoc tao tu luc chua dang nhap,
+      // da fetch voi token=NULL) de no duoc tao lai va fetch voi token moi
+      await Get.delete<DashboardController>(force: true);
       Get.offAll(
         () => const HomeDashboardPage(),
         transition: Transition.fadeIn,
@@ -91,6 +95,7 @@ class AuthController extends GetxController {
 
     if (result['success']) {
       clearFields();
+      await Get.delete<DashboardController>(force: true);
       Get.offAll(
         () => const HomeDashboardPage(),
         transition: Transition.fadeIn,

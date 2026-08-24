@@ -138,7 +138,7 @@ class AccountSecurityPage extends GetView<AccountSecurityController> {
                             ),
                             Obx(() => Switch(
                               value: controller.is2FA.value,
-                              activeColor: Colors.white,
+                              activeThumbColor: Colors.white,
                               activeTrackColor: const Color(0xFF0C3D2B), // Xanh đậm
                               inactiveThumbColor: Colors.white,
                               inactiveTrackColor: const Color(0xFFD0D0D0),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/app_theme.dart';
 
 class CategoryCard extends StatelessWidget {
   const CategoryCard({super.key});
@@ -10,15 +10,9 @@ class CategoryCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.rXl,
+        boxShadow: AppShadow.cardSoft,
       ),
       child: Row(
         children: [
@@ -26,29 +20,25 @@ class CategoryCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFF4FAF6),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.scaffoldBg,
+              borderRadius: AppRadius.rSm,
             ),
             child: const Icon(
               Icons.list_alt_rounded,
-              color: Color(0xFF0F5C43),
+              color: AppColors.primary,
               size: 22,
             ),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
-              'Quản lý danh mục',
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1D1D1D),
-              ),
+              'Quan ly danh muc',
+              style: AppTextStyles.titleMedium,
             ),
           ),
           const Icon(
             Icons.chevron_right_rounded,
-            color: Color(0xFF8A8A8A),
+            color: AppColors.textTertiary,
             size: 22,
           ),
         ],

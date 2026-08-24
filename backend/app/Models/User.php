@@ -9,7 +9,7 @@ use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
@@ -21,9 +21,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'photo_id', // Thêm trường avatar
-        'language', // Thêm trường ngôn ngữ
-        'notifications_enabled', // Thêm trường thông báo
+        'avatar',
+        'provider',
+        'status',
     ];
     // Thêm relationship liên kết với bảng Photo
     public function photo()
@@ -53,5 +53,17 @@ class User extends Authenticatable
             'password' => 'hashed',
             'notifications_enabled' => 'boolean', // Ép kiểu boolean
         ];
+    }
+
+    public function participatingEvents(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Event::class,
+            Participant::class,
+            'user_id',
+            'event_id',
+            'id',
+            'event_id'
+        );
     }
 }

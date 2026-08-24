@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../config/app_theme.dart';
 
 class LogoutButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -14,15 +15,15 @@ class LogoutButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
+          color: AppColors.cardBg,
+          borderRadius: AppRadius.rPill,
           border: Border.all(
-            color: const Color(0xFF0F5C43),
+            color: AppColors.primary,
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0F5C43).withValues(alpha: 0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -30,11 +31,11 @@ class LogoutButton extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            'Đăng xuất',
-            style: GoogleFonts.inter(
+            'Dang xuat',
+            style: GoogleFonts.nunito(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF0F5C43),
+              color: AppColors.primary,
             ),
           ),
         ),

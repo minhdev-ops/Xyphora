@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../config/app_theme.dart';
 import '../controllers/profile_controller.dart';
 
 class ThemeModeCard extends StatelessWidget {
@@ -11,7 +12,7 @@ class ThemeModeCard extends StatelessWidget {
     final ProfileController controller = Get.find<ProfileController>();
 
     final List<Color> colors = const [
-      Color(0xFF0F5C43),
+      AppColors.primary,
       Color(0xFF1976D2),
       Color(0xFF424242),
     ];
@@ -20,15 +21,9 @@ class ThemeModeCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.rXl,
+        boxShadow: AppShadow.cardSoft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,12 +32,8 @@ class ThemeModeCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Đổi chế độ',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1D1D1D),
-                ),
+                'Doi che do',
+                style: AppTextStyles.title,
               ),
               Obx(() => Transform.scale(
                 scale: 0.85,
@@ -52,7 +43,7 @@ class ThemeModeCard extends StatelessWidget {
                     controller.isDarkMode.value = value;
                   },
                   activeThumbColor: Colors.white,
-                  activeTrackColor: const Color(0xFF0F5C43),
+                  activeTrackColor: AppColors.primary,
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: const Color(0xFFD0D0D0),
                 ),
@@ -69,19 +60,19 @@ class ThemeModeCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
+                    color: AppColors.successBg,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: const Color(0xFF0F5C43),
+                      color: AppColors.primary,
                       width: 1.5,
                     ),
                   ),
                   child: Text(
-                    'Xanh lá - Sinh thái',
-                    style: GoogleFonts.inter(
+                    'Xanh la - Sinh thai',
+                    style: GoogleFonts.nunito(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF0F5C43),
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
