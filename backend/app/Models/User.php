@@ -21,7 +21,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'photo_id', // Thêm trường avatar
+        'language', // Thêm trường ngôn ngữ
+        'notifications_enabled', // Thêm trường thông báo
     ];
+    // Thêm relationship liên kết với bảng Photo
+    public function photo()
+    {
+        return $this->belongsTo(Photo::class, 'photo_id', 'photo_id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -43,6 +51,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'notifications_enabled' => 'boolean', // Ép kiểu boolean
         ];
     }
 }
