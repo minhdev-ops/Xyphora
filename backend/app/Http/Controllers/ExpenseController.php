@@ -333,6 +333,44 @@ class ExpenseController extends Controller
         ], 200);
     }
 
+    public function destroy(Request $request, int $expense)
+    {
+        $expense = Expense::findOrFail($expense);
+
+        if ($expense->is_deleted) {
+            return response()->json([
+                'message' => 'Chi tiêu này đã bị xóa.',
+            ], 404);
+        }
+
+        $user = $request->user();
+
+        if ($expense->event_id === null) {
+            // Chi tieu ca nhan: chi nguoi tao moi duoc xoa
+            if ($expense->created_by !== $user->id) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền xóa chi tiêu này.',
+                ], 403);
+            }
+        } else {
+            // Chi tieu nhom: owner su kien hoac nguoi tao expense
+            $event = Event::find($expense->event_id);
+            $isOwner = $event && $event->owner_id === $user->id;
+            if (! $isOwner && $expense->created_by !== $user->id) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền xóa chi tiêu này.',
+                ], 403);
+            }
+        }
+
+        $expense->update(['is_deleted' => true]);
+
+        return response()->json([
+            'message' => 'Xóa chi tiêu thành công',
+            'success' => true,
+        ], 200);
+    }
+
     public function index(Request $request)
     {
         $request->validate([
