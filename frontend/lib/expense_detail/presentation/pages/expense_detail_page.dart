@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../add_expense/domain/models/expense_model.dart';
+import '../../../add_expense/presentation/pages/edit_expense_page.dart';
 import '../../../config/category_icons.dart';
 import '../../../event_management/presentation/pages/event_detail_view.dart';
 import '../../domain/models/expense_detail.dart';
@@ -53,7 +55,8 @@ class ExpenseDetailPage extends GetView<ExpenseDetailController> {
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
               onTap: () {
-                Get.snackbar('Tùy chọn', 'Chức năng đang được phát triển');
+                final ctrl = Get.find<ExpenseDetailController>();
+                _showOptionsSheet(context, ctrl);
               },
               child: Container(
                 width: 40,
@@ -603,6 +606,130 @@ class ExpenseDetailPage extends GetView<ExpenseDetailController> {
           color: textColor,
         ),
       ),
+    );
+  }
+
+  void _showOptionsSheet(BuildContext context, ExpenseDetailController ctrl) {
+    final detail = ctrl.detail.value;
+    if (detail == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD0D0D0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_rounded, color: Color(0xFF0C3D2B)),
+                title: Text(
+                  'Chỉnh sửa',
+                  style: GoogleFonts.nunito(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0C3D2B),
+                  ),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await Get.to<ExpenseModel>(
+                    () => const EditExpensePage(),
+                    arguments: {
+                      'id': '${detail.expenseId}',
+                      'title': detail.title,
+                      'amount': detail.amount,
+                      'currency': detail.currency,
+                      'category': detail.categoryName ?? '',
+                      'note': detail.description ?? '',
+                      'date': detail.expenseDate ?? '',
+                      'event_id': detail.eventId,
+                      'event_title': detail.eventTitle,
+                    },
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
+                  if (result != null) {
+                    ctrl.loadDetail();
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded, color: Color(0xFFD32F2F)),
+                title: Text(
+                  'Xóa',
+                  style: GoogleFonts.nunito(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFD32F2F),
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmDelete(context, ctrl, detail);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(
+    BuildContext context,
+    ExpenseDetailController ctrl,
+    ExpenseDetail detail,
+  ) {
+    Get.defaultDialog(
+      title: 'Xóa chi tiêu',
+      titleStyle: GoogleFonts.nunito(
+        fontSize: 18,
+        fontWeight: FontWeight.w900,
+        color: const Color(0xFF0C3D2B),
+      ),
+      middleText: 'Bạn có chắc chắn muốn xóa "${detail.title}"?',
+      middleTextStyle: GoogleFonts.nunito(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFF5A7563),
+      ),
+      textCancel: 'Hủy',
+      textConfirm: 'Xóa',
+      confirmTextColor: Colors.white,
+      buttonColor: const Color(0xFFD32F2F),
+      onConfirm: () async {
+        Navigator.pop(context);
+        final success = await ctrl.deleteExpense();
+        if (success) {
+          Get.back();
+          Get.snackbar(
+            'Thành công',
+            'Đã xóa chi tiêu',
+            backgroundColor: const Color(0xFFD32F2F).withValues(alpha: 0.8),
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'Lỗi',
+            'Không thể xóa chi tiêu',
+            backgroundColor: Colors.redAccent,
+            colorText: Colors.white,
+          );
+        }
+      },
     );
   }
 }

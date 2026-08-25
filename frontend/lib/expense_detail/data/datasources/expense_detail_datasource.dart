@@ -44,4 +44,23 @@ class ExpenseDetailDatasource {
 
     throw Exception(message);
   }
+
+  Future<Map<String, dynamic>> deleteExpense(int expenseId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/expenses/$expenseId/delete'),
+        headers: await _headers(),
+      );
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': body['message']};
+      }
+
+      return {'success': false, 'message': body['message'] ?? 'Không thể xóa'};
+    } catch (e) {
+      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+    }
+  }
 }
