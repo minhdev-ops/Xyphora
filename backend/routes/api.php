@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\StatisticsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/categories', [ExpenseController::class, 'storeCategory']);
     Route::put('/categories/{category}', [ExpenseController::class, 'updateCategory']);
     Route::delete('/categories/{category}', [ExpenseController::class, 'deleteCategory']);
+
+    Route::get('/statistics/general', [StatisticsController::class, 'general']);
 
     Route::get('/user', function (Request $request) {
         return $request->user();
