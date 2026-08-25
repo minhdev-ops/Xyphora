@@ -50,7 +50,7 @@ class StatisticsController extends Controller
         $total = (float) $expenses->sum('amount');
 
         $palette = [
-            0x4CAF50, 0x3B82F6, 0x8B5CF6, 0xF59E0B, 0xEF4444, 0x10B981, 0xEC4899,
+            0xFF4CAF50, 0xFF3B82F6, 0xFF8B5CF6, 0xFFF59E0B, 0xFFEF4444, 0xFF10B981, 0xFFEC4899,
         ];
 
         $byCategory = [];
