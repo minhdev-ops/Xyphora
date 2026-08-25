@@ -24,7 +24,7 @@ class ExpenseController extends Controller
             'currency' => 'nullable|string|size:3',
             'description' => 'nullable|string|max:500',
             'expense_date' => 'nullable|date',
-            'split_method' => 'nullable|in:equal,exact,percentage,share',
+            'split_method' => 'nullable|in:equal,percent,amount,exact,percentage,share',
             'payer_id' => 'nullable|integer|exists:participants,participant_id',
             'payer_ids' => 'nullable|array',
             'payer_ids.*' => 'integer|exists:participants,participant_id',
@@ -131,7 +131,13 @@ class ExpenseController extends Controller
             ]);
         }
 
-        $splitMethod = $request->split_method ?? Expense::SPLIT_EQUAL;
+        $rawMethod = $request->input('split_method', 'equal');
+        $splitMethod = match ($rawMethod) {
+            'percent', 'percentage' => Expense::SPLIT_PERCENTAGE,
+            'amount', 'exact' => Expense::SPLIT_EXACT,
+            'share' => Expense::SPLIT_SHARE,
+            default => Expense::SPLIT_EQUAL,
+        };
         $expenseDate = $request->expense_date ?? now()->toDateString();
         $title = mb_substr(
             $request->filled('title') ? $request->title : 'Chi tiêu mới',
