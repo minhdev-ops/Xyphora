@@ -84,7 +84,7 @@ class EventDetailController extends GetxController {
 
   String payerName(String payerId) {
     final p =
-        event.value.participants.firstWhereOrNull((p) => p.userId == payerId);
+        event.value.participants.firstWhereOrNull((p) => p.id == payerId);
     if (p == null) return 'Unknown';
     final name = p.user?.name ?? p.displayName;
     return name.isNotEmpty ? name : 'Unknown';

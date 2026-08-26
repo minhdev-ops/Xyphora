@@ -1,29 +1,29 @@
 import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:uni_links/uni_links.dart';
 import '../event_management/presentation/pages/join_event_page.dart';
 
 class DeepLinkService {
   static const String scheme = 'xyphora';
-  static StreamSubscription<String?>? _subscription;
+  static StreamSubscription<Uri>? _subscription;
 
   static Future<void> init() async {
     try {
-      final initial = await getInitialLink();
+      final appLinks = AppLinks();
+      final initial = await appLinks.getInitialLink();
       _handle(initial);
-      _subscription = linkStream.listen(_handle);
+      _subscription = appLinks.uriLinkStream.listen(_handle);
     } catch (e) {
       debugPrint('DeepLinkService.init error: $e');
     }
   }
 
-  static void _handle(String? link) {
-    debugPrint('DeepLinkService: received $link');
-    if (link == null) return;
+  static void _handle(Uri? uri) {
+    debugPrint('DeepLinkService: received $uri');
+    if (uri == null) return;
 
-    final uri = Uri.tryParse(link);
-    if (uri == null || uri.scheme != scheme) return;
+    if (uri.scheme != scheme) return;
 
     if (uri.host == 'join') {
       final token = uri.queryParameters['token'];

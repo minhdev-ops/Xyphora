@@ -50,6 +50,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/events/join/claim', [EventController::class, 'claim']);
     Route::get('/events/{event}/invite', [EventController::class, 'invite']);
 
+    Route::post('/events/{event}/expenses', [ExpenseController::class, 'storeForEvent']);
     Route::put('/events/{event}', [EventController::class, 'update']);
     Route::delete('/events/{event}', [EventController::class, 'destroy']);
 });

@@ -163,4 +163,63 @@ class AddExpenseDatasource {
       return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
     }
   }
+
+  Future<Map<String, dynamic>> createEventExpense({
+    required int eventId,
+    int? categoryId,
+    required String title,
+    required double amount,
+    String currency = 'VND',
+    String? description,
+    String? expenseDate,
+    String? splitMethod,
+    List<int> payerIds = const [],
+    List<Map<String, dynamic>> splits = const [],
+  }) async {
+    try {
+      final token = await TokenStorage.read();
+      if (token == null) {
+        return {'success': false, 'message': 'Chưa đăng nhập'};
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/events/$eventId/expenses'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'category_id': ?categoryId,
+          'title': title,
+          'amount': amount,
+          'currency': currency,
+          if (description != null && description.isNotEmpty)
+            'description': description,
+          'expense_date': ?expenseDate,
+          'split_method': ?splitMethod,
+          if (payerIds.isNotEmpty) 'payer_ids': payerIds,
+          if (splits.isNotEmpty) 'splits': splits,
+        }),
+      );
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 201) {
+        return {'success': true, 'message': body['message'], 'data': body['data']};
+      }
+
+      String errorMsg = body['message'] ?? 'Dữ liệu không hợp lệ';
+      final rawErrors = body['errors'];
+      if (rawErrors is Map<String, dynamic> && rawErrors.isNotEmpty) {
+        final first = rawErrors.values.first;
+        if (first is List && first.isNotEmpty) {
+          errorMsg = first.first.toString();
+        }
+      }
+      return {'success': false, 'message': errorMsg};
+    } catch (e) {
+      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+    }
+  }
 }

@@ -236,6 +236,216 @@ class ExpenseController extends Controller
         ], 201);
     }
 
+    public function storeForEvent(Request $request, Event $event)
+    {
+        $request->validate([
+            'category_id' => 'nullable|integer|exists:categories,category_id',
+            'title' => 'nullable|string|max:150',
+            'amount' => 'required|numeric|gt:0',
+            'currency' => 'nullable|string|size:3',
+            'description' => 'nullable|string|max:500',
+            'expense_date' => 'nullable|date',
+            'split_method' => 'nullable|in:equal,exact,percentage,share',
+            'payer_id' => 'nullable|integer|exists:participants,participant_id',
+            'payer_ids' => 'nullable|array',
+            'payer_ids.*' => 'integer|exists:participants,participant_id',
+            'splits' => 'nullable|array',
+        ], [
+            'category_id.exists' => 'Danh mục không tồn tại.',
+            'amount.required' => 'Vui lòng nhập số tiền.',
+            'amount.gt' => 'Số tiền phải lớn hơn 0.',
+            'title.max' => 'Tiêu đề không được quá 150 ký tự.',
+            'description.max' => 'Mô tả không được quá 500 ký tự.',
+            'split_method.in' => 'Phương thức chia tiền không hợp lệ.',
+        ]);
+
+        $user = $request->user();
+
+        $isOwner = $event->owner_id === $user->id;
+        $userParticipant = Participant::where('event_id', $event->event_id)
+            ->where('user_id', $user->id)
+            ->where('status', Participant::STATUS_ACTIVE)
+            ->first();
+
+        if (! $isOwner && ! $userParticipant) {
+            return response()->json([
+                'message' => 'Bạn không phải thành viên của sự kiện này.',
+            ], 403);
+        }
+
+        // Xac dinh nguoi tra
+        $payerIds = [];
+        if ($request->filled('payer_ids')) {
+            $payerIds = Participant::whereIn('participant_id', $request->payer_ids)
+                ->where('event_id', $event->event_id)
+                ->where('status', Participant::STATUS_ACTIVE)
+                ->pluck('participant_id')
+                ->all();
+
+            if (empty($payerIds)) {
+                return response()->json([
+                    'message' => 'Người trả không hợp lệ cho sự kiện này.',
+                ], 422);
+            }
+        } elseif ($request->filled('payer_id')) {
+            $payer = Participant::where('participant_id', $request->payer_id)
+                ->where('event_id', $event->event_id)
+                ->where('status', Participant::STATUS_ACTIVE)
+                ->first();
+
+            if (! $payer) {
+                return response()->json([
+                    'message' => 'Người trả không hợp lệ cho sự kiện này.',
+                ], 422);
+            }
+
+            $payerIds = [$payer->participant_id];
+        } else {
+            if (! $userParticipant) {
+                return response()->json([
+                    'message' => 'Bạn chưa tham gia sự kiện này.',
+                ], 403);
+            }
+
+            $payerIds = [$userParticipant->participant_id];
+        }
+
+        // Category
+        $category = null;
+        if ($request->filled('category_id')) {
+            $category = Category::where('category_id', $request->category_id)
+                ->where('type', Category::TYPE_EXPENSE)
+                ->where(function ($q) use ($user) {
+                    $q->where('is_default', true)
+                        ->orWhere('created_by', $user->id);
+                })
+                ->first();
+
+            if (! $category) {
+                return response()->json([
+                    'message' => 'Danh mục không hợp lệ.',
+                ], 422);
+            }
+        }
+
+        if (! $category) {
+            $category = Category::where('type', Category::TYPE_EXPENSE)
+                ->where('is_default', true)
+                ->orderBy('category_id')
+                ->first();
+        }
+
+        if (! $category) {
+            $category = Category::create([
+                'name' => 'Khác',
+                'icon' => 'receipt',
+                'type' => Category::TYPE_EXPENSE,
+                'is_default' => true,
+            ]);
+        }
+
+        $splitMethod = $request->split_method ?? Expense::SPLIT_EQUAL;
+        $expenseDate = $request->expense_date ?? now()->toDateString();
+        $title = mb_substr(
+            $request->filled('title') ? $request->title : 'Chi tiêu mới',
+            0,
+            150
+        );
+
+        $expense = DB::transaction(function () use (
+            $request,
+            $event,
+            $user,
+            $payerIds,
+            $category,
+            $splitMethod,
+            $expenseDate,
+            $title
+        ) {
+            $payer = Participant::find($payerIds[0]);
+
+            $expense = Expense::create([
+                'event_id' => $event->event_id,
+                'created_by' => $user->id,
+                'payer_id' => $payer->participant_id,
+                'category_id' => $category->category_id,
+                'title' => $title,
+                'description' => $request->description,
+                'amount' => $request->amount,
+                'currency' => $request->currency ?? 'VND',
+                'expense_date' => $expenseDate,
+                'expense_type' => 'expense',
+                'split_method' => $splitMethod,
+                'note' => $request->description,
+                'is_deleted' => false,
+            ]);
+
+            $totalAmount = (float) $request->amount;
+
+            // Ghi nguoi tra (nhieu nguoi thi chia deu so tien phai tra)
+            $perPayer = round($totalAmount / count($payerIds), 2);
+            $remaining = $totalAmount;
+            foreach ($payerIds as $index => $participantId) {
+                $isLast = $index === count($payerIds) - 1;
+                $payerAmount = $isLast ? round($remaining, 2) : $perPayer;
+
+                ExpensePayer::create([
+                    'expense_id' => $expense->expense_id,
+                    'participant_id' => $participantId,
+                    'amount' => $payerAmount,
+                ]);
+
+                $remaining -= $perPayer;
+            }
+
+            // Chia tien theo phuong thuc da chon
+            $splits = $this->buildSplits(
+                $event,
+                $totalAmount,
+                $splitMethod,
+                $request->input('splits', [])
+            );
+
+            foreach ($splits as $split) {
+                ExpenseSplit::create([
+                    'expense_id' => $expense->expense_id,
+                    'participant_id' => $split['participant_id'],
+                    'amount' => $split['amount'],
+                    'status' => ExpenseSplit::STATUS_PENDING,
+                ]);
+            }
+
+            // Thong bao cho cac thanh vien khac
+            $this->notifyParticipants($event, $user, $expense);
+
+            return $expense;
+        });
+
+        return response()->json([
+            'message' => 'Thêm chi tiêu thành công',
+            'data' => [
+                'expense_id' => $expense->expense_id,
+                'event_id' => $expense->event_id,
+                'title' => $expense->title,
+                'amount' => (float) $expense->amount,
+                'currency' => $expense->currency,
+                'description' => $expense->description,
+                'expense_date' => $expense->expense_date,
+                'split_method' => $expense->split_method,
+                'category' => $category->name,
+                'payers' => $expense->payers()
+                    ->with('participant')
+                    ->get()
+                    ->map(fn (ExpensePayer $p) => [
+                        'participant_id' => $p->participant_id,
+                        'user_id' => $p->participant?->user_id,
+                        'display_name' => $p->participant?->display_name,
+                        'amount' => (float) $p->amount,
+                    ]),
+            ],
+        ], 201);
+    }
+
     public function index(Request $request)
     {
         $request->validate([

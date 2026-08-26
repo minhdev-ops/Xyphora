@@ -42,4 +42,30 @@ class AddExpenseRepository {
       splits: splits,
     );
   }
+
+  Future<Map<String, dynamic>> saveEventExpense({
+    required int eventId,
+    int? categoryId,
+    required String title,
+    required double amount,
+    String currency = 'VND',
+    String? description,
+    String? expenseDate,
+    String? splitMethod,
+    List<int> payerIds = const [],
+    List<Map<String, dynamic>> splits = const [],
+  }) {
+    return _datasource.createEventExpense(
+      eventId: eventId,
+      categoryId: categoryId,
+      title: title,
+      amount: amount,
+      currency: currency,
+      description: description,
+      expenseDate: expenseDate,
+      splitMethod: splitMethod,
+      payerIds: payerIds,
+      splits: splits,
+    );
+  }
 }
