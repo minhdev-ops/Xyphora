@@ -7,4 +7,8 @@ class ExpenseDetailRepository {
   Future<ExpenseDetail> fetchExpenseDetail(int expenseId) {
     return _datasource.fetchExpenseDetail(expenseId);
   }
+
+  Future<Map<String, dynamic>> deleteExpense(int expenseId) {
+    return _datasource.deleteExpense(expenseId);
+  }
 }
