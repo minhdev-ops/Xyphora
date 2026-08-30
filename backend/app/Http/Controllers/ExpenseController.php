@@ -24,7 +24,7 @@ class ExpenseController extends Controller
             'currency' => 'nullable|string|size:3',
             'description' => 'nullable|string|max:500',
             'expense_date' => 'nullable|date',
-            'split_method' => 'nullable|in:equal,exact,percentage,share',
+            'split_method' => 'nullable|in:equal,percent,amount,exact,percentage,share',
             'payer_id' => 'nullable|integer|exists:participants,participant_id',
             'payer_ids' => 'nullable|array',
             'payer_ids.*' => 'integer|exists:participants,participant_id',
@@ -131,7 +131,13 @@ class ExpenseController extends Controller
             ]);
         }
 
-        $splitMethod = $request->split_method ?? Expense::SPLIT_EQUAL;
+        $rawMethod = $request->input('split_method', 'equal');
+        $splitMethod = match ($rawMethod) {
+            'percent', 'percentage' => Expense::SPLIT_PERCENTAGE,
+            'amount', 'exact' => Expense::SPLIT_EXACT,
+            'share' => Expense::SPLIT_SHARE,
+            default => Expense::SPLIT_EQUAL,
+        };
         $expenseDate = $request->expense_date ?? now()->toDateString();
         $title = mb_substr(
             $request->filled('title') ? $request->title : 'Chi tiêu mới',
@@ -236,8 +242,30 @@ class ExpenseController extends Controller
         ], 201);
     }
 
-    public function storeForEvent(Request $request, Event $event)
+    public function update(Request $request, int $expense)
     {
+        $expense = Expense::findOrFail($expense);
+
+        if ($expense->is_deleted) {
+            return response()->json([
+                'message' => 'Chi tiêu này đã bị xóa.',
+            ], 404);
+        }
+
+        // Chi tieu ca nhan (nhu cu: khong ho tro sua chi tieu nhom)
+        if ($expense->event_id !== null) {
+            return response()->json([
+                'message' => 'Tính năng sửa chi tiêu nhóm chưa được hỗ trợ.',
+            ], 422);
+        }
+
+        $user = $request->user();
+        if ($expense->created_by !== $user->id) {
+            return response()->json([
+                'message' => 'Bạn không có quyền sửa chi tiêu này.',
+            ], 403);
+        }
+
         $request->validate([
             'category_id' => 'nullable|integer|exists:categories,category_id',
             'title' => 'nullable|string|max:150',
@@ -256,7 +284,9 @@ class ExpenseController extends Controller
             'amount.gt' => 'Số tiền phải lớn hơn 0.',
             'title.max' => 'Tiêu đề không được quá 150 ký tự.',
             'description.max' => 'Mô tả không được quá 500 ký tự.',
-            'split_method.in' => 'Phương thức chia tiền không hợp lệ.',
+            'currency.size' => 'Tiền tệ phải gồm 3 ký tự.',
+            'expense_date.date' => 'Ngày chi tiêu không hợp lệ.',
+            'category_id.exists' => 'Danh mục không tồn tại.',
         ]);
 
         $user = $request->user();

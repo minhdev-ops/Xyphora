@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import '../../../add_expense/domain/models/expense_model.dart';
+import '../../../add_expense/presentation/pages/edit_expense_page.dart';
+import '../../../add_expense/data/datasources/add_expense_datasource.dart';
 import '../../../config/app_theme.dart';
 import '../../../config/app_format.dart';
 import '../../domain/models/spending_model.dart';
@@ -184,13 +187,27 @@ class SpendingDetailPage extends GetView<DashboardController> {
 
               // 3. Action Buttons
               GestureDetector(
-                onTap: () {
-                  Get.snackbar(
-                    'Chỉnh sửa',
-                    'Tính năng chỉnh sửa chi tiêu đang phát triển',
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.8),
-                    colorText: Colors.white,
+                onTap: () async {
+                  final result = await Get.to<ExpenseModel>(
+                    () => const EditExpensePage(),
+                    arguments: {
+                      'id': '${spending.expenseId}',
+                      'title': spending.title,
+                      'amount': spending.amount,
+                      'currency': 'VND',
+                      'category': spending.category,
+                      'paymentMethod': spending.paymentMethod,
+                      'note': spending.note,
+                      'date': spending.date,
+                      'event_id': spending.eventId,
+                    },
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
                   );
+                  if (result != null) {
+                    controller.loadDashboardData();
+                    Get.back();
+                  }
                 },
                 child: Container(
                   width: double.infinity,
@@ -230,23 +247,32 @@ class SpendingDetailPage extends GetView<DashboardController> {
                     textConfirm: 'Xóa',
                     confirmTextColor: Colors.white,
                     buttonColor: AppColors.error,
-                    onConfirm: () {
-                      controller.spendings.removeWhere((s) => 
-                        s.title == spending.title && 
-                        s.amount == spending.amount && 
-                        s.date == spending.date
-                      );
-                      controller.monthlySpendingTotal.value -= spending.amount;
-                      controller.spendingCount.value = controller.spendings.length;
-
-                      Get.back();
-                      Get.back();
-                      Get.snackbar(
-                        'Thành công',
-                        'Đã xóa khoản chi tiêu thành công',
-                        backgroundColor: AppColors.error.withValues(alpha: 0.8),
-                        colorText: Colors.white,
-                      );
+                    onConfirm: () async {
+                      final datasource = AddExpenseDatasource();
+                      final result = await datasource.deleteExpense(spending.expenseId);
+                      if (result['success'] == true) {
+                        controller.spendings.removeWhere((s) =>
+                          s.expenseId == spending.expenseId
+                        );
+                        controller.monthlySpendingTotal.value -= spending.amount;
+                        controller.spendingCount.value = controller.spendings.length;
+                        Get.back();
+                        Get.back();
+                        Get.snackbar(
+                          'Thành công',
+                          'Đã xóa khoản chi tiêu',
+                          backgroundColor: AppColors.error.withValues(alpha: 0.8),
+                          colorText: Colors.white,
+                        );
+                      } else {
+                        Get.back();
+                        Get.snackbar(
+                          'Lỗi',
+                          result['message'] ?? 'Không thể xóa',
+                          backgroundColor: Colors.redAccent,
+                          colorText: Colors.white,
+                        );
+                      }
                     },
                   );
                 },

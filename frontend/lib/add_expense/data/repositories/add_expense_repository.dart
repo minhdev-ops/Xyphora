@@ -43,8 +43,9 @@ class AddExpenseRepository {
     );
   }
 
-  Future<Map<String, dynamic>> saveEventExpense({
-    required int eventId,
+  Future<Map<String, dynamic>> updateExpense({
+    required int expenseId,
+    int? eventId,
     int? categoryId,
     required String title,
     required double amount,
@@ -55,7 +56,8 @@ class AddExpenseRepository {
     List<int> payerIds = const [],
     List<Map<String, dynamic>> splits = const [],
   }) {
-    return _datasource.createEventExpense(
+    return _datasource.updateExpense(
+      expenseId: expenseId,
       eventId: eventId,
       categoryId: categoryId,
       title: title,
@@ -67,5 +69,9 @@ class AddExpenseRepository {
       payerIds: payerIds,
       splits: splits,
     );
+  }
+
+  Future<Map<String, dynamic>> deleteExpense(int expenseId) {
+    return _datasource.deleteExpense(expenseId);
   }
 }
