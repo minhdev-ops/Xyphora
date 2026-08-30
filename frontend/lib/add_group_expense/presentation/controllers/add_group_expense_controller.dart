@@ -356,7 +356,7 @@ class AddGroupExpenseController extends GetxController {
     final payerIds =
         selectedPayers.map(int.tryParse).whereType<int>().toList();
 
-    final result = await _repository.saveEventExpense(
+    final result = await _repository.saveExpense(
       eventId: selectedEventId.value!,
       categoryId: selectedCategoryId.value,
       title: title,

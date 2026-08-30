@@ -1,5 +1,3 @@
-import 'dart:ui' show PointerDeviceKind;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,8 +31,7 @@ void main() {
   );
   runApp(
     DevicePreview(
-      enabled: true,
-      // Chuyển thành false khi muốn chạy trên máy ảo điện thoại hoặc thiết bị thật
+      enabled: kDebugMode,
       builder: (context) => const MyApp(),
     ),
   );
