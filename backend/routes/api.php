@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +47,13 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::get('/user/profile', [UserController::class, 'profile']);
+    Route::post('/user/profile', [UserController::class, 'updateProfile']); // Use POST because of file upload
+    Route::put('/user/settings', [UserController::class, 'updateSettings']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
     Route::post('/events/join', [EventController::class, 'join']);
     Route::post('/events/join/claim', [EventController::class, 'claim']);

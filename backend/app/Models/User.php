@@ -24,6 +24,8 @@ class User extends Authenticatable
         'avatar',
         'provider',
         'status',
+        'language',
+        'notifications_enabled',
     ];
     // Thêm relationship liên kết với bảng Photo
     public function photo()
