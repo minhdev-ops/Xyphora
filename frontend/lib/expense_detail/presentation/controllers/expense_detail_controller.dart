@@ -58,4 +58,13 @@ class ExpenseDetailController extends GetxController {
     if (dt == null) return date;
     return '${dt.day} tháng ${dt.month}, ${dt.year}';
   }
+
+  Future<bool> deleteExpense() async {
+    try {
+      final result = await _repository.deleteExpense(expenseId);
+      return result['success'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
 }

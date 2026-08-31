@@ -32,7 +32,7 @@ class StatisticsDatasource {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/expenses?per_page=100'),
+        Uri.parse('$baseUrl/statistics/general'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -41,113 +41,57 @@ class StatisticsDatasource {
       );
 
       if (response.statusCode != 200) {
+        debugPrint('Statistics API error: ${response.statusCode}');
         return _emptyData();
       }
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      final rawItems =
-          (body['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
-      final summary = body['summary'] as Map<String, dynamic>? ?? {};
+      final data = body['data'] as Map<String, dynamic>? ?? {};
 
-      if (rawItems.isEmpty) {
-        return _emptyData();
-      }
+      final totalExpense = (data['totalExpense'] as num?)?.toDouble() ?? 0.0;
+      final changeRate = (data['changeRate'] as num?)?.toDouble() ?? 0.0;
 
-      double total = (summary['my_total_amount'] as num?)?.toDouble() ??
-          (summary['total_amount'] as num?)?.toDouble() ??
-          0.0;
-
-      if (total == 0.0) {
-        total = rawItems.fold(
-          0.0,
-          (sum, item) => sum + ((item['amount'] as num?)?.toDouble() ?? 0.0),
+      final rawCategories = (data['categoryStats'] as List<dynamic>? ?? []);
+      final categoryStats = rawCategories.map((c) {
+        final map = c as Map<String, dynamic>;
+        return CategoryStat(
+          name: map['name'] as String? ?? 'Khác',
+          amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
+          color: (map['color'] as num?)?.toInt() ?? 0xFF64748B,
+          percent: (map['percent'] as num?)?.toInt() ?? 0,
         );
-      }
+      }).toList();
 
-      final categoryTotals = <String, Map<String, dynamic>>{};
-      final monthlyTotals = <int, double>{};
-      final monthlyTxMap = <String, List<TransactionItem>>{};
-
-      for (var i = 1; i <= 12; i++) {
-        monthlyTotals[i] = 0.0;
-        monthlyTxMap['T$i'] = [];
-      }
-
-      final colorPalette = [
-        0xFF4CAF50,
-        0xFF3B82F6,
-        0xFF8B5CF6,
-        0xFFF59E0B,
-        0xFFEF4444,
-        0xFF10B981,
-        0xFFEC4899,
-      ];
-      int colorIdx = 0;
-
-      for (final item in rawItems) {
-        final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
-        final catName = item['category_name'] as String? ?? 'Khác';
-        final title = item['title'] as String? ?? 'Chi tiêu';
-        final dateStr = item['expense_date'] as String?;
-
-        if (!categoryTotals.containsKey(catName)) {
-          categoryTotals[catName] = {
-            'amount': 0.0,
-            'color': colorPalette[colorIdx % colorPalette.length],
-          };
-          colorIdx++;
-        }
-        categoryTotals[catName]!['amount'] =
-            (categoryTotals[catName]!['amount'] as double) + amount;
-
-        if (dateStr != null) {
-          final date = DateTime.tryParse(dateStr);
-          if (date != null) {
-            final m = date.month;
-            monthlyTotals[m] = (monthlyTotals[m] ?? 0.0) + amount;
-            final label = 'T$m';
-            monthlyTxMap[label]?.add(
-              TransactionItem(
-                name: title,
-                categoryName: catName,
-                amount: amount,
-                color: categoryTotals[catName]!['color'] as int,
-              ),
-            );
-          }
-        }
-      }
-
-      final categoryStats = <CategoryStat>[];
-      categoryTotals.forEach((name, map) {
-        final amt = map['amount'] as double;
-        final pct = total > 0 ? ((amt / total) * 100).round() : 0;
-        categoryStats.add(
-          CategoryStat(
-            name: name,
-            amount: amt,
-            color: map['color'] as int,
-            percent: pct,
-          ),
+      final rawMonthly = (data['monthlyStats'] as List<dynamic>? ?? []);
+      final monthlyStats = rawMonthly.map((m) {
+        final map = m as Map<String, dynamic>;
+        return MonthlyStat(
+          label: map['label'] as String? ?? '',
+          value: (map['value'] as num?)?.toDouble() ?? 0.0,
         );
+      }).toList();
+
+      final rawTxMap = (data['monthlyTransactions'] as Map<String, dynamic>? ?? {});
+      final monthlyTransactions = <String, List<TransactionItem>>{};
+      rawTxMap.forEach((key, value) {
+        final txList = (value as List<dynamic>? ?? []).map((t) {
+          final map = t as Map<String, dynamic>;
+          return TransactionItem(
+            name: map['name'] as String? ?? '',
+            categoryName: map['categoryName'] as String? ?? 'Khác',
+            amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
+            color: (map['color'] as num?)?.toInt() ?? 0xFF64748B,
+          );
+        }).toList();
+        monthlyTransactions[key] = txList;
       });
 
-      final monthlyStats = <MonthlyStat>[];
-      for (var i = 1; i <= 12; i++) {
-        monthlyStats.add(
-          MonthlyStat(
-            label: 'T$i',
-            value: monthlyTotals[i] ?? 0.0,
-          ),
-        );
-      }
-
       return StatisticsData(
-        totalExpense: total,
-        changeRate: 0.0,
+        totalExpense: totalExpense,
+        changeRate: changeRate,
         categoryStats: categoryStats,
         monthlyStats: monthlyStats,
-        monthlyTransactions: monthlyTxMap,
+        monthlyTransactions: monthlyTransactions,
       );
     } catch (e) {
       debugPrint('Error fetching statistics: $e');

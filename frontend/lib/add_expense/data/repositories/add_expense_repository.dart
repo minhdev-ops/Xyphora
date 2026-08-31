@@ -42,4 +42,36 @@ class AddExpenseRepository {
       splits: splits,
     );
   }
+
+  Future<Map<String, dynamic>> updateExpense({
+    required int expenseId,
+    int? eventId,
+    int? categoryId,
+    required String title,
+    required double amount,
+    String currency = 'VND',
+    String? description,
+    String? expenseDate,
+    String? splitMethod,
+    List<int> payerIds = const [],
+    List<Map<String, dynamic>> splits = const [],
+  }) {
+    return _datasource.updateExpense(
+      expenseId: expenseId,
+      eventId: eventId,
+      categoryId: categoryId,
+      title: title,
+      amount: amount,
+      currency: currency,
+      description: description,
+      expenseDate: expenseDate,
+      splitMethod: splitMethod,
+      payerIds: payerIds,
+      splits: splits,
+    );
+  }
+
+  Future<Map<String, dynamic>> deleteExpense(int expenseId) {
+    return _datasource.deleteExpense(expenseId);
+  }
 }

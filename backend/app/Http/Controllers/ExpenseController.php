@@ -24,7 +24,7 @@ class ExpenseController extends Controller
             'currency' => 'nullable|string|size:3',
             'description' => 'nullable|string|max:500',
             'expense_date' => 'nullable|date',
-            'split_method' => 'nullable|in:equal,exact,percentage,share',
+            'split_method' => 'nullable|in:equal,percent,amount,exact,percentage,share',
             'payer_id' => 'nullable|integer|exists:participants,participant_id',
             'payer_ids' => 'nullable|array',
             'payer_ids.*' => 'integer|exists:participants,participant_id',
@@ -131,7 +131,13 @@ class ExpenseController extends Controller
             ]);
         }
 
-        $splitMethod = $request->split_method ?? Expense::SPLIT_EQUAL;
+        $rawMethod = $request->input('split_method', 'equal');
+        $splitMethod = match ($rawMethod) {
+            'percent', 'percentage' => Expense::SPLIT_PERCENTAGE,
+            'amount', 'exact' => Expense::SPLIT_EXACT,
+            'share' => Expense::SPLIT_SHARE,
+            default => Expense::SPLIT_EQUAL,
+        };
         $expenseDate = $request->expense_date ?? now()->toDateString();
         $title = mb_substr(
             $request->filled('title') ? $request->title : 'Chi tiêu mới',
@@ -234,6 +240,141 @@ class ExpenseController extends Controller
                     ]),
             ],
         ], 201);
+    }
+
+    public function update(Request $request, int $expense)
+    {
+        $expense = Expense::findOrFail($expense);
+
+        if ($expense->is_deleted) {
+            return response()->json([
+                'message' => 'Chi tiêu này đã bị xóa.',
+            ], 404);
+        }
+
+        // Chi tieu ca nhan (nhu cu: khong ho tro sua chi tieu nhom)
+        if ($expense->event_id !== null) {
+            return response()->json([
+                'message' => 'Tính năng sửa chi tiêu nhóm chưa được hỗ trợ.',
+            ], 422);
+        }
+
+        $user = $request->user();
+        if ($expense->created_by !== $user->id) {
+            return response()->json([
+                'message' => 'Bạn không có quyền sửa chi tiêu này.',
+            ], 403);
+        }
+
+        $request->validate([
+            'title' => 'nullable|string|max:150',
+            'amount' => 'required|numeric|gt:0',
+            'currency' => 'nullable|string|size:3',
+            'description' => 'nullable|string|max:500',
+            'expense_date' => 'nullable|date',
+            'category_id' => 'nullable|integer|exists:categories,category_id',
+        ], [
+            'amount.required' => 'Vui lòng nhập số tiền.',
+            'amount.gt' => 'Số tiền phải lớn hơn 0.',
+            'title.max' => 'Tiêu đề không được quá 150 ký tự.',
+            'description.max' => 'Mô tả không được quá 500 ký tự.',
+            'currency.size' => 'Tiền tệ phải gồm 3 ký tự.',
+            'expense_date.date' => 'Ngày chi tiêu không hợp lệ.',
+            'category_id.exists' => 'Danh mục không tồn tại.',
+        ]);
+
+        $category = null;
+        if ($request->filled('category_id')) {
+            $category = Category::where('category_id', $request->category_id)
+                ->where('type', Category::TYPE_EXPENSE)
+                ->where(function ($q) use ($user) {
+                    $q->where('is_default', true)
+                        ->orWhere('created_by', $user->id);
+                })
+                ->first();
+
+            if (! $category) {
+                return response()->json([
+                    'message' => 'Danh mục không hợp lệ.',
+                ], 422);
+            }
+        }
+
+        $data = [];
+
+        if ($request->filled('title')) {
+            $data['title'] = mb_substr($request->title, 0, 150);
+        }
+        $data['amount'] = $request->amount;
+        if ($request->filled('currency')) {
+            $data['currency'] = $request->currency;
+        }
+        if ($request->filled('description')) {
+            $data['description'] = $request->description;
+            $data['note'] = $request->description;
+        }
+        if ($request->filled('expense_date')) {
+            $data['expense_date'] = $request->expense_date;
+        }
+        if ($category !== null) {
+            $data['category_id'] = $category->category_id;
+        }
+
+        $expense->update($data);
+
+        $categoryName = Category::find($expense->category_id)?->name;
+
+        return response()->json([
+            'message' => 'Cập nhật chi tiêu thành công',
+            'data' => [
+                'expense_id' => $expense->expense_id,
+                'event_id' => $expense->event_id,
+                'title' => $expense->title,
+                'amount' => (float) $expense->amount,
+                'currency' => $expense->currency,
+                'description' => $expense->description,
+                'expense_date' => $expense->expense_date?->toDateString(),
+                'category' => $categoryName,
+            ],
+        ], 200);
+    }
+
+    public function destroy(Request $request, int $expense)
+    {
+        $expense = Expense::findOrFail($expense);
+
+        if ($expense->is_deleted) {
+            return response()->json([
+                'message' => 'Chi tiêu này đã bị xóa.',
+            ], 404);
+        }
+
+        $user = $request->user();
+
+        if ($expense->event_id === null) {
+            // Chi tieu ca nhan: chi nguoi tao moi duoc xoa
+            if ($expense->created_by !== $user->id) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền xóa chi tiêu này.',
+                ], 403);
+            }
+        } else {
+            // Chi tieu nhom: owner su kien hoac nguoi tao expense
+            $event = Event::find($expense->event_id);
+            $isOwner = $event && $event->owner_id === $user->id;
+            if (! $isOwner && $expense->created_by !== $user->id) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền xóa chi tiêu này.',
+                ], 403);
+            }
+        }
+
+        $expense->update(['is_deleted' => true]);
+
+        return response()->json([
+            'message' => 'Xóa chi tiêu thành công',
+            'success' => true,
+        ], 200);
     }
 
     public function index(Request $request)
