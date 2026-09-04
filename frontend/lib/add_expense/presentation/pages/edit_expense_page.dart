@@ -43,8 +43,8 @@ class EditExpenseController extends GetxController {
   static const List<String> currencies = ['VND', 'USD', 'EUR', 'JPY'];
   static const List<(String, String)> splitOptions = [
     ('equal', 'Chia đều'),
-    ('percent', 'Theo %'),
-    ('amount', 'Theo tiền'),
+    ('percentage', 'Theo %'),
+    ('exact', 'Theo tiền'),
   ];
 
   List<String> get sortedCurrencies => [
@@ -326,7 +326,7 @@ class EditExpenseController extends GetxController {
     if (mode == 'equal' || members.isEmpty) return const [];
 
     final splits = <Map<String, dynamic>>[];
-    if (mode == 'percent') {
+    if (mode == 'percentage') {
       for (final member in members) {
         final value = double.tryParse(
           splitControllerFor(member.id).text.replaceAll(',', '.'),

@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:app_links/app_links.dart';
 import '../event_management/presentation/pages/join_event_page.dart';
 
 class DeepLinkService {

@@ -12,8 +12,8 @@ class AddExpenseController extends GetxController {
   static const List<String> currencies = ['VND', 'USD', 'EUR', 'JPY'];
   static const List<(String, String)> splitOptions = [
     ('equal', 'Chia đều'),
-    ('percent', 'Theo %'),
-    ('amount', 'Theo tiền'),
+    ('percentage', 'Theo %'),
+    ('exact', 'Theo tiền'),
   ];
 
   final amount = 0.0.obs;
@@ -231,7 +231,7 @@ class AddExpenseController extends GetxController {
     if (mode == 'equal') return;
 
     final count = members.length;
-    final base = mode == 'percent' ? 100.0 / count : amount.value / count;
+    final base = mode == 'percentage' ? 100.0 / count : amount.value / count;
 
     for (final member in members) {
       splitControllerFor(member.id).text = _fmtNum(base);
@@ -251,7 +251,7 @@ class AddExpenseController extends GetxController {
 
     final splits = <Map<String, dynamic>>[];
 
-    if (mode == 'percent') {
+    if (mode == 'percentage') {
       for (final member in members) {
         final value = double.tryParse(
           splitControllerFor(member.id).text.replaceAll(',', '.'),
@@ -282,7 +282,7 @@ class AddExpenseController extends GetxController {
     final mode = selectedSplitMode.value;
     if (mode == 'equal' || members.isEmpty) return true;
 
-    if (mode == 'percent') {
+    if (mode == 'percentage') {
       final total = members.fold<double>(
         0,
         (sum, m) =>
@@ -480,7 +480,7 @@ class AddExpenseController extends GetxController {
         final mode = selectedSplitMode.value;
         Get.snackbar(
           'Lỗi',
-          mode == 'percent'
+          mode == 'percentage'
               ? 'Tổng phần trăm phải bằng 100%'
               : 'Tổng số tiền phải bằng tổng chi tiêu',
           backgroundColor: Colors.redAccent,

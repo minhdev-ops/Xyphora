@@ -1,4 +1,4 @@
-// import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -31,8 +31,7 @@ void main() {
   );
   runApp(
     DevicePreview(
-      enabled: true,
-      // Chuyển thành false khi muốn chạy trên máy ảo điện thoại hoặc thiết bị thật
+      enabled: kDebugMode,
       builder: (context) => const MyApp(),
     ),
   );
@@ -86,73 +85,72 @@ class MyApp extends StatelessWidget {
 
 // Nếu chạy trực tiếp ứng dụng lên máy ảo Android/iOS hoặc điện thoại thật mà không thông qua khung DevicePreview,
 // hãy comment toàn bộ nội dung file bên trên (hoặc xóa đi) và mở comment khối code dưới đây:
-/*
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    debugPrint('FlutterError: ${details.exceptionAsString()}');
-  };
-
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
-  runApp(const MyAppPhone());
-}
-
-class MyAppPhone extends StatelessWidget {
-  const MyAppPhone({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return GetMaterialApp(
-      title: 'Xyphora',
-      debugShowCheckedModeBanner: false,
-      initialBinding: BindingsBuilder(() {
-        Get.put<AuthController>(AuthController(), permanent: true);
-        Get.lazyPut<DashboardController>(
-          () => DashboardController(),
-          fenix: true,
-        );
-        Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
-        Get.lazyPut<NotificationController>(
-          () => NotificationController(),
-          fenix: true,
-        );
-        Get.lazyPut<AddExpenseController>(
-          () => AddExpenseController(),
-          fenix: true,
-        );
-        Get.lazyPut<AddGroupExpenseController>(
-          () => AddGroupExpenseController(),
-          fenix: true,
-        );
-        Get.lazyPut<StatisticsController>(
-          () => StatisticsController(),
-          fenix: true,
-        );
-      }),
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFE4F5E5),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
-        useMaterial3: true,
-      ),
-      scrollBehavior: MaterialScrollBehavior().copyWith(
-        dragDevices: {
-          PointerDeviceKind.touch,
-          PointerDeviceKind.mouse,
-          PointerDeviceKind.stylus,
-          PointerDeviceKind.trackpad,
-        },
-      ),
-      home: ExpensePage(),
-    );
-  }
-}
-*/
+//
+// void main() {
+//   WidgetsFlutterBinding.ensureInitialized();
+//
+//   FlutterError.onError = (FlutterErrorDetails details) {
+//     FlutterError.presentError(details);
+//     debugPrint('FlutterError: ${details.exceptionAsString()}');
+//   };
+//
+//   SystemChrome.setSystemUIOverlayStyle(
+//     const SystemUiOverlayStyle(
+//       statusBarColor: Colors.transparent,
+//       statusBarIconBrightness: Brightness.dark,
+//       systemNavigationBarColor: Colors.white,
+//       systemNavigationBarIconBrightness: Brightness.dark,
+//     ),
+//   );
+//   runApp(const MyAppPhone());
+// }
+//
+// class MyAppPhone extends StatelessWidget {
+//   const MyAppPhone({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return GetMaterialApp(
+//       title: 'Xyphora',
+//       debugShowCheckedModeBanner: false,
+//       initialBinding: BindingsBuilder(() {
+//         Get.put<AuthController>(AuthController(), permanent: true);
+//         Get.lazyPut<DashboardController>(
+//           () => DashboardController(),
+//           fenix: true,
+//         );
+//         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
+//         Get.lazyPut<NotificationController>(
+//           () => NotificationController(),
+//           fenix: true,
+//         );
+//         Get.lazyPut<AddExpenseController>(
+//           () => AddExpenseController(),
+//           fenix: true,
+//         );
+//         Get.lazyPut<AddGroupExpenseController>(
+//           () => AddGroupExpenseController(),
+//           fenix: true,
+//         );
+//         Get.lazyPut<StatisticsController>(
+//           () => StatisticsController(),
+//           fenix: true,
+//         );
+//       }),
+//       theme: ThemeData(
+//         scaffoldBackgroundColor: const Color(0xFFE4F5E5),
+//         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
+//         useMaterial3: true,
+//       ),
+//       scrollBehavior: MaterialScrollBehavior().copyWith(
+//         dragDevices: {
+//           PointerDeviceKind.touch,
+//           PointerDeviceKind.mouse,
+//           PointerDeviceKind.stylus,
+//           PointerDeviceKind.trackpad,
+//         },
+//       ),
+//       home: const LoginPages(),
+//     );
+//   }
+// }
