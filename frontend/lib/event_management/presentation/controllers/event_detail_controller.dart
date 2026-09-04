@@ -27,7 +27,7 @@ class EventDetailController extends GetxController {
   final RxString expensesErrorMessage = ''.obs;
 
   // ── Computed helpers ───────────────────────────────────────────────────────
-  bool get _isDummy => event.value.id.startsWith('ev');
+  bool get _isDummy => int.tryParse(event.value.id) == null;
 
   /// ID sự kiện hiện tại – dùng khi navigate sang GroupExpensePage.
   String get eventId => event.value.id;
@@ -84,7 +84,7 @@ class EventDetailController extends GetxController {
 
   String payerName(String payerId) {
     final p =
-        event.value.participants.firstWhereOrNull((p) => p.userId == payerId);
+        event.value.participants.firstWhereOrNull((p) => p.id == payerId);
     if (p == null) return 'Unknown';
     final name = p.user?.name ?? p.displayName;
     return name.isNotEmpty ? name : 'Unknown';
@@ -111,7 +111,7 @@ class EventDetailController extends GetxController {
       final user = await _authService.getCurrentUser();
       if (user != null) myUserId.value = user.id;
       final token = await _authService.getToken();
-      if (token == null || initialEvent.id.startsWith('ev')) return;
+      if (token == null || int.tryParse(initialEvent.id) == null) return;
       final detail =
           await _repository.getEvent(token: token, eventId: initialEvent.id);
       event.value = detail;
@@ -153,7 +153,7 @@ class EventDetailController extends GetxController {
 
   Future<String> getInviteLink() async {
     final current = event.value;
-    if (current.id.startsWith('ev')) {
+    if (int.tryParse(current.id) == null) {
       throw EventApiException('Không thể tạo link mời cho dữ liệu mẫu');
     }
     final token = await _authService.getToken();
@@ -173,7 +173,7 @@ class EventDetailController extends GetxController {
   Future<void> deleteEvent() async {
     final current = event.value;
     final token = await _authService.getToken();
-    if (token == null || current.id.startsWith('ev')) return;
+    if (token == null || int.tryParse(current.id) == null) return;
     await _repository.deleteEvent(token: token, eventId: current.id);
     Get.find<EventController>().removeEvent(current.id);
   }

@@ -3,58 +3,108 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    /**
-     * Get the list of notifications for the current user.
-     * Optionally filter by type (e.g. reminder, expense_added, etc).
-     */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        $query = Notification::where('user_id', $user->id);
+        $notifications = Notification::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->input('per_page', 20));
 
-        if ($request->has('type')) {
-            $query->where('type', $request->type);
-        }
-
-        // Return latest notifications first
-        $notifications = $query->orderBy('created_at', 'desc')->get();
+        $data = $notifications->map(function (Notification $n) {
+            return [
+                'notification_id' => $n->notification_id,
+                'type' => $n->type,
+                'title' => $n->title,
+                'content' => $n->content,
+                'reference_id' => $n->reference_id,
+                'is_read' => (bool) $n->is_read,
+                'created_at' => $n->created_at?->toDateTimeString(),
+            ];
+        });
 
         return response()->json([
-            'status' => 'success',
-            'data' => $notifications,
+            'message' => 'Lấy danh sách thông báo thành công',
+            'data' => $data,
+            'meta' => [
+                'current_page' => $notifications->currentPage(),
+                'per_page' => $notifications->perPage(),
+                'total' => $notifications->total(),
+                'last_page' => $notifications->lastPage(),
+            ],
         ]);
     }
 
-    /**
-     * Mark a specific notification as read.
-     */
-    public function markAsRead(Request $request, $id)
+    public function markAsRead(Request $request, int $notification): JsonResponse
     {
         $user = $request->user();
 
-        $notification = Notification::where('user_id', $user->id)
-            ->where('notification_id', $id)
+        $notification = Notification::where('notification_id', $notification)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $notification) {
+            return response()->json([
+                'message' => 'Thông báo không tồn tại.',
+            ], 404);
+        }
+
+        $notification->update(['is_read' => true]);
+
+        return response()->json([
+            'message' => 'Đã đánh dấu là đã đọc',
+        ]);
+    }
+
+    public function markAllAsRead(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        Notification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'message' => 'Đã đánh dấu tất cả thông báo là đã đọc',
+        ]);
+    }
+
+    public function destroy(Request $request, int $notification): JsonResponse
+    {
+        $user = $request->user();
+
+        $notification = Notification::where('notification_id', $notification)
+            ->where('user_id', $user->id)
             ->first();
 
         if (!$notification) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Notification not found',
+                'message' => 'Thông báo không tồn tại.',
             ], 404);
         }
 
-        $notification->is_read = true;
-        $notification->save();
+        $notification->delete();
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Notification marked as read',
-            'data' => $notification,
+            'message' => 'Xóa thông báo thành công',
+        ]);
+    }
+
+    public function unreadCount(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $count = Notification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->count();
+
+        return response()->json([
+            'data' => ['unread_count' => $count],
         ]);
     }
 }

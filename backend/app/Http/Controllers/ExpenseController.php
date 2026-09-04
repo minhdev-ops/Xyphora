@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Event;
 use App\Models\Expense;
+use App\Models\ExpenseHistory;
 use App\Models\ExpensePayer;
 use App\Models\ExpenseSplit;
 use App\Models\Notification;
@@ -173,6 +174,23 @@ class ExpenseController extends Controller
                 'is_deleted' => false,
             ]);
 
+            $historyFields = [
+                'title' => ['old' => null, 'new' => $title],
+                'amount' => ['old' => null, 'new' => $request->amount],
+                'category_id' => ['old' => null, 'new' => $category->category_id],
+                'expense_date' => ['old' => null, 'new' => $expenseDate],
+                'split_method' => ['old' => null, 'new' => $splitMethod],
+            ];
+            foreach ($historyFields as $field => $values) {
+                ExpenseHistory::create([
+                    'expense_id' => $expense->expense_id,
+                    'updated_by' => $user->id,
+                    'field_name' => $field,
+                    'old_value' => $values['old'],
+                    'new_value' => (string) $values['new'],
+                ]);
+            }
+
             // Chi tieu thuoc su kien moi chia tien, ghi nguoi tra va thong bao
             if ($event !== null && $payerIds !== []) {
                 $totalAmount = (float) $request->amount;
@@ -252,35 +270,49 @@ class ExpenseController extends Controller
             ], 404);
         }
 
-        // Chi tieu ca nhan (nhu cu: khong ho tro sua chi tieu nhom)
-        if ($expense->event_id !== null) {
-            return response()->json([
-                'message' => 'Tính năng sửa chi tiêu nhóm chưa được hỗ trợ.',
-            ], 422);
-        }
-
         $user = $request->user();
-        if ($expense->created_by !== $user->id) {
-            return response()->json([
-                'message' => 'Bạn không có quyền sửa chi tiêu này.',
-            ], 403);
+
+        if ($expense->event_id !== null) {
+            $event = Event::findOrFail($expense->event_id);
+            $isOwner = $event->owner_id === $user->id;
+            $userParticipant = Participant::where('event_id', $event->event_id)
+                ->where('user_id', $user->id)
+                ->where('status', Participant::STATUS_ACTIVE)
+                ->first();
+
+            if (! $isOwner && ! $userParticipant) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền sửa chi tiêu này.',
+                ], 403);
+            }
+        } else {
+            if ($expense->created_by !== $user->id) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền sửa chi tiêu này.',
+                ], 403);
+            }
         }
 
         $request->validate([
+            'category_id' => 'nullable|integer|exists:categories,category_id',
             'title' => 'nullable|string|max:150',
             'amount' => 'required|numeric|gt:0',
             'currency' => 'nullable|string|size:3',
             'description' => 'nullable|string|max:500',
             'expense_date' => 'nullable|date',
-            'category_id' => 'nullable|integer|exists:categories,category_id',
+            'split_method' => 'nullable|in:equal,percent,amount,exact,percentage,share',
+            'payer_id' => 'nullable|integer|exists:participants,participant_id',
+            'payer_ids' => 'nullable|array',
+            'payer_ids.*' => 'integer|exists:participants,participant_id',
+            'splits' => 'nullable|array',
         ], [
+            'category_id.exists' => 'Danh mục không tồn tại.',
             'amount.required' => 'Vui lòng nhập số tiền.',
             'amount.gt' => 'Số tiền phải lớn hơn 0.',
             'title.max' => 'Tiêu đề không được quá 150 ký tự.',
             'description.max' => 'Mô tả không được quá 500 ký tự.',
             'currency.size' => 'Tiền tệ phải gồm 3 ký tự.',
             'expense_date.date' => 'Ngày chi tiêu không hợp lệ.',
-            'category_id.exists' => 'Danh mục không tồn tại.',
         ]);
 
         $category = null;
@@ -300,29 +332,138 @@ class ExpenseController extends Controller
             }
         }
 
-        $data = [];
-
-        if ($request->filled('title')) {
-            $data['title'] = mb_substr($request->title, 0, 150);
-        }
-        $data['amount'] = $request->amount;
-        if ($request->filled('currency')) {
-            $data['currency'] = $request->currency;
-        }
-        if ($request->filled('description')) {
-            $data['description'] = $request->description;
-            $data['note'] = $request->description;
-        }
-        if ($request->filled('expense_date')) {
-            $data['expense_date'] = $request->expense_date;
-        }
-        if ($category !== null) {
-            $data['category_id'] = $category->category_id;
+        if (! $category) {
+            $category = Category::where('category_id', $expense->category_id)->first();
         }
 
-        $expense->update($data);
+        $rawMethod = $request->input('split_method', $expense->split_method);
+        $splitMethod = match ($rawMethod) {
+            'percent', 'percentage' => Expense::SPLIT_PERCENTAGE,
+            'amount', 'exact' => Expense::SPLIT_EXACT,
+            'share' => Expense::SPLIT_SHARE,
+            default => Expense::SPLIT_EQUAL,
+        };
+        $expenseDate = $request->expense_date ?? $expense->expense_date;
+        $title = mb_substr(
+            $request->filled('title') ? $request->title : $expense->title,
+            0,
+            150
+        );
 
-        $categoryName = Category::find($expense->category_id)?->name;
+        DB::transaction(function () use (
+            $request,
+            $expense,
+            $user,
+            $category,
+            $splitMethod,
+            $expenseDate,
+            $title
+        ) {
+            $oldValues = [
+                'title' => $expense->title,
+                'amount' => $expense->amount,
+                'category_id' => $expense->category_id,
+                'expense_date' => $expense->expense_date,
+                'split_method' => $expense->split_method,
+                'description' => $expense->description,
+            ];
+
+            $expense->update([
+                'category_id' => $category->category_id,
+                'title' => $title,
+                'description' => $request->description,
+                'amount' => $request->amount,
+                'currency' => $request->currency ?? $expense->currency,
+                'expense_date' => $expenseDate,
+                'split_method' => $splitMethod,
+                'note' => $request->description,
+            ]);
+
+            $newValues = [
+                'title' => $title,
+                'amount' => $request->amount,
+                'category_id' => $category->category_id,
+                'expense_date' => $expenseDate,
+                'split_method' => $splitMethod,
+                'description' => $request->description,
+            ];
+            foreach ($oldValues as $field => $oldVal) {
+                $newVal = $newValues[$field];
+                if ((string) ($oldVal ?? '') !== (string) ($newVal ?? '')) {
+                    ExpenseHistory::create([
+                        'expense_id' => $expense->expense_id,
+                        'updated_by' => $user->id,
+                        'field_name' => $field,
+                        'old_value' => $oldVal !== null ? (string) $oldVal : null,
+                        'new_value' => $newVal !== null ? (string) $newVal : null,
+                    ]);
+                }
+            }
+
+            if ($expense->event_id !== null) {
+                $event = Event::findOrFail($expense->event_id);
+
+                ExpensePayer::where('expense_id', $expense->expense_id)->delete();
+                ExpenseSplit::where('expense_id', $expense->expense_id)->delete();
+
+                $payerIds = [];
+                if ($request->filled('payer_ids')) {
+                    $payerIds = Participant::whereIn('participant_id', $request->payer_ids)
+                        ->where('event_id', $event->event_id)
+                        ->where('status', Participant::STATUS_ACTIVE)
+                        ->pluck('participant_id')
+                        ->all();
+                } elseif ($request->filled('payer_id')) {
+                    $payer = Participant::where('participant_id', $request->payer_id)
+                        ->where('event_id', $event->event_id)
+                        ->where('status', Participant::STATUS_ACTIVE)
+                        ->first();
+                    if ($payer) {
+                        $payerIds = [$payer->participant_id];
+                    }
+                }
+
+                if (! empty($payerIds)) {
+                    $totalAmount = (float) $request->amount;
+                    $perPayer = round($totalAmount / count($payerIds), 2);
+                    $remaining = $totalAmount;
+                    foreach ($payerIds as $index => $participantId) {
+                        $isLast = $index === count($payerIds) - 1;
+                        $payerAmount = $isLast ? round($remaining, 2) : $perPayer;
+
+                        ExpensePayer::create([
+                            'expense_id' => $expense->expense_id,
+                            'participant_id' => $participantId,
+                            'amount' => $payerAmount,
+                        ]);
+
+                        $remaining -= $perPayer;
+                    }
+
+                    $expense->update(['payer_id' => $payerIds[0]]);
+
+                    $splits = $this->buildSplits(
+                        $event,
+                        $totalAmount,
+                        $splitMethod,
+                        $request->input('splits', [])
+                    );
+
+                    foreach ($splits as $split) {
+                        ExpenseSplit::create([
+                            'expense_id' => $expense->expense_id,
+                            'participant_id' => $split['participant_id'],
+                            'amount' => $split['amount'],
+                            'status' => ExpenseSplit::STATUS_PENDING,
+                        ]);
+                    }
+                }
+
+                $this->notifyUpdateParticipants($event, $user, $expense);
+            }
+        });
+
+        $expense->refresh();
 
         return response()->json([
             'message' => 'Cập nhật chi tiêu thành công',
@@ -333,48 +474,20 @@ class ExpenseController extends Controller
                 'amount' => (float) $expense->amount,
                 'currency' => $expense->currency,
                 'description' => $expense->description,
-                'expense_date' => $expense->expense_date?->toDateString(),
-                'category' => $categoryName,
+                'expense_date' => $expense->expense_date,
+                'split_method' => $expense->split_method,
+                'category' => $category->name,
+                'payers' => $expense->payers()
+                    ->with('participant')
+                    ->get()
+                    ->map(fn (ExpensePayer $p) => [
+                        'participant_id' => $p->participant_id,
+                        'user_id' => $p->participant?->user_id,
+                        'display_name' => $p->participant?->display_name,
+                        'amount' => (float) $p->amount,
+                    ]),
             ],
-        ], 200);
-    }
-
-    public function destroy(Request $request, int $expense)
-    {
-        $expense = Expense::findOrFail($expense);
-
-        if ($expense->is_deleted) {
-            return response()->json([
-                'message' => 'Chi tiêu này đã bị xóa.',
-            ], 404);
-        }
-
-        $user = $request->user();
-
-        if ($expense->event_id === null) {
-            // Chi tieu ca nhan: chi nguoi tao moi duoc xoa
-            if ($expense->created_by !== $user->id) {
-                return response()->json([
-                    'message' => 'Bạn không có quyền xóa chi tiêu này.',
-                ], 403);
-            }
-        } else {
-            // Chi tieu nhom: owner su kien hoac nguoi tao expense
-            $event = Event::find($expense->event_id);
-            $isOwner = $event && $event->owner_id === $user->id;
-            if (! $isOwner && $expense->created_by !== $user->id) {
-                return response()->json([
-                    'message' => 'Bạn không có quyền xóa chi tiêu này.',
-                ], 403);
-            }
-        }
-
-        $expense->update(['is_deleted' => true]);
-
-        return response()->json([
-            'message' => 'Xóa chi tiêu thành công',
-            'success' => true,
-        ], 200);
+        ]);
     }
 
     public function index(Request $request)
@@ -965,6 +1078,66 @@ class ExpenseController extends Controller
         ])->all();
     }
 
+    public function destroy(Request $request, int $expense)
+    {
+        $expense = Expense::findOrFail($expense);
+
+        if ($expense->is_deleted) {
+            return response()->json([
+                'message' => 'Chi tiêu này đã bị xóa.',
+            ], 404);
+        }
+
+        $user = $request->user();
+
+        if ($expense->event_id !== null) {
+            $event = Event::findOrFail($expense->event_id);
+            $isOwner = $event->owner_id === $user->id;
+            $userParticipant = Participant::where('event_id', $event->event_id)
+                ->where('user_id', $user->id)
+                ->where('status', Participant::STATUS_ACTIVE)
+                ->first();
+
+            if (! $isOwner && ! $userParticipant) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền xóa chi tiêu này.',
+                ], 403);
+            }
+        } else {
+            if ($expense->created_by !== $user->id) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền xóa chi tiêu này.',
+                ], 403);
+            }
+        }
+
+        $expense->update(['is_deleted' => true]);
+
+        ExpenseHistory::create([
+            'expense_id' => $expense->expense_id,
+            'updated_by' => $user->id,
+            'field_name' => 'is_deleted',
+            'old_value' => '0',
+            'new_value' => '1',
+        ]);
+
+        if ($expense->event_id !== null) {
+            $event = Event::findOrFail($expense->event_id);
+            $this->notifyDeleteParticipants($event, $user, $expense);
+        }
+
+        return response()->json([
+            'message' => 'Xóa chi tiêu thành công',
+        ]);
+    }
+
+    public function storeForEvent(Request $request, int $event)
+    {
+        $request->merge(['event_id' => $event]);
+
+        return $this->create($request);
+    }
+
     private function notifyParticipants(Event $event, $user, Expense $expense): void
     {
         $others = $event->participants()
@@ -979,6 +1152,46 @@ class ExpenseController extends Controller
                 'type' => Notification::TYPE_EXPENSE_ADDED,
                 'title' => 'Chi tiêu mới trong '.$event->title,
                 'content' => $user->name.' đã thêm chi tiêu "'.$expense->title.'" '.number_format((float) $expense->amount).'đ',
+                'reference_id' => $expense->expense_id,
+                'is_read' => false,
+            ]);
+        }
+    }
+
+    private function notifyDeleteParticipants(Event $event, $user, Expense $expense): void
+    {
+        $others = $event->participants()
+            ->where('status', Participant::STATUS_ACTIVE)
+            ->where('user_id', '!=', $user->id)
+            ->whereNotNull('user_id')
+            ->get();
+
+        foreach ($others as $participant) {
+            Notification::create([
+                'user_id' => $participant->user_id,
+                'type' => Notification::TYPE_EXPENSE_DELETED,
+                'title' => 'Chi tiêu đã xóa trong '.$event->title,
+                'content' => $user->name.' đã xóa chi tiêu "'.$expense->title.'"',
+                'reference_id' => $expense->expense_id,
+                'is_read' => false,
+            ]);
+        }
+    }
+
+    private function notifyUpdateParticipants(Event $event, $user, Expense $expense): void
+    {
+        $others = $event->participants()
+            ->where('status', Participant::STATUS_ACTIVE)
+            ->where('user_id', '!=', $user->id)
+            ->whereNotNull('user_id')
+            ->get();
+
+        foreach ($others as $participant) {
+            Notification::create([
+                'user_id' => $participant->user_id,
+                'type' => Notification::TYPE_EXPENSE_UPDATED,
+                'title' => 'Chi tiêu đã cập nhật trong '.$event->title,
+                'content' => $user->name.' đã cập nhật chi tiêu "'.$expense->title.'" '.number_format((float) $expense->amount).'đ',
                 'reference_id' => $expense->expense_id,
                 'is_read' => false,
             ]);

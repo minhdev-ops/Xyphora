@@ -15,8 +15,8 @@ class AddGroupExpenseController extends GetxController {
   static const List<String> currencies = ['VND', 'USD', 'EUR', 'JPY'];
   static const List<(String, String)> splitOptions = [
     ('equal', 'Chia đều'),
-    ('percent', 'Theo %'),
-    ('amount', 'Theo tiền'),
+    ('percentage', 'Theo %'),
+    ('exact', 'Theo tiền'),
   ];
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ class AddGroupExpenseController extends GetxController {
     final mode = selectedSplitMode.value;
     if (mode == 'equal') return;
     final count = members.length;
-    final base = mode == 'percent' ? 100.0 / count : amount.value / count;
+    final base = mode == 'percentage' ? 100.0 / count : amount.value / count;
     for (final member in members) {
       splitControllerFor(member.id).text = _fmtNum(base);
     }
@@ -296,7 +296,7 @@ class AddGroupExpenseController extends GetxController {
       final value = double.tryParse(
           splitControllerFor(member.id).text.replaceAll(',', '.'));
       if (value == null || value < 0) return const [];
-      if (mode == 'percent') {
+      if (mode == 'percentage') {
         splits.add({'participant_id': int.parse(member.id), 'percentage': value});
       } else {
         splits.add({'participant_id': int.parse(member.id), 'amount': value});
@@ -317,7 +317,7 @@ class AddGroupExpenseController extends GetxController {
               ) ??
               0),
     );
-    if (mode == 'percent') return (total - 100).abs() <= 0.5;
+    if (mode == 'percentage') return (total - 100).abs() <= 0.5;
     return (total - amount.value).abs() <= 0.5;
   }
 
@@ -341,7 +341,7 @@ class AddGroupExpenseController extends GetxController {
       final mode = selectedSplitMode.value;
       Get.snackbar(
         'Lỗi',
-        mode == 'percent'
+        mode == 'percentage'
             ? 'Tổng phần trăm phải bằng 100%'
             : 'Tổng số tiền phải bằng tổng chi tiêu',
         backgroundColor: Colors.redAccent,
@@ -357,7 +357,7 @@ class AddGroupExpenseController extends GetxController {
         selectedPayers.map(int.tryParse).whereType<int>().toList();
 
     final result = await _repository.saveExpense(
-      eventId: selectedEventId.value,
+      eventId: selectedEventId.value!,
       categoryId: selectedCategoryId.value,
       title: title,
       amount: amount.value,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../config/token_storage.dart';
 import '../../data/dashboard_service.dart';
 import '../../domain/models/transaction_model.dart';
 import '../../domain/models/spending_model.dart';
+import '../../../auth/presentation/pages/login_pages.dart';
 
 class DashboardController extends GetxController {
   final DashboardService _dashboardService = DashboardService();
@@ -48,6 +50,13 @@ class DashboardController extends GetxController {
     if (result['success'] != true) {
       isLoading.value = false;
       update();
+
+      if (result['message'] == 'Phiên đăng nhập đã hết hạn') {
+        await TokenStorage.delete();
+        Get.offAll(() => const LoginPages());
+        return;
+      }
+
       Get.snackbar(
         'Lỗi',
         result['message'] ?? 'Không thể tải dữ liệu',

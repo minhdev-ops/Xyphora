@@ -71,6 +71,9 @@ class EventDatasource {
 
   EventModel _parseEvent(Map<String, dynamic> json) {
     final eventId = json['event_id'].toString();
+    final participants = (json['participants'] as List? ?? [])
+        .map((p) => _parseParticipant(p, eventId))
+        .toList();
     return EventModel(
       id: eventId,
       ownerId: json['owner_id'].toString(),
@@ -81,10 +84,37 @@ class EventDatasource {
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
       participantCount: (json['participants_count'] as num?)?.toInt(),
-      participants: (json['participants'] as List? ?? [])
-          .map((p) => _parseParticipant(p, eventId))
+      participants: participants,
+      expenses: (json['expenses'] as List? ?? [])
+          .map((e) => _parseExpense(e, eventId, participants))
           .toList(),
-      expenses: [],
+    );
+  }
+
+  ExpenseModel _parseExpense(
+      dynamic raw, String eventId, List<ParticipantModel> participants) {
+    final e = raw as Map<String, dynamic>;
+    return ExpenseModel(
+      id: e['expense_id'].toString(),
+      eventId: eventId,
+      title: e['title'] as String? ?? '',
+      amount: double.tryParse(e['amount']?.toString() ?? '') ?? 0,
+      dayPaid: DateTime.tryParse(e['expense_date'] as String? ?? '') ??
+          DateTime.now(),
+      payerId: e['payer_id']?.toString() ?? '',
+      categoryIcon: (e['category'] as Map<String, dynamic>?)?['icon'] as String?,
+      splits: (e['splits'] as List? ?? [])
+          .map((s) => _parseExpenseSplit(s))
+          .toList(),
+    );
+  }
+
+  ExpenseSplitModel _parseExpenseSplit(dynamic raw) {
+    final s = raw as Map<String, dynamic>;
+    return ExpenseSplitModel(
+      expenseId: s['expense_id']?.toString() ?? '',
+      participantId: s['participant_id']?.toString() ?? '',
+      amount: double.tryParse(s['amount']?.toString() ?? '') ?? 0,
     );
   }
 

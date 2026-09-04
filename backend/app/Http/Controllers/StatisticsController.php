@@ -91,10 +91,19 @@ class StatisticsController extends Controller
             ];
         }
 
+        $currentMonth = (int) now()->format('n');
+        $currentMonthTotal = $monthlyStats[$currentMonth - 1]['value'] ?? 0;
+        $previousMonthTotal = $currentMonth > 1
+            ? ($monthlyStats[$currentMonth - 2]['value'] ?? 0)
+            : 0;
+        $changeRate = $previousMonthTotal > 0
+            ? round(($currentMonthTotal - $previousMonthTotal) / $previousMonthTotal * 100, 1)
+            : 0.0;
+
         return response()->json([
             'data' => [
                 'totalExpense' => round($total, 2),
-                'changeRate' => 0.0,
+                'changeRate' => $changeRate,
                 'categoryStats' => $categoryStats,
                 'monthlyStats' => $monthlyStats,
                 'monthlyTransactions' => $monthlyTransactions,

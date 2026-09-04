@@ -146,6 +146,11 @@ class EventController extends Controller
             'participants' => function ($query) {
                 $query->where('status', 'active');
             },
+            'expenses' => function ($query) {
+                $query->with(['splits', 'category'])
+                    ->where('is_deleted', false)
+                    ->orderBy('expense_date', 'desc');
+            },
         ]);
 
         return response()->json([

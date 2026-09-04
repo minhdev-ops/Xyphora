@@ -32,7 +32,6 @@ Route::post('/auth/google', [AuthController::class, 'googleLogin']);
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/home/dashboard', [DashboardController::class, 'home']);
-    Route::get('/dashboard', [DashboardController::class, 'home']);
 
     Route::get('/events', [EventController::class, 'index']);
     Route::post('/events', [EventController::class, 'store']);
@@ -64,6 +63,13 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/events/join/claim', [EventController::class, 'claim']);
     Route::get('/events/{event}/invite', [EventController::class, 'invite']);
 
+    Route::post('/events/{event}/expenses', [ExpenseController::class, 'storeForEvent']);
     Route::put('/events/{event}', [EventController::class, 'update']);
     Route::delete('/events/{event}', [EventController::class, 'destroy']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::put('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::put('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy']);
 });

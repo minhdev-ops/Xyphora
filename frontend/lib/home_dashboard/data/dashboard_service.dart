@@ -9,14 +9,12 @@ class DashboardService {
 
   Future<String?> _getToken() async {
     final token = await TokenStorage.read();
-    debugPrint('[Dashboard] baseUrl=$baseUrl token=${token != null ? token.substring(0, 20).padRight(20, '.') : "NULL"}');
     return token;
   }
 
   Future<Map<String, dynamic>> getDashboard() async {
     try {
       final token = await _getToken();
-      debugPrint('[Dashboard] baseUrl=$baseUrl token=${token != null ? token.substring(0, 20).padRight(20, '.') : "NULL"}');
       if (token == null) {
         return {'success': false, 'message': 'Chưa đăng nhập'};
       }

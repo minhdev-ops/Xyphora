@@ -9,6 +9,7 @@ import '../../config/token_storage.dart';
 
 class AuthService {
   static String get baseUrl => ApiConfig.baseUrl;
+  UserModel? _cachedUser;
 
   Future<Map<String, dynamic>> register(String name, String email, String password) async {
     try {
@@ -91,6 +92,7 @@ class AuthService {
   }
 
   Future<UserModel?> getCurrentUser() async {
+    if (_cachedUser != null) return _cachedUser;
     try {
       final token = await getToken();
       if (token == null) return null;
@@ -104,16 +106,21 @@ class AuthService {
       );
       if (response.statusCode != 200) return null;
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return UserModel(
+      _cachedUser = UserModel(
         id: data['id'].toString(),
         name: data['name'] as String? ?? '',
         email: data['email'] as String? ?? '',
         avatarUrl: data['avatar'] as String?,
       );
+      return _cachedUser;
     } catch (e) {
       debugPrint('getCurrentUser error: $e');
       return null;
     }
+  }
+
+  void clearCachedUser() {
+    _cachedUser = null;
   }
 
   Future<void> logout() async {
@@ -132,6 +139,8 @@ class AuthService {
       }
     } catch (e) {
       // Bỏ qua lỗi kết nối khi logout
+    } finally {
+      clearCachedUser();
     }
   }
 
