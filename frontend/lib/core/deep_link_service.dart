@@ -1,18 +1,19 @@
 import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:uni_links/uni_links.dart';
 import '../event_management/presentation/pages/join_event_page.dart';
 
 class DeepLinkService {
   static const String scheme = 'xyphora';
   static StreamSubscription<String?>? _subscription;
+  static final _appLinks = AppLinks();
 
   static Future<void> init() async {
     try {
-      final initial = await getInitialLink();
+      final initial = await _appLinks.getInitialLinkString();
       _handle(initial);
-      _subscription = linkStream.listen(_handle);
+      _subscription = _appLinks.stringLinkStream.listen(_handle);
     } catch (e) {
       debugPrint('DeepLinkService.init error: $e');
     }

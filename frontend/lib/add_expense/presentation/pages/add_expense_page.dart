@@ -6,6 +6,7 @@ import '../controllers/add_expense_controller.dart';
 import '../widgets/expense_header.dart';
 import '../widgets/expense_card.dart';
 import '../widgets/expense_calculator.dart';
+import '../widgets/payers_section.dart';
 import '../widgets/receipt_attachment.dart';
 
 class ExpensePage extends GetView<AddExpenseController> {
@@ -53,6 +54,17 @@ class ExpensePage extends GetView<AddExpenseController> {
                                   ),
                                 ),
                                 const SizedBox(height: 24),
+                                Obx(
+                                  () => controller.selectedEventId.value == null
+                                      ? const SizedBox.shrink()
+                                      : const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                          ),
+                                          child: PayersSection(),
+                                        ),
+                                ),
+                                const SizedBox(height: 16),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 20),
                                   child: ReceiptAttachment(),

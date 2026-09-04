@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../../data/repositories/statistics_repository.dart';
 import '../../domain/models/statistics_model.dart';
@@ -5,16 +6,39 @@ import '../../domain/models/statistics_model.dart';
 class StatisticsController extends GetxController {
   final StatisticsRepository _repository = StatisticsRepository();
 
-  double get totalExpense => _repository.getTotalExpense();
+  final isLoading = false.obs;
+  final totalExpense = 0.0.obs;
+  final changeRate = 0.0.obs;
+  final categoryStats = <CategoryStat>[].obs;
+  final monthlyStats = <MonthlyStat>[].obs;
+  final _monthlyTransactions = <String, List<TransactionItem>>{}.obs;
 
-  double get changeRate => _repository.getChangeRate();
+  @override
+  void onInit() {
+    super.onInit();
+    loadStatistics();
+  }
 
-  List<CategoryStat> get categoryStats => _repository.getCategoryStats();
-
-  List<MonthlyStat> get monthlyStats => _repository.getMonthlyStats();
+  Future<void> loadStatistics() async {
+    isLoading.value = true;
+    update();
+    try {
+      final data = await _repository.fetchStatistics();
+      totalExpense.value = data.totalExpense;
+      changeRate.value = data.changeRate;
+      categoryStats.assignAll(data.categoryStats);
+      monthlyStats.assignAll(data.monthlyStats);
+      _monthlyTransactions.assignAll(data.monthlyTransactions);
+    } catch (e) {
+      debugPrint('StatisticsController load error: $e');
+    } finally {
+      isLoading.value = false;
+      update();
+    }
+  }
 
   List<TransactionItem> transactionsOf(String monthLabel) =>
-      _repository.getMonthlyTransactions(monthLabel);
+      _monthlyTransactions[monthLabel] ?? const [];
 
   String formatCurrency(double amount) {
     final digits = amount.round().toString();

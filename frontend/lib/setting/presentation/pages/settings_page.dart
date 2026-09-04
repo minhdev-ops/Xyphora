@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/custom_header.dart';
 import '../widgets/setting_card.dart';
 import '../../../home_dashboard/presentation/widgets/custom_bottom_nav_bar.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
 import 'account_security_page.dart';
 import 'push_notification_page.dart';
 import 'default_currency_page.dart';
