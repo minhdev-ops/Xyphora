@@ -2,24 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../add_group_expense/presentation/bindings/add_group_expense_binding.dart';
 import '../../../add_group_expense/presentation/pages/add_group_expense_page.dart';
-import '../../data/event_service.dart';
-import '../../data/repositories/event_repository.dart';
 import '../bindings/event_binding.dart';
-import '../controllers/event_detail_controller.dart';
+import '../controllers/event_controller.dart';
 import 'edit_event_page.dart';
 import '../widgets/expenses_tab.dart';
 import '../widgets/balances_tab.dart';
 import '../widgets/invite_sheet.dart';
 import '../widgets/photos_tab.dart';
 import '../../domain/models/event_model.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
-class EventDetailView extends GetView<EventDetailController> {
+class EventDetailView extends GetView<EventController> {
   final EventModel? event;
 
   const EventDetailView({super.key, this.event});
 
   Future<void> _showInviteSheet(BuildContext context) async {
-    final controller = Get.find<EventDetailController>();
     try {
       final link = await controller.getInviteLink();
       if (!context.mounted) return;
@@ -27,10 +25,10 @@ class EventDetailView extends GetView<EventDetailController> {
         InviteSheet(link: link),
         isScrollControlled: true,
       );
-    } on EventApiException catch (e) {
+    } on ExceptionWithMessage catch (e) {
       Get.snackbar(
         'Lỗi',
-        e.message,
+        e.mess,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
@@ -73,7 +71,7 @@ class EventDetailView extends GetView<EventDetailController> {
                 Navigator.pop(sheetContext);
                 Get.to(
                   () => EditEventPage(
-                    event: Get.find<EventDetailController>().event.value,
+                    event: controller.currentEvent.value,
                   ),
                 );
               },
@@ -95,7 +93,6 @@ class EventDetailView extends GetView<EventDetailController> {
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
-    final controller = Get.find<EventDetailController>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -125,10 +122,10 @@ class EventDetailView extends GetView<EventDetailController> {
         colorText: Colors.white,
         duration: const Duration(seconds: 2),
       );
-    } on EventApiException catch (e) {
+    } on ExceptionWithMessage catch (e) {
       Get.snackbar(
         'Lỗi',
-        e.message,
+        e.mess,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
@@ -145,16 +142,8 @@ class EventDetailView extends GetView<EventDetailController> {
   @override
   Widget build(BuildContext context) {
     EventBinding().dependencies();
-    final EventDetailController controller;
-    if (Get.isRegistered<EventDetailController>()) {
-      controller = Get.find<EventDetailController>();
-      if (event != null && controller.event.value.id != event!.id) {
-        controller.loadEvent(event!);
-      }
-    } else {
-      controller = Get.put(
-        EventDetailController(Get.find<EventRepository>(), initialEvent: event),
-      );
+    if (event != null) {
+      controller.loadEventDetail(event!);
     }
 
     return Scaffold(
@@ -208,7 +197,7 @@ class EventDetailView extends GetView<EventDetailController> {
       body: Column(
         children: [
           Obx(
-            () => controller.isLoading.value
+            () => controller.isLoadingDetail.value
                 ? const Padding(
                     padding: EdgeInsets.only(top: 48),
                     child: Center(
@@ -217,15 +206,14 @@ class EventDetailView extends GetView<EventDetailController> {
                       ),
                     ),
                   )
-                : _EventInfo(event: controller.event.value),
+                : _EventInfo(event: controller.currentEvent.value),
           ),
           const SizedBox(height: 20),
           _CustomTabBar(currentTab: controller.currentTab, onSwitch: controller.switchTab),
           const SizedBox(height: 8),
           Expanded(
             child: Obx(() {
-              // Track event change so tabs rebuild after API load.
-              controller.event.value;
+              controller.currentEvent.value;
               switch (controller.currentTab.value) {
                 case 0:
                   return const ExpensesTab();
@@ -262,7 +250,7 @@ class EventDetailView extends GetView<EventDetailController> {
                     binding: AddGroupExpenseBinding(),
                     arguments: {
                       'event_id': int.tryParse(controller.eventId),
-                      'event_title': controller.event.value.title,
+                      'event_title': controller.currentEvent.value.title,
                     },
                   );
                 }

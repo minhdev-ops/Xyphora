@@ -1,4 +1,5 @@
 import 'expense_split_model.dart';
+import 'participant_model.dart';
 
 class ExpenseModel {
   final String id;
@@ -8,7 +9,6 @@ class ExpenseModel {
   final DateTime dayPaid;
   final String payerId;
   final List<ExpenseSplitModel> splits;
-  /// Icon name của danh mục (ví dụ: 'restaurant', 'hotel'), null nếu không có.
   final String? categoryIcon;
 
   ExpenseModel({
@@ -21,4 +21,19 @@ class ExpenseModel {
     required this.splits,
     this.categoryIcon,
   });
+
+  factory ExpenseModel.fromJson(Map<String, dynamic> json, String eventId, List<ParticipantModel> participants) {
+    return ExpenseModel(
+      id: json['expense_id'].toString(),
+      eventId: eventId,
+      title: json['title'] as String? ?? '',
+      amount: double.tryParse(json['amount']?.toString() ?? '') ?? 0,
+      dayPaid: DateTime.tryParse(json['expense_date'] as String? ?? '') ?? DateTime.now(),
+      payerId: json['payer_id']?.toString() ?? '',
+      categoryIcon: (json['category'] as Map<String, dynamic>?)?['icon'] as String?,
+      splits: (json['splits'] as List? ?? [])
+          .map((s) => ExpenseSplitModel.fromJson(s as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }

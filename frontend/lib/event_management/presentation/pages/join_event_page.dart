@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../bindings/event_binding.dart';
-import '../controllers/join_event_controller.dart';
+import '../controllers/event_controller.dart';
 
-class JoinEventPage extends GetView<JoinEventController> {
+class JoinEventPage extends GetView<EventController> {
   final String token;
 
   const JoinEventPage({super.key, required this.token});
@@ -11,9 +11,7 @@ class JoinEventPage extends GetView<JoinEventController> {
   @override
   Widget build(BuildContext context) {
     EventBinding().dependencies();
-    if (!Get.isRegistered<JoinEventController>()) {
-      Get.put(JoinEventController(token));
-    }
+    controller.loadJoinEvent(token);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6),
@@ -37,7 +35,7 @@ class JoinEventPage extends GetView<JoinEventController> {
       ),
       body: SafeArea(
         child: Obx(() {
-          if (controller.isLoading.value) {
+          if (controller.isLoadingJoin.value) {
             return const Center(
               child: CircularProgressIndicator(color: Color(0xFF0A4226)),
             );
@@ -49,13 +47,13 @@ class JoinEventPage extends GetView<JoinEventController> {
               children: [
                 const SizedBox(height: 12),
                 Text(
-                  controller.eventIcon.value,
+                  controller.joinEventIcon.value,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 48),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  controller.eventTitle.value,
+                  controller.joinEventTitle.value,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 22,
@@ -71,7 +69,7 @@ class JoinEventPage extends GetView<JoinEventController> {
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  child: controller.participants.isEmpty
+                  child: controller.joinParticipants.isEmpty
                       ? const Center(
                           child: Text(
                             'Không còn tên nào để chọn.\nMọi người đã tham gia hết rồi!',
@@ -81,10 +79,10 @@ class JoinEventPage extends GetView<JoinEventController> {
                           ),
                         )
                       : ListView.separated(
-                          itemCount: controller.participants.length,
+                          itemCount: controller.joinParticipants.length,
                           separatorBuilder: (_, _) => const SizedBox(height: 10),
                           itemBuilder: (context, index) {
-                            final p = controller.participants[index];
+                            final p = controller.joinParticipants[index];
                             final participantId =
                                 (p['participant_id'] as num).toInt();
                             final name =
@@ -93,7 +91,7 @@ class JoinEventPage extends GetView<JoinEventController> {
                               name: name,
                               onTap: controller.isClaiming.value
                                   ? null
-                                  : () => controller.claim(participantId, name),
+                                  : () => controller.claimParticipant(participantId, name),
                             );
                           },
                         ),

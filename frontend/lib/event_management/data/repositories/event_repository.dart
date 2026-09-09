@@ -1,42 +1,42 @@
-import '../../domain/models/event_model.dart';
-import '../datasources/event_datasource.dart';
+import 'package:injectable/injectable.dart';
+import 'package:xyphora_frontend/event_management/data/datasources/event_datasource.dart';
+import 'package:xyphora_frontend/event_management/domain/models/event_model.dart';
 
+@lazySingleton
 class EventRepository {
   final EventDatasource _datasource;
 
   EventRepository(this._datasource);
 
-  Future<List<EventModel>> getEvents({String? token}) {
-    return _datasource.getEvents(token: token);
+  Future<List<EventModel>> getEvents() {
+    return _datasource.getEvents();
   }
 
-  Future<EventModel> getEvent({
-    required String token,
-    required String eventId,
-  }) {
-    return _datasource.getEvent(token: token, eventId: eventId);
+  Future<EventModel> getEvent(String eventId) {
+    return _datasource.getEvent(eventId);
   }
 
-  Future<Map<String, dynamic>> getInviteLink({
-    required String token,
-    required String eventId,
-  }) {
-    return _datasource.getInviteLink(token: token, eventId: eventId);
+  Future<Map<String, dynamic>> getInviteLink(String eventId) {
+    return _datasource.getInviteLink(eventId);
   }
 
-  Future<EventModel> updateEvent({
-    required String token,
-    required String eventId,
-    required Map<String, dynamic> data,
-  }) {
-    return _datasource.updateEvent(
-        token: token, eventId: eventId, data: data);
+  Future<EventModel> createEvent(Map<String, dynamic> data) {
+    return _datasource.createEvent(data);
   }
 
-  Future<void> deleteEvent({
-    required String token,
-    required String eventId,
-  }) {
-    return _datasource.deleteEvent(token: token, eventId: eventId);
+  Future<EventModel> updateEvent(String eventId, Map<String, dynamic> data) {
+    return _datasource.updateEvent(eventId, data);
+  }
+
+  Future<void> deleteEvent(String eventId) {
+    return _datasource.deleteEvent(eventId);
+  }
+
+  Future<Map<String, dynamic>> joinEvent(String inviteToken) {
+    return _datasource.joinEvent(inviteToken);
+  }
+
+  Future<Map<String, dynamic>> claimParticipant(String inviteToken, int participantId) {
+    return _datasource.claimParticipant(inviteToken, participantId);
   }
 }

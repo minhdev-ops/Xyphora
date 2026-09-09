@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../bindings/event_binding.dart';
-import '../controllers/add_event_controller.dart';
+import '../controllers/event_controller.dart';
 
-class AddEventPage extends GetView<AddEventController> {
+class AddEventPage extends GetView<EventController> {
   const AddEventPage({super.key});
 
   static const Color _green = Color(0xFF0C3D2B);
@@ -12,6 +12,7 @@ class AddEventPage extends GetView<AddEventController> {
   @override
   Widget build(BuildContext context) {
     EventBinding().dependencies();
+    controller.resetCreateEditState();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF6),
@@ -68,7 +69,7 @@ class AddEventPage extends GetView<AddEventController> {
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
-                          children: AddEventController.emojis.map((emoji) {
+                          children: EventController.emojis.map((emoji) {
                             final isSelected =
                                 emoji == controller.selectedEmoji.value;
                             return Padding(
@@ -169,10 +170,10 @@ class AddEventPage extends GetView<AddEventController> {
                               name: 'Bạn',
                               isCreator: true,
                             ),
-...controller.participants.map(
-              (p) => _buildParticipantRow(
-                name: p.name,
-                isCreator: false,
+                            ...controller.participants.map(
+                              (p) => _buildParticipantRow(
+                                name: p.name,
+                                isCreator: false,
                                 onRemove: () =>
                                     controller.removeParticipant(p),
                               ),
@@ -410,7 +411,7 @@ class AddEventPage extends GetView<AddEventController> {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: controller.confirmAddParticipant,
+            onTap: () => controller.confirmAddParticipant(),
             child: Container(
               width: 40,
               height: 40,

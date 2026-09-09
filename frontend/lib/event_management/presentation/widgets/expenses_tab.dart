@@ -7,9 +7,9 @@ import '../../../config/category_icons.dart';
 import '../../../expense_detail/presentation/bindings/expense_detail_binding.dart';
 import '../../../expense_detail/presentation/pages/expense_detail_page.dart';
 import '../../domain/models/expense_model.dart';
-import '../controllers/event_detail_controller.dart';
+import '../controllers/event_controller.dart';
 
-class ExpensesTab extends GetView<EventDetailController> {
+class ExpensesTab extends GetView<EventController> {
   const ExpensesTab({super.key});
 
   static const Map<String, String> _fallbackEmojis = {
@@ -96,7 +96,7 @@ class ExpensesTab extends GetView<EventDetailController> {
 
 class _ExpenseItemView extends StatelessWidget {
   final ExpenseModel expense;
-  final EventDetailController controller;
+  final EventController controller;
   final String Function(String) emojiFor;
 
   const _ExpenseItemView({

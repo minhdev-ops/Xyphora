@@ -2,12 +2,18 @@ class ExpenseSplitModel {
   final String expenseId;
   final String participantId;
   final double amount;
-  final String status;
 
   ExpenseSplitModel({
     required this.expenseId,
     required this.participantId,
     required this.amount,
-    this.status = 'pending',
   });
+
+  factory ExpenseSplitModel.fromJson(Map<String, dynamic> json) {
+    return ExpenseSplitModel(
+      expenseId: json['expense_id']?.toString() ?? '',
+      participantId: json['participant_id']?.toString() ?? '',
+      amount: double.tryParse(json['amount']?.toString() ?? '') ?? 0,
+    );
+  }
 }

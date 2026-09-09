@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../add_expense/data/repositories/add_expense_repository.dart';
 import '../../../add_expense/domain/models/group_member.dart';
-import '../../../event_management/presentation/controllers/event_detail_controller.dart';
+import '../../../event_management/presentation/controllers/event_controller.dart';
 import '../../../home_dashboard/presentation/controllers/dashboard_controller.dart';
 
 /// Controller dành riêng cho luồng thêm chi tiêu nhóm từ màn EventDetail.
-/// Nhận [eventId] và [eventTitle] từ arguments hoặc EventDetailController.
+/// Nhận [eventId] và [eventTitle] từ arguments hoặc EventController.
 class AddGroupExpenseController extends GetxController {
   final AddExpenseRepository _repository = AddExpenseRepository();
 
@@ -71,13 +71,13 @@ class AddGroupExpenseController extends GetxController {
         loadMembers(id);
       }
     } else {
-      // Fallback: lấy từ EventDetailController nếu đang mở từ EventDetailView
-      if (Get.isRegistered<EventDetailController>()) {
-        final detailCtrl = Get.find<EventDetailController>();
-        final rawId = int.tryParse(detailCtrl.event.value.id);
+      // Fallback: lấy từ EventController nếu đang mở từ EventDetailView
+      if (Get.isRegistered<EventController>()) {
+        final detailCtrl = Get.find<EventController>();
+        final rawId = int.tryParse(detailCtrl.currentEvent.value.id);
         if (rawId != null) {
           selectedEventId.value = rawId;
-          eventTitle.value = detailCtrl.event.value.title;
+          eventTitle.value = detailCtrl.currentEvent.value.title;
           loadMembers(rawId);
         }
       }
@@ -371,9 +371,9 @@ class AddGroupExpenseController extends GetxController {
     isSaving.value = false;
 
     if (result['success'] == true) {
-      // Refresh EventDetailController nếu đang mở
-      if (Get.isRegistered<EventDetailController>()) {
-        final detailCtrl = Get.find<EventDetailController>();
+      // Refresh EventController nếu đang mở
+      if (Get.isRegistered<EventController>()) {
+        final detailCtrl = Get.find<EventController>();
         await detailCtrl.loadExpenses();
       }
       if (Get.isRegistered<DashboardController>()) {

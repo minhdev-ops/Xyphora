@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/app_theme.dart';
 import '../../../config/app_format.dart';
-import '../controllers/event_detail_controller.dart';
+import '../controllers/event_controller.dart';
 
-class BalancesTab extends GetView<EventDetailController> {
+class BalancesTab extends GetView<EventController> {
   const BalancesTab({super.key});
 
   @override
