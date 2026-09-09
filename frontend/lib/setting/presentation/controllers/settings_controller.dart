@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../auth/data/auth_service.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/pages/login_pages.dart';
 import 'default_currency_controller.dart';
 import 'language_controller.dart';
@@ -60,8 +60,8 @@ class SettingsController extends GetxController {
 
     if (confirmed != true) return;
 
-    final authService = AuthService();
-    await authService.logout();
+    final authRepository = Get.find<AuthRepository>();
+    await authRepository.logout();
     Get.offAll(
       () => const LoginPages(),
       transition: Transition.fadeIn,

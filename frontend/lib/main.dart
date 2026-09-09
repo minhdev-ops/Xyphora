@@ -6,15 +6,17 @@ import 'package:device_preview/device_preview.dart';
 import 'package:xyphora_frontend/add_expense/presentation/controllers/add_expense_controller.dart';
 import 'package:xyphora_frontend/add_group_expense/presentation/controllers/add_group_expense_controller.dart';
 import 'package:xyphora_frontend/statistics/presentation/controllers/statistics_controller.dart';
-import 'auth/presentation/controllers/auth_controller.dart';
-import 'auth/presentation/pages/login_pages.dart';
-import 'core/deep_link_service.dart';
-import 'home_dashboard/presentation/controllers/dashboard_controller.dart';
-import 'profile/presentation/controllers/profile_controller.dart';
-import 'notification/presentation/controllers/notification_controller.dart';
+import 'package:xyphora_frontend/auth/presentation/bindings/auth_binding.dart';
+import 'package:xyphora_frontend/auth/presentation/pages/login_pages.dart';
+import 'package:xyphora_frontend/core/deep_link_service.dart';
+import 'package:xyphora_frontend/home_dashboard/presentation/controllers/dashboard_controller.dart';
+import 'package:xyphora_frontend/profile/presentation/controllers/profile_controller.dart';
+import 'package:xyphora_frontend/notification/presentation/controllers/notification_controller.dart';
+import 'package:xyphora_frontend/injector.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  configureDependencies();
 
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
@@ -50,7 +52,7 @@ class MyApp extends StatelessWidget {
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
       initialBinding: BindingsBuilder(() {
-        Get.put<AuthController>(AuthController(), permanent: true);
+        AuthBinding().dependencies();
         Get.lazyPut<DashboardController>(
           () => DashboardController(),
           fenix: true,
