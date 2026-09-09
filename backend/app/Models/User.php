@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
@@ -26,7 +24,14 @@ class User extends Authenticatable
         'avatar',
         'provider',
         'status',
+        'language',
+        'notifications_enabled',
     ];
+    // Thêm relationship liên kết với bảng Photo
+    public function photo()
+    {
+        return $this->belongsTo(Photo::class, 'photo_id', 'photo_id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -48,6 +53,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'notifications_enabled' => 'boolean', // Ép kiểu boolean
         ];
     }
 
