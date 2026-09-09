@@ -82,7 +82,7 @@ class NotificationController extends Controller
             ->where('user_id', $user->id)
             ->first();
 
-        if (! $notification) {
+        if (!$notification) {
             return response()->json([
                 'message' => 'Thông báo không tồn tại.',
             ], 404);
