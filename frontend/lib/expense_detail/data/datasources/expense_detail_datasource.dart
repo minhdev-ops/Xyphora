@@ -1,66 +1,52 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../../config/api_config.dart';
-import '../../../config/token_storage.dart';
-import '../../domain/models/expense_detail.dart';
+import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
+import 'package:xyphora_frontend/expense_detail/data/services/expense_detail_service.dart';
+import 'package:xyphora_frontend/expense_detail/domain/models/expense_detail.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
+@lazySingleton
 class ExpenseDetailDatasource {
-  static final String baseUrl = ApiConfig.baseUrl;
+  final ExpenseDetailService _service;
 
-  Future<Map<String, String>> _headers() async {
-    final token = await TokenStorage.read();
-    final auth = token == null ? null : 'Bearer $token';
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': ?auth,
-    };
-  }
+  ExpenseDetailDatasource(this._service);
 
   Future<ExpenseDetail> fetchExpenseDetail(int expenseId) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/expenses/$expenseId'),
-      headers: await _headers(),
-    );
-
-    if (response.statusCode == 200) {
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return ExpenseDetail.fromJson(body['data'] as Map<String, dynamic>);
+    try {
+      final response = await _service.fetchExpenseDetail(expenseId);
+      final data = response['data'] as Map<String, dynamic>? ?? {};
+      return ExpenseDetail.fromJson(data);
+    } catch (error) {
+      _handleError(error);
     }
-
-    String message = 'Không thể tải chi tiết chi tiêu';
-    if (response.statusCode == 401) {
-      message = 'Phiên đăng nhập đã hết hạn';
-    } else if (response.statusCode == 403) {
-      message = 'Bạn không có quyền xem chi tiêu này';
-    } else if (response.statusCode == 404) {
-      message = 'Chi tiêu không tồn tại';
-    } else {
-      try {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        message = body['message']?.toString() ?? message;
-      } catch (_) {}
-    }
-
-    throw Exception(message);
   }
 
   Future<Map<String, dynamic>> deleteExpense(int expenseId) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/expenses/$expenseId/delete'),
-        headers: await _headers(),
-      );
+      return await _service.deleteExpense(expenseId);
+    } catch (error) {
+      _handleError(error);
+    }
+  }
 
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return {'success': true, 'message': body['message']};
+  Never _handleError(Object error) {
+    if (error is ExceptionWithMessage) {
+      throw error;
+    } else if (error is DioException) {
+      final data = error.response?.data;
+      String? serverMessage;
+      if (data is Map) {
+        serverMessage = data['message']?.toString();
       }
-
-      return {'success': false, 'message': body['message'] ?? 'Không thể xóa'};
-    } catch (e) {
-      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+      if (error.response?.statusCode == 401) {
+        serverMessage = 'Phiên đăng nhập đã hết hạn';
+      } else if (error.response?.statusCode == 403) {
+        serverMessage = 'Bạn không có quyền xem chi tiêu này';
+      } else if (error.response?.statusCode == 404) {
+        serverMessage = 'Chi tiêu không tồn tại';
+      }
+      throw ExceptionWithMessage(mess: serverMessage ?? 'Lỗi kết nối máy chủ');
+    } else {
+      throw ExceptionWithMessage(mess: error.toString());
     }
   }
 }

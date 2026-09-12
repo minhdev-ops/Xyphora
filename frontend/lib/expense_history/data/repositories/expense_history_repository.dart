@@ -1,8 +1,12 @@
-import '../datasources/expense_history_datasource.dart';
-import '../../domain/models/expense_history_item.dart';
+import 'package:injectable/injectable.dart';
+import 'package:xyphora_frontend/expense_history/data/datasources/expense_history_datasource.dart';
+import 'package:xyphora_frontend/expense_history/domain/models/expense_history_item.dart';
 
+@lazySingleton
 class ExpenseHistoryRepository {
-  final ExpenseHistoryDatasource _datasource = ExpenseHistoryDatasource();
+  final ExpenseHistoryDatasource _datasource;
+
+  ExpenseHistoryRepository(this._datasource);
 
   Future<ExpensePageResult> fetchExpenses({
     int? eventId,

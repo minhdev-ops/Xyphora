@@ -1,25 +1,14 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../../config/api_config.dart';
-import '../../../config/token_storage.dart';
-import '../../domain/models/expense_history_item.dart';
+import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
+import 'package:xyphora_frontend/expense_history/data/services/expense_history_service.dart';
+import 'package:xyphora_frontend/expense_history/domain/models/expense_history_item.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
+@lazySingleton
 class ExpenseHistoryDatasource {
-  static final String baseUrl = ApiConfig.baseUrl;
+  final ExpenseHistoryService _service;
 
-  static String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  Future<Map<String, String>> _headers() async {
-    final token = await TokenStorage.read();
-    final auth = token == null ? null : 'Bearer $token';
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': ?auth,
-    };
-  }
+  ExpenseHistoryDatasource(this._service);
 
   Future<ExpensePageResult> fetchExpenses({
     int? eventId,
@@ -33,48 +22,57 @@ class ExpenseHistoryDatasource {
     String? mySplitStatus,
     String sort = 'desc',
   }) async {
-    final query = <String, String>{
-      'page': '$page',
-      'per_page': '$perPage',
-      'sort': sort,
-      if (eventId != null) 'event_id': '$eventId',
-      if (dateFrom != null) 'date_from': _formatDate(dateFrom),
-      if (dateTo != null) 'date_to': _formatDate(dateTo),
-      if (categoryId != null) 'category_id': '$categoryId',
-      if (payerId != null) 'payer_id': '$payerId',
-      if (search != null && search.isNotEmpty) 'search': search,
-      'my_split_status': ?mySplitStatus,
-    };
-
-    final uri = Uri.parse('$baseUrl/expenses').replace(queryParameters: query);
-    final response = await http.get(uri, headers: await _headers());
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(body['message'] ?? 'Lỗi tải danh sách chi tiêu');
+    try {
+      final response = await _service.fetchExpenses(
+        eventId: eventId,
+        page: page,
+        perPage: perPage,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        categoryId: categoryId,
+        payerId: payerId,
+        search: search,
+        mySplitStatus: mySplitStatus,
+        sort: sort,
+      );
+      return ExpensePageResult.fromJson(response);
+    } catch (error) {
+      _handleError(error);
     }
-    return ExpensePageResult.fromJson(body);
   }
 
   Future<List<Map<String, dynamic>>> fetchCategories() async {
-    final uri = Uri.parse('$baseUrl/categories');
-    final response = await http.get(uri, headers: await _headers());
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(body['message'] ?? 'Lỗi tải danh mục');
+    try {
+      final response = await _service.fetchCategories();
+      final data = response['data'] as List<dynamic>? ?? [];
+      return data.cast<Map<String, dynamic>>();
+    } catch (error) {
+      _handleError(error);
     }
-    return (body['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
   }
 
   Future<List<Map<String, dynamic>>> fetchEvents() async {
-    final uri = Uri.parse('$baseUrl/events');
-    final response = await http.get(uri, headers: await _headers());
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(body['message'] ?? 'Lỗi tải sự kiện');
+    try {
+      final response = await _service.fetchEvents();
+      final data = response['data'] as List<dynamic>? ?? [];
+      return data.cast<Map<String, dynamic>>();
+    } catch (error) {
+      _handleError(error);
     }
-    return (body['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+  }
+
+  Never _handleError(Object error) {
+    if (error is ExceptionWithMessage) {
+      throw error;
+    } else if (error is DioException) {
+      final data = error.response?.data;
+      String? serverMessage;
+      if (data is Map) {
+        serverMessage = data['message']?.toString();
+      }
+      throw ExceptionWithMessage(mess: serverMessage ?? 'Lỗi kết nối máy chủ');
+    } else {
+      throw ExceptionWithMessage(mess: error.toString());
+    }
   }
 }
