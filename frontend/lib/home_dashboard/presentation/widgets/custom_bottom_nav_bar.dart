@@ -6,6 +6,7 @@ import '../../../statistics/presentation/pages/statistics_page.dart';
 import '../../../event_management/presentation/pages/event_page.dart';
 import '../../../setting/presentation/bindings/settings_binding.dart';
 import '../../../setting/presentation/pages/settings_page.dart';
+import '../../../statistics/presentation/bindings/statistics_binding.dart';
 
 class CustomBottomNavBar extends StatefulWidget {
   final int initialIndex;
@@ -37,6 +38,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     } else if (index == 1) {
       Get.offAll(
         () => const StatisticsPage(),
+        binding: StatisticsBinding(),
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
