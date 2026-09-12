@@ -9,7 +9,9 @@ import '../../../home_dashboard/presentation/controllers/dashboard_controller.da
 /// Controller dành riêng cho luồng thêm chi tiêu nhóm từ màn EventDetail.
 /// Nhận [eventId] và [eventTitle] từ arguments hoặc EventController.
 class AddGroupExpenseController extends GetxController {
-  final AddExpenseRepository _repository = AddExpenseRepository();
+  final AddExpenseRepository _repository;
+
+  AddGroupExpenseController(this._repository);
 
   static const int maxExpressionLength = 12;
   static const List<String> currencies = ['VND', 'USD', 'EUR', 'JPY'];

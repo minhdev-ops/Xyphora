@@ -1,104 +1,49 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../../config/api_config.dart';
-import '../../../config/token_storage.dart';
+import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
+import 'package:xyphora_frontend/add_expense/data/services/add_expense_service.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
+@lazySingleton
 class AddExpenseDatasource {
-  static final String baseUrl = ApiConfig.baseUrl;
+  final AddExpenseService _service;
 
-
+  AddExpenseDatasource(this._service);
 
   Future<Map<String, dynamic>> fetchCategories() async {
     try {
-      final token = await TokenStorage.read();
-      if (token == null) {
-        return {'success': false, 'message': 'Chưa đăng nhập'};
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/categories'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'data': (body['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>(),
-        };
-      }
-      return {'success': false, 'message': body['message'] ?? 'Lỗi tải danh mục'};
-    } catch (e) {
-      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+      final response = await _service.fetchCategories();
+      final data = response['data'] as List<dynamic>? ?? [];
+      return {
+        'success': true,
+        'data': data.cast<Map<String, dynamic>>(),
+      };
+    } catch (error) {
+      _handleError(error);
     }
   }
 
   Future<Map<String, dynamic>> fetchEvents() async {
     try {
-      final token = await TokenStorage.read();
-      if (token == null) {
-        return {'success': false, 'message': 'Chưa đăng nhập'};
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/events'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'data': (body['data'] as List<dynamic>? ?? [])
-              .cast<Map<String, dynamic>>(),
-        };
-      }
+      final response = await _service.fetchEvents();
+      final data = response['data'] as List<dynamic>? ?? [];
       return {
-        'success': false,
-        'message': body['message'] ?? 'Lỗi tải danh sách sự kiện',
+        'success': true,
+        'data': data.cast<Map<String, dynamic>>(),
       };
-    } catch (e) {
-      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+    } catch (error) {
+      _handleError(error);
     }
   }
 
   Future<Map<String, dynamic>> fetchEvent(int eventId) async {
     try {
-      final token = await TokenStorage.read();
-      if (token == null) {
-        return {'success': false, 'message': 'Chưa đăng nhập'};
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/events/$eventId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'data': body['data'] as Map<String, dynamic>? ?? const {},
-        };
-      }
-      return {'success': false, 'message': body['message'] ?? 'Lỗi tải sự kiện'};
-    } catch (e) {
-      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+      final response = await _service.fetchEvent(eventId);
+      return {
+        'success': true,
+        'data': response['data'] as Map<String, dynamic>? ?? {},
+      };
+    } catch (error) {
+      _handleError(error);
     }
   }
 
@@ -115,52 +60,20 @@ class AddExpenseDatasource {
     List<Map<String, dynamic>> splits = const [],
   }) async {
     try {
-      final token = await TokenStorage.read();
-      if (token == null) {
-        return {'success': false, 'message': 'Chưa đăng nhập'};
-      }
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/expenses/create'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'event_id': ?eventId,
-          'category_id': ?categoryId,
-          'title': title,
-          'amount': amount,
-          'currency': currency,
-          if (description != null && description.isNotEmpty)
-            'description': description,
-          'expense_date': ?expenseDate,
-          if (eventId != null && splitMethod != null)
-            'split_method': splitMethod,
-          if (eventId != null && payerIds.isNotEmpty)
-            'payer_ids': payerIds,
-          if (eventId != null && splits.isNotEmpty) 'splits': splits,
-        }),
+      return await _service.saveExpense(
+        eventId: eventId,
+        categoryId: categoryId,
+        title: title,
+        amount: amount,
+        currency: currency,
+        description: description,
+        expenseDate: expenseDate,
+        splitMethod: splitMethod,
+        payerIds: payerIds,
+        splits: splits,
       );
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 201) {
-        return {'success': true, 'message': body['message'], 'data': body['data']};
-      }
-
-      String errorMsg = body['message'] ?? 'Dữ liệu không hợp lệ';
-      final rawErrors = body['errors'];
-      if (rawErrors is Map<String, dynamic> && rawErrors.isNotEmpty) {
-        final first = rawErrors.values.first;
-        if (first is List && first.isNotEmpty) {
-          errorMsg = first.first.toString();
-        }
-      }
-      return {'success': false, 'message': errorMsg};
-    } catch (e) {
-      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+    } catch (error) {
+      _handleError(error);
     }
   }
 
@@ -178,80 +91,47 @@ class AddExpenseDatasource {
     List<Map<String, dynamic>> splits = const [],
   }) async {
     try {
-      final token = await TokenStorage.read();
-      if (token == null) {
-        return {'success': false, 'message': 'Chưa đăng nhập'};
-      }
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/expenses/$expenseId/update'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'event_id': ?eventId,
-          'category_id': ?categoryId,
-          'title': title,
-          'amount': amount,
-          'currency': currency,
-          if (description != null && description.isNotEmpty)
-            'description': description,
-          'expense_date': ?expenseDate,
-          if (eventId != null && splitMethod != null)
-            'split_method': splitMethod,
-          if (eventId != null && payerIds.isNotEmpty)
-            'payer_ids': payerIds,
-          if (eventId != null && splits.isNotEmpty) 'splits': splits,
-        }),
+      return await _service.updateExpense(
+        expenseId: expenseId,
+        eventId: eventId,
+        categoryId: categoryId,
+        title: title,
+        amount: amount,
+        currency: currency,
+        description: description,
+        expenseDate: expenseDate,
+        splitMethod: splitMethod,
+        payerIds: payerIds,
+        splits: splits,
       );
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return {'success': true, 'message': body['message'], 'data': body['data']};
-      }
-
-      String errorMsg = body['message'] ?? 'Dữ liệu không hợp lệ';
-      final rawErrors = body['errors'];
-      if (rawErrors is Map<String, dynamic> && rawErrors.isNotEmpty) {
-        final first = rawErrors.values.first;
-        if (first is List && first.isNotEmpty) {
-          errorMsg = first.first.toString();
-        }
-      }
-      return {'success': false, 'message': errorMsg};
-    } catch (e) {
-      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+    } catch (error) {
+      _handleError(error);
     }
   }
 
   Future<Map<String, dynamic>> deleteExpense(int expenseId) async {
     try {
-      final token = await TokenStorage.read();
-      if (token == null) {
-        return {'success': false, 'message': 'Chưa đăng nhập'};
+      return await _service.deleteExpense(expenseId);
+    } catch (error) {
+      _handleError(error);
+    }
+  }
+
+  Never _handleError(Object error) {
+    if (error is ExceptionWithMessage) {
+      throw error;
+    } else if (error is DioException) {
+      final data = error.response?.data;
+      String? serverMessage;
+      if (data is Map) {
+        serverMessage = data['message']?.toString();
       }
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/expenses/$expenseId/delete'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return {'success': true, 'message': body['message']};
+      if (error.response?.statusCode == 401) {
+        serverMessage = 'Phiên đăng nhập đã hết hạn';
       }
-
-      return {'success': false, 'message': body['message'] ?? 'Không thể xóa'};
-    } catch (e) {
-      return {'success': false, 'message': 'Không thể kết nối đến máy chủ'};
+      throw ExceptionWithMessage(mess: serverMessage ?? 'Lỗi kết nối máy chủ');
+    } else {
+      throw ExceptionWithMessage(mess: error.toString());
     }
   }
 }
