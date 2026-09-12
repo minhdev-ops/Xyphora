@@ -32,3 +32,19 @@ class TransactionItem {
     required this.color,
   });
 }
+
+class StatisticsData {
+  final double totalExpense;
+  final double changeRate;
+  final List<CategoryStat> categoryStats;
+  final List<MonthlyStat> monthlyStats;
+  final Map<String, List<TransactionItem>> monthlyTransactions;
+
+  const StatisticsData({
+    required this.totalExpense,
+    required this.changeRate,
+    required this.categoryStats,
+    required this.monthlyStats,
+    required this.monthlyTransactions,
+  });
+}

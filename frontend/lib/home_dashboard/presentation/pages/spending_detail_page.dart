@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../../add_expense/domain/models/expense_model.dart';
 import '../../../add_expense/presentation/pages/edit_expense_page.dart';
-import '../../../add_expense/data/datasources/add_expense_datasource.dart';
+import '../../../add_expense/data/repositories/add_expense_repository.dart';
 import '../../../config/app_theme.dart';
 import '../../../config/app_format.dart';
 import '../../domain/models/spending_model.dart';
@@ -248,8 +248,8 @@ class SpendingDetailPage extends GetView<DashboardController> {
                     confirmTextColor: Colors.white,
                     buttonColor: AppColors.error,
                     onConfirm: () async {
-                      final datasource = AddExpenseDatasource();
-                      final result = await datasource.deleteExpense(spending.expenseId);
+                      final repository = Get.find<AddExpenseRepository>();
+                      final result = await repository.deleteExpense(spending.expenseId);
                       if (result['success'] == true) {
                         controller.spendings.removeWhere((s) =>
                           s.expenseId == spending.expenseId

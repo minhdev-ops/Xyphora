@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import '../../data/repositories/statistics_repository.dart';
-import '../../domain/models/statistics_model.dart';
+import 'package:xyphora_frontend/statistics/data/repositories/statistics_repository.dart';
+import 'package:xyphora_frontend/statistics/domain/models/statistics_model.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
 class StatisticsController extends GetxController {
-  final StatisticsRepository _repository = StatisticsRepository();
+  final StatisticsRepository _repository;
+
+  StatisticsController(this._repository);
 
   final isLoading = false.obs;
   final totalExpense = 0.0.obs;
@@ -21,7 +24,6 @@ class StatisticsController extends GetxController {
 
   Future<void> loadStatistics() async {
     isLoading.value = true;
-    update();
     try {
       final data = await _repository.fetchStatistics();
       totalExpense.value = data.totalExpense;
@@ -33,7 +35,6 @@ class StatisticsController extends GetxController {
       debugPrint('StatisticsController load error: $e');
     } finally {
       isLoading.value = false;
-      update();
     }
   }
 
