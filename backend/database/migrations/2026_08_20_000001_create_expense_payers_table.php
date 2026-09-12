@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -26,11 +25,8 @@ return new class extends Migration
                 ->cascadeOnUpdate()->cascadeOnDelete();
         });
 
-        // Backfill du lieu cu: moi expense co payer_id duoc gan 1 dong payer tuong ung
-        DB::statement(
-            'INSERT INTO expense_payers (expense_id, participant_id, amount, created_at) '
-            .'SELECT expense_id, payer_id, amount, NOW() FROM expenses WHERE payer_id IS NOT NULL'
-        );
+        // CHECK constraint (MySQL 8.0.16+) - run as raw SQL since Blueprint::check() not available
+        DB::statement('ALTER TABLE `expense_payers` ADD CONSTRAINT `chk_payers_amount` CHECK (`amount` > 0)');
     }
 
     public function down(): void

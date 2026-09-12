@@ -12,6 +12,8 @@ return new class extends Migration
             $table->string('avatar', 500)->nullable()->after('password');
             $table->enum('provider', ['email', 'google', 'facebook', 'apple'])->default('email')->after('avatar');
             $table->enum('status', ['active', 'inactive', 'banned'])->default('active')->after('provider');
+            $table->string('language', 10)->default('vi')->after('status');
+            $table->boolean('notifications_enabled')->default(true)->after('language');
             $table->index('status', 'idx_users_status');
         });
     }
@@ -20,7 +22,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropIndex('idx_users_status');
-            $table->dropColumn(['status', 'provider', 'avatar']);
+            $table->dropColumn(['status', 'provider', 'avatar', 'language', 'notifications_enabled']);
         });
     }
 };
