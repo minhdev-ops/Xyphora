@@ -10,7 +10,7 @@ import '../../domain/models/expense_model.dart';
 import '../../domain/models/group_member.dart';
 
 class EditExpenseController extends GetxController {
-  final AddExpenseRepository _repository = AddExpenseRepository();
+  final AddExpenseRepository _repository = Get.find<AddExpenseRepository>();
 
   late final int expenseId;
   final isSaving = false.obs;

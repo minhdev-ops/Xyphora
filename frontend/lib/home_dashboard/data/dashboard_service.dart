@@ -35,7 +35,7 @@ class DashboardService {
       } else if (response.statusCode == 401) {
         return {'success': false, 'message': 'Phiên đăng nhập đã hết hạn'};
       } else {
-        return {'success': false, 'message': 'Lỗi tải dữ liệu'};
+        return {'success': false, 'message': 'Lỗi tải dữ liệu ${response.statusCode}'};
       }
     } catch (e) {
       debugPrint('[Dashboard] error: $e');

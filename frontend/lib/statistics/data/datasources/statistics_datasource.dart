@@ -1,52 +1,19 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import '../../../config/api_config.dart';
-import '../../../config/token_storage.dart';
-import '../../domain/models/statistics_model.dart';
+import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
+import 'package:xyphora_frontend/statistics/data/services/statistics_service.dart';
+import 'package:xyphora_frontend/statistics/domain/models/statistics_model.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
-class StatisticsData {
-  final double totalExpense;
-  final double changeRate;
-  final List<CategoryStat> categoryStats;
-  final List<MonthlyStat> monthlyStats;
-  final Map<String, List<TransactionItem>> monthlyTransactions;
-
-  StatisticsData({
-    required this.totalExpense,
-    required this.changeRate,
-    required this.categoryStats,
-    required this.monthlyStats,
-    required this.monthlyTransactions,
-  });
-}
-
+@lazySingleton
 class StatisticsDatasource {
-  static final String baseUrl = ApiConfig.baseUrl;
+  final StatisticsService _service;
+
+  StatisticsDatasource(this._service);
 
   Future<StatisticsData> fetchStatistics() async {
     try {
-      final token = await TokenStorage.read();
-      if (token == null || token.isEmpty) {
-        return _emptyData();
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/statistics/general'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode != 200) {
-        debugPrint('Statistics API error: ${response.statusCode}');
-        return _emptyData();
-      }
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      final data = body['data'] as Map<String, dynamic>? ?? {};
+      final response = await _service.fetchStatistics();
+      final data = response['data'] as Map<String, dynamic>? ?? {};
 
       final totalExpense = (data['totalExpense'] as num?)?.toDouble() ?? 0.0;
       final changeRate = (data['changeRate'] as num?)?.toDouble() ?? 0.0;
@@ -93,25 +60,23 @@ class StatisticsDatasource {
         monthlyStats: monthlyStats,
         monthlyTransactions: monthlyTransactions,
       );
-    } catch (e) {
-      debugPrint('Error fetching statistics: $e');
-      return _emptyData();
+    } catch (error) {
+      _handleError(error);
     }
   }
 
-  StatisticsData _emptyData() {
-    final monthlyStats = <MonthlyStat>[];
-    final monthlyTxMap = <String, List<TransactionItem>>{};
-    for (var i = 1; i <= 12; i++) {
-      monthlyStats.add(MonthlyStat(label: 'T$i', value: 0.0));
-      monthlyTxMap['T$i'] = [];
+  Never _handleError(Object error) {
+    if (error is ExceptionWithMessage) {
+      throw error;
+    } else if (error is DioException) {
+      final data = error.response?.data;
+      String? serverMessage;
+      if (data is Map) {
+        serverMessage = data['message']?.toString();
+      }
+      throw ExceptionWithMessage(mess: serverMessage ?? 'Lỗi kết nối máy chủ');
+    } else {
+      throw ExceptionWithMessage(mess: error.toString());
     }
-    return StatisticsData(
-      totalExpense: 0.0,
-      changeRate: 0.0,
-      categoryStats: const [],
-      monthlyStats: monthlyStats,
-      monthlyTransactions: monthlyTxMap,
-    );
   }
 }

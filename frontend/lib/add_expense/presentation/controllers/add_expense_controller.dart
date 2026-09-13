@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../../../home_dashboard/presentation/controllers/dashboard_controller.dart';
-import '../../data/repositories/add_expense_repository.dart';
-import '../../domain/models/group_member.dart';
+import 'package:xyphora_frontend/add_expense/data/repositories/add_expense_repository.dart';
+import 'package:xyphora_frontend/add_expense/domain/models/group_member.dart';
+import 'package:xyphora_frontend/home_dashboard/presentation/controllers/dashboard_controller.dart';
+import 'package:xyphora_frontend/event_management/presentation/controllers/event_controller.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
 class AddExpenseController extends GetxController {
-  final AddExpenseRepository _repository = AddExpenseRepository();
+  final AddExpenseRepository _repository;
+
+  AddExpenseController(this._repository);
 
   static const int maxExpressionLength = 12;
   static const List<String> currencies = ['VND', 'USD', 'EUR', 'JPY'];
@@ -45,22 +49,15 @@ class AddExpenseController extends GetxController {
   final isLoadingMembers = false.obs;
 
   final Map<String, TextEditingController> _splitControllers = {};
+  final TextEditingController descriptionController = TextEditingController();
 
   List<String> get sortedCurrencies => [
     selectedCurrency.value,
     ...currencies.where((c) => c != selectedCurrency.value),
   ];
 
-  final TextEditingController descriptionController = TextEditingController();
-
-
-
-  TextEditingController splitControllerFor(String memberId) {
-    return _splitControllers.putIfAbsent(
-      memberId,
-      () => TextEditingController(),
-    );
-  }
+  TextEditingController splitControllerFor(String memberId) =>
+      _splitControllers.putIfAbsent(memberId, () => TextEditingController());
 
   @override
   void onInit() {
@@ -80,21 +77,31 @@ class AddExpenseController extends GetxController {
 
   Future<void> loadEvents() async {
     isLoadingEvents.value = true;
-    update();
 
     final result = await _repository.fetchEvents();
 
-    if (result['success'] == true) {
-      events.assignAll(
-        (result['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>(),
-      );
-    } else {
+    try {
+      if (result['success'] == true) {
+        events.assignAll(
+          (result['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>(),
+        );
+      } else {
+        Get.snackbar(
+          'Lỗi',
+          result['message'] ?? 'Không thể tải danh sách sự kiện',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
       Get.snackbar(
         'Lỗi',
-        result['message'] ?? 'Không thể tải danh sách sự kiện',
+        'Đã xảy ra lỗi: ${e.toString()}',
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
+    } finally {
+      isLoadingEvents.value = false;
     }
 
     final id = selectedEventId.value;
@@ -109,7 +116,6 @@ class AddExpenseController extends GetxController {
     }
 
     isLoadingEvents.value = false;
-    update();
   }
 
   void selectEvent(int? eventId) {
@@ -132,12 +138,10 @@ class AddExpenseController extends GetxController {
       eventTitle.value = match?['title']?.toString() ?? 'Sự kiện';
       loadMembers(id);
     }
-    update();
   }
 
   Future<void> loadMembers(int eventId) async {
     isLoadingMembers.value = true;
-    update();
 
     final result = await _repository.fetchEvent(eventId);
 
@@ -145,9 +149,7 @@ class AddExpenseController extends GetxController {
       final data = result['data'] as Map<String, dynamic>? ?? const {};
       final participants = (data['participants'] as List<dynamic>? ?? [])
           .cast<Map<String, dynamic>>();
-      members.assignAll(
-        participants.map(GroupMember.fromParticipant).toList(),
-      );
+      members.assignAll(participants.map(GroupMember.fromParticipant).toList());
 
       // Mac dinh nguoi tra = nguoi dang dang nhap (is_me), neu khong co thi nguoi dau tien
       final me = members.firstWhereOrNull((m) => m.isMe);
@@ -168,20 +170,18 @@ class AddExpenseController extends GetxController {
     }
 
     isLoadingMembers.value = false;
-    update();
   }
 
   Future<void> loadCategories() async {
     isLoadingCategories.value = true;
-    update();
 
     final result = await _repository.fetchCategories();
 
     if (result['success'] == true) {
       categories.assignAll(result['data'] as List<Map<String, dynamic>>);
       if (selectedCategoryId.value == null && categories.isNotEmpty) {
-        selectedCategoryId.value =
-            (categories.first['category_id'] as num).toInt();
+        selectedCategoryId.value = (categories.first['category_id'] as num)
+            .toInt();
       }
     } else {
       Get.snackbar(
@@ -193,19 +193,16 @@ class AddExpenseController extends GetxController {
     }
 
     isLoadingCategories.value = false;
-    update();
   }
 
   void selectCategory(int? categoryId) {
     selectedCategoryId.value = (categoryId == null || categoryId == 0)
         ? null
         : categoryId;
-    update();
   }
 
   void selectDate(DateTime date) {
     selectedDate.value = date;
-    update();
   }
 
   void togglePayer(String memberId) {
@@ -268,10 +265,7 @@ class AddExpenseController extends GetxController {
           splitControllerFor(member.id).text.replaceAll(',', '.'),
         );
         if (value == null || value < 0) return const [];
-        splits.add({
-          'participant_id': int.parse(member.id),
-          'amount': value,
-        });
+        splits.add({'participant_id': int.parse(member.id), 'amount': value});
       }
     }
 
@@ -445,7 +439,6 @@ class AddExpenseController extends GetxController {
         result -= next;
       }
     }
-
     return result;
   }
 
@@ -491,18 +484,13 @@ class AddExpenseController extends GetxController {
     }
 
     isSaving.value = true;
-    update();
 
     final rawTitle = description.value.isEmpty
         ? (eventId != null ? 'Chi tiêu nhóm' : 'Chi tiêu mới')
         : description.value;
-    final title =
-        rawTitle.length > 150 ? rawTitle.substring(0, 150) : rawTitle;
+    final title = rawTitle.length > 150 ? rawTitle.substring(0, 150) : rawTitle;
 
-    final payerIds = selectedPayers
-        .map(int.tryParse)
-        .whereType<int>()
-        .toList();
+    final payerIds = selectedPayers.map(int.tryParse).whereType<int>().toList();
 
     final result = await _repository.saveExpense(
       eventId: eventId,
@@ -518,11 +506,13 @@ class AddExpenseController extends GetxController {
     );
 
     isSaving.value = false;
-    update();
 
     if (result['success'] == true) {
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().loadDashboardData();
+      }
+      if (Get.isRegistered<EventController>()) {
+        Get.find<EventController>().loadEvents();
       }
       Get.back(result: true);
       Get.snackbar(
@@ -563,9 +553,7 @@ class AddExpenseController extends GetxController {
     isCurrencyPickerVisible.toggle();
   }
 
-  void hideCurrencyPicker() {
-    isCurrencyPickerVisible.value = false;
-  }
+  void hideCurrencyPicker() => isCurrencyPickerVisible.value = false;
 
   void selectCurrency(String value) {
     selectedCurrency.value = value;
@@ -581,23 +569,24 @@ class AddExpenseController extends GetxController {
     description.value = '';
     descriptionController.clear();
     selectedDate.value = DateTime.now();
-    selectedCategoryId.value =
-        categories.isEmpty ? null : (categories.first['category_id'] as num).toInt();
+    selectedCategoryId.value = categories.isEmpty
+        ? null
+        : (categories.first['category_id'] as num).toInt();
     selectedEventId.value = null;
     eventTitle.value = null;
     members.clear();
     selectedPayers.clear();
     selectedSplitMode.value = 'equal';
-    for (final controller in _splitControllers.values) {
-      controller.clear();
+    for (final c in _splitControllers.values) {
+      c.clear();
     }
   }
 
   @override
   void onClose() {
     descriptionController.dispose();
-    for (final controller in _splitControllers.values) {
-      controller.dispose();
+    for (final c in _splitControllers.values) {
+      c.dispose();
     }
     super.onClose();
   }

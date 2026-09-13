@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../data/repositories/category_list_repository.dart';
-import '../../domain/models/category_stat_item.dart';
+import 'package:xyphora_frontend/category_list/data/repositories/category_list_repository.dart';
+import 'package:xyphora_frontend/category_list/domain/models/category_stat_item.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
 class CategoryListController extends GetxController {
-  final CategoryListRepository _repository = CategoryListRepository();
+  final CategoryListRepository _repository;
+
+  CategoryListController(this._repository);
 
   final isLoading = true.obs;
   final errorMessage = RxnString();
@@ -31,7 +34,6 @@ class CategoryListController extends GetxController {
   Future<void> loadCategories() async {
     isLoading.value = true;
     errorMessage.value = null;
-    update();
 
     try {
       categories.assignAll(await _repository.fetchCategories());
@@ -40,7 +42,6 @@ class CategoryListController extends GetxController {
     }
 
     isLoading.value = false;
-    update();
   }
 
   Future<bool> createCategory({
@@ -75,7 +76,6 @@ class CategoryListController extends GetxController {
 
   Future<bool> _mutate(Future<dynamic> Function() action) async {
     isMutating.value = true;
-    update();
 
     try {
       await action();
@@ -91,7 +91,6 @@ class CategoryListController extends GetxController {
       return false;
     } finally {
       isMutating.value = false;
-      update();
     }
   }
 

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../data/auth_service.dart';
-import '../../../home_dashboard/presentation/controllers/dashboard_controller.dart';
-import '../../../home_dashboard/presentation/pages/home_dashboard_page.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:xyphora_frontend/auth/data/repositories/auth_repository.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
+import 'package:xyphora_frontend/home_dashboard/presentation/controllers/dashboard_controller.dart';
+import 'package:xyphora_frontend/home_dashboard/presentation/pages/home_dashboard_page.dart';
 import '../pages/login_pages.dart';
 
 class AuthController extends GetxController {
-  final AuthService _authService = AuthService();
+  final AuthRepository _repository;
+
+  AuthController(this._repository);
 
   final isLoading = false.obs;
   final isPasswordVisible = false.obs;
@@ -28,6 +32,11 @@ class AuthController extends GetxController {
   final forgotPasswordController = TextEditingController();
   final forgotConfirmPasswordController = TextEditingController();
 
+  // Google Sign In
+  late final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
+
   void clearFields() {
     loginEmailController.clear();
     loginPasswordController.clear();
@@ -42,12 +51,10 @@ class AuthController extends GetxController {
 
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
-    update();
   }
 
   void toggleConfirmPasswordVisibility() {
     isConfirmPasswordVisible.value = !isConfirmPasswordVisible.value;
-    update();
   }
 
   Future<void> handleLogin() async {
@@ -61,50 +68,99 @@ class AuthController extends GetxController {
     }
 
     isLoading.value = true;
-    update();
-    final result = await _authService.login(email, password);
-    isLoading.value = false;
-    update();
-
-    if (result['success']) {
-      clearFields();
-      // Xoa controller dashboard cu (duoc tao tu luc chua dang nhap,
-      // da fetch voi token=NULL) de no duoc tao lai va fetch voi token moi
-      await Get.delete<DashboardController>(force: true);
-      Get.offAll(
-        () => const HomeDashboardPage(),
-        transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 400),
-      );
-    } else {
+    try {
+      final response = await _repository.login(email, password);
+      if (response['success'] == true) {
+        clearFields();
+        await Get.delete<DashboardController>(force: true);
+        Get.offAll(
+          () => const HomeDashboardPage(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 400),
+        );
+      } else {
+        Get.snackbar(
+          'Đăng nhập thất bại',
+          response['message'] ?? 'Email hoặc mật khẩu không đúng.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      String message = 'Lỗi kết nối máy chủ';
+      if (e is ExceptionWithMessage) {
+        message = e.mess;
+      }
       Get.snackbar(
         'Đăng nhập thất bại',
-        result['message'] ?? 'Email hoặc mật khẩu không đúng.',
+        message,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
+    } finally {
+      isLoading.value = false;
     }
   }
 
   Future<void> handleGoogleLogin() async {
     isLoading.value = true;
-    update();
-    final result = await _authService.googleLogin();
-    isLoading.value = false;
-    update();
+    try {
+      try {
+        await _googleSignIn.disconnect();
+      } catch (_) {
+        await _googleSignIn.signOut();
+      }
+      final GoogleSignInAccount? account = await _googleSignIn.signIn();
+      if (account == null) {
+        return;
+      }
 
-    if (result['success']) {
-      clearFields();
-      await Get.delete<DashboardController>(force: true);
-      Get.offAll(
-        () => const HomeDashboardPage(),
-        transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 400),
-      );
-    } else {
+      final GoogleSignInAuthentication auth = await account.authentication;
+      final String? idToken = auth.idToken;
+
+      if (idToken == null) {
+        Get.snackbar(
+          'Đăng nhập Google thất bại',
+          'Không thể lấy ID token từ Google',
+          backgroundColor: const Color(0xFFE53935),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+          borderRadius: 12,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+        );
+        return;
+      }
+
+      final response = await _repository.googleLogin(idToken);
+      if (response['success'] == true) {
+        clearFields();
+        await Get.delete<DashboardController>(force: true);
+        Get.offAll(
+          () => const HomeDashboardPage(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 400),
+        );
+      } else {
+        Get.snackbar(
+          'Đăng nhập Google thất bại',
+          response['message'] ?? 'Đăng nhập Google thất bại',
+          backgroundColor: const Color(0xFFE53935),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+          borderRadius: 12,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+        );
+      }
+    } catch (e) {
+      String message = 'Không thể kết nối đến máy chủ';
+      if (e is ExceptionWithMessage) {
+        message = e.mess;
+      }
       Get.snackbar(
         'Đăng nhập Google thất bại',
-        result['message'],
+        message,
         backgroundColor: const Color(0xFFE53935),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
@@ -112,6 +168,8 @@ class AuthController extends GetxController {
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 3),
       );
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -127,25 +185,36 @@ class AuthController extends GetxController {
     }
 
     isLoading.value = true;
-    update();
-    final result = await _authService.register(name, email, password);
-    isLoading.value = false;
-    update();
-
-    if (result['success']) {
-      clearFields();
-      Get.offAll(() => const LoginPages());
-      Future.delayed(const Duration(milliseconds: 500), () {
-        Get.snackbar('Thành công', result['message'],
-            backgroundColor: Colors.green, colorText: Colors.white);
-      });
-    } else {
+    try {
+      final response = await _repository.register(name, email, password);
+      if (response['success'] == true) {
+        clearFields();
+        Get.offAll(() => const LoginPages());
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Get.snackbar('Thành công', response['message'] ?? 'Đăng ký thành công',
+              backgroundColor: Colors.green, colorText: Colors.white);
+        });
+      } else {
+        Get.snackbar(
+          'Đăng ký thất bại',
+          response['message'] ?? 'Không thể đăng ký tài khoản.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      String message = 'Lỗi kết nối máy chủ';
+      if (e is ExceptionWithMessage) {
+        message = e.mess;
+      }
       Get.snackbar(
         'Đăng ký thất bại',
-        result['message'] ?? 'Không thể đăng ký tài khoản.',
+        message,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -159,23 +228,33 @@ class AuthController extends GetxController {
     }
 
     isLoading.value = true;
-    update();
-    final result = await _authService.forgotPassword(email);
-    isLoading.value = false;
-    update();
-
-    if (result['success']) {
-      currentStep.value = 2;
-      update();
-      Get.snackbar('Thành công', result['message'],
-          backgroundColor: Colors.green, colorText: Colors.white);
-    } else {
+    try {
+      final response = await _repository.forgotPassword(email);
+      if (response['success'] == true) {
+        currentStep.value = 2;
+        Get.snackbar('Thành công', response['message'] ?? 'Mã OTP đã được gửi',
+            backgroundColor: Colors.green, colorText: Colors.white);
+      } else {
+        Get.snackbar(
+          'Gửi OTP thất bại',
+          response['message'] ?? 'Không thể gửi mã OTP.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      String message = 'Không thể kết nối đến máy chủ';
+      if (e is ExceptionWithMessage) {
+        message = e.mess;
+      }
       Get.snackbar(
         'Gửi OTP thất bại',
-        result['message'] ?? 'Không thể gửi mã OTP.',
+        message,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -204,25 +283,36 @@ class AuthController extends GetxController {
     }
 
     isLoading.value = true;
-    update();
-    final result = await _authService.resetPassword(email, otp, password, confirmPassword);
-    isLoading.value = false;
-    update();
-
-    if (result['success']) {
-      clearFields();
-      Get.snackbar('Thành công', result['message'],
-          backgroundColor: Colors.green, colorText: Colors.white);
-      Future.delayed(const Duration(seconds: 1), () {
-        Get.offAll(() => const LoginPages());
-      });
-    } else {
+    try {
+      final response = await _repository.resetPassword(email, otp, password, confirmPassword);
+      if (response['success'] == true) {
+        clearFields();
+        Get.snackbar('Thành công', response['message'] ?? 'Đặt lại mật khẩu thành công',
+            backgroundColor: Colors.green, colorText: Colors.white);
+        Future.delayed(const Duration(seconds: 1), () {
+          Get.offAll(() => const LoginPages());
+        });
+      } else {
+        Get.snackbar(
+          'Đặt lại mật khẩu thất bại',
+          response['message'] ?? 'Không thể đặt lại mật khẩu.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      String message = 'Không thể kết nối đến máy chủ';
+      if (e is ExceptionWithMessage) {
+        message = e.mess;
+      }
       Get.snackbar(
         'Đặt lại mật khẩu thất bại',
-        result['message'] ?? 'Không thể đặt lại mật khẩu.',
+        message,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
+    } finally {
+      isLoading.value = false;
     }
   }
 

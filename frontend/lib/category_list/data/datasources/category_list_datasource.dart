@@ -1,36 +1,23 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../../config/api_config.dart';
-import '../../../config/token_storage.dart';
-import '../../domain/models/category_stat_item.dart';
+import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
+import 'package:xyphora_frontend/category_list/data/services/category_list_service.dart';
+import 'package:xyphora_frontend/category_list/domain/models/category_stat_item.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
+@lazySingleton
 class CategoryListDatasource {
-  static final String baseUrl = ApiConfig.baseUrl;
+  final CategoryListService _service;
 
-  Future<Map<String, String>> _headers() async {
-    final token = await TokenStorage.read();
-    final auth = token == null ? null : 'Bearer $token';
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': ?auth,
-    };
-  }
+  CategoryListDatasource(this._service);
 
   Future<List<CategoryStatItem>> fetchCategories() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/categories'),
-      headers: await _headers(),
-    );
-
-    if (response.statusCode == 200) {
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return (body['data'] as List<dynamic>? ?? [])
-          .map((e) => CategoryStatItem.fromJson(e as Map<String, dynamic>))
-          .toList();
+    try {
+      final response = await _service.fetchCategories();
+      final data = response['data'] as List<dynamic>? ?? [];
+      return data.map((e) => CategoryStatItem.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (error) {
+      _handleError(error);
     }
-
-    throw _parseError(response, 'Không thể tải danh mục');
   }
 
   Future<Map<String, dynamic>> createCategory({
@@ -38,21 +25,11 @@ class CategoryListDatasource {
     String? icon,
     String? color,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/categories'),
-      headers: await _headers(),
-      body: jsonEncode({
-        'name': name,
-        'icon': ?icon,
-        'color': ?color,
-      }),
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+    try {
+      return await _service.createCategory(name: name, icon: icon, color: color);
+    } catch (error) {
+      _handleError(error);
     }
-
-    throw _parseError(response, 'Không thể tạo danh mục');
   }
 
   Future<Map<String, dynamic>> updateCategory({
@@ -61,46 +38,38 @@ class CategoryListDatasource {
     String? icon,
     String? color,
   }) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/categories/$categoryId'),
-      headers: await _headers(),
-      body: jsonEncode({
-        'name': name,
-        'icon': ?icon,
-        'color': ?color,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+    try {
+      return await _service.updateCategory(
+        categoryId: categoryId,
+        name: name,
+        icon: icon,
+        color: color,
+      );
+    } catch (error) {
+      _handleError(error);
     }
-
-    throw _parseError(response, 'Không thể cập nhật danh mục');
   }
 
   Future<void> deleteCategory(int categoryId) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/categories/$categoryId'),
-      headers: await _headers(),
-    );
-
-    if (response.statusCode == 200) {
-      return;
+    try {
+      await _service.deleteCategory(categoryId);
+    } catch (error) {
+      _handleError(error);
     }
-
-    throw _parseError(response, 'Không thể xóa danh mục');
   }
 
-  Exception _parseError(http.Response response, String fallback) {
-    String message = fallback;
-    if (response.statusCode == 401) {
-      message = 'Phiên đăng nhập đã hết hạn';
+  Never _handleError(Object error) {
+    if (error is ExceptionWithMessage) {
+      throw error;
+    } else if (error is DioException) {
+      final data = error.response?.data;
+      String? serverMessage;
+      if (data is Map) {
+        serverMessage = data['message']?.toString();
+      }
+      throw ExceptionWithMessage(mess: serverMessage ?? 'Lỗi kết nối máy chủ');
     } else {
-      try {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        message = body['message']?.toString() ?? message;
-      } catch (_) {}
+      throw ExceptionWithMessage(mess: error.toString());
     }
-    return Exception(message);
   }
 }

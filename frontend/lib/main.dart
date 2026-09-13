@@ -4,17 +4,25 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:xyphora_frontend/add_expense/presentation/controllers/add_expense_controller.dart';
+import 'package:xyphora_frontend/add_expense/presentation/bindings/add_expense_binding.dart';
 import 'package:xyphora_frontend/add_group_expense/presentation/controllers/add_group_expense_controller.dart';
+import 'package:xyphora_frontend/add_group_expense/presentation/bindings/add_group_expense_binding.dart';
 import 'package:xyphora_frontend/statistics/presentation/controllers/statistics_controller.dart';
-import 'auth/presentation/controllers/auth_controller.dart';
-import 'auth/presentation/pages/login_pages.dart';
-import 'core/deep_link_service.dart';
-import 'home_dashboard/presentation/controllers/dashboard_controller.dart';
-import 'profile/presentation/controllers/profile_controller.dart';
-import 'notification/presentation/controllers/notification_controller.dart';
+import 'package:xyphora_frontend/statistics/presentation/bindings/statistics_binding.dart';
+import 'package:xyphora_frontend/expense_history/presentation/bindings/expense_history_binding.dart';
+import 'package:xyphora_frontend/category_list/presentation/bindings/category_list_binding.dart';
+import 'package:xyphora_frontend/expense_detail/presentation/bindings/expense_detail_binding.dart';
+import 'package:xyphora_frontend/auth/presentation/bindings/auth_binding.dart';
+import 'package:xyphora_frontend/auth/presentation/pages/login_pages.dart';
+import 'package:xyphora_frontend/core/deep_link_service.dart';
+import 'package:xyphora_frontend/home_dashboard/presentation/controllers/dashboard_controller.dart';
+import 'package:xyphora_frontend/profile/presentation/controllers/profile_controller.dart';
+import 'package:xyphora_frontend/notification/presentation/controllers/notification_controller.dart';
+import 'package:xyphora_frontend/injector.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  configureDependencies();
 
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
@@ -31,7 +39,7 @@ void main() {
   );
   runApp(
     DevicePreview(
-      enabled: kDebugMode,
+      enabled: true, // sửa thành false nếu muốn chạy máy ảo
       builder: (context) => const MyApp(),
     ),
   );
@@ -50,7 +58,12 @@ class MyApp extends StatelessWidget {
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
       initialBinding: BindingsBuilder(() {
-        Get.put<AuthController>(AuthController(), permanent: true);
+        AuthBinding().dependencies();
+        AddExpenseBinding().dependencies();
+        AddGroupExpenseBinding().dependencies();
+        StatisticsBinding().dependencies();
+        ExpenseHistoryBinding().dependencies();
+        CategoryListBinding().dependencies();
         Get.lazyPut<DashboardController>(
           () => DashboardController(),
           fenix: true,
@@ -58,18 +71,6 @@ class MyApp extends StatelessWidget {
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
         Get.lazyPut<NotificationController>(
           () => NotificationController(),
-          fenix: true,
-        );
-        Get.lazyPut<AddExpenseController>(
-          () => AddExpenseController(),
-          fenix: true,
-        );
-        Get.lazyPut<AddGroupExpenseController>(
-          () => AddGroupExpenseController(),
-          fenix: true,
-        );
-        Get.lazyPut<StatisticsController>(
-          () => StatisticsController(),
           fenix: true,
         );
       }),
@@ -82,75 +83,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-// Nếu chạy trực tiếp ứng dụng lên máy ảo Android/iOS hoặc điện thoại thật mà không thông qua khung DevicePreview,
-// hãy comment toàn bộ nội dung file bên trên (hoặc xóa đi) và mở comment khối code dưới đây:
-//
-// void main() {
-//   WidgetsFlutterBinding.ensureInitialized();
-//
-//   FlutterError.onError = (FlutterErrorDetails details) {
-//     FlutterError.presentError(details);
-//     debugPrint('FlutterError: ${details.exceptionAsString()}');
-//   };
-//
-//   SystemChrome.setSystemUIOverlayStyle(
-//     const SystemUiOverlayStyle(
-//       statusBarColor: Colors.transparent,
-//       statusBarIconBrightness: Brightness.dark,
-//       systemNavigationBarColor: Colors.white,
-//       systemNavigationBarIconBrightness: Brightness.dark,
-//     ),
-//   );
-//   runApp(const MyAppPhone());
-// }
-//
-// class MyAppPhone extends StatelessWidget {
-//   const MyAppPhone({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return GetMaterialApp(
-//       title: 'Xyphora',
-//       debugShowCheckedModeBanner: false,
-//       initialBinding: BindingsBuilder(() {
-//         Get.put<AuthController>(AuthController(), permanent: true);
-//         Get.lazyPut<DashboardController>(
-//           () => DashboardController(),
-//           fenix: true,
-//         );
-//         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
-//         Get.lazyPut<NotificationController>(
-//           () => NotificationController(),
-//           fenix: true,
-//         );
-//         Get.lazyPut<AddExpenseController>(
-//           () => AddExpenseController(),
-//           fenix: true,
-//         );
-//         Get.lazyPut<AddGroupExpenseController>(
-//           () => AddGroupExpenseController(),
-//           fenix: true,
-//         );
-//         Get.lazyPut<StatisticsController>(
-//           () => StatisticsController(),
-//           fenix: true,
-//         );
-//       }),
-//       theme: ThemeData(
-//         scaffoldBackgroundColor: const Color(0xFFE4F5E5),
-//         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0C3D2B)),
-//         useMaterial3: true,
-//       ),
-//       scrollBehavior: MaterialScrollBehavior().copyWith(
-//         dragDevices: {
-//           PointerDeviceKind.touch,
-//           PointerDeviceKind.mouse,
-//           PointerDeviceKind.stylus,
-//           PointerDeviceKind.trackpad,
-//         },
-//       ),
-//       home: const LoginPages(),
-//     );
-//   }
-// }

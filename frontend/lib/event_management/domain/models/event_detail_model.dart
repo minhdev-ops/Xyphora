@@ -14,6 +14,30 @@ class ExpenseGroup {
     required this.formattedDate,
     required this.expenses,
   });
+
+  static List<ExpenseGroup> fromExpenses(List<ExpenseModel> expenses) {
+    final map = <DateTime, List<ExpenseModel>>{};
+    for (final e in expenses) {
+      final day = DateTime(e.dayPaid.year, e.dayPaid.month, e.dayPaid.day);
+      map.putIfAbsent(day, () => []);
+      map[day]!.add(e);
+    }
+    final sortedDays = map.keys.toList()..sort((a, b) => b.compareTo(a));
+    return sortedDays.map((day) => ExpenseGroup(
+          date: day,
+          formattedDate: _formatDate(day),
+          expenses: map[day]!,
+        )).toList();
+  }
+
+  static String _formatDate(DateTime dt) {
+    const months = [
+      'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4',
+      'tháng 5', 'tháng 6', 'tháng 7', 'tháng 8',
+      'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12',
+    ];
+    return '${dt.day} ${months[dt.month - 1]}, ${dt.year}';
+  }
 }
 
 class BalanceItem {
@@ -21,6 +45,24 @@ class BalanceItem {
   final double amount;
 
   BalanceItem({required this.name, required this.amount});
+
+  static List<BalanceItem> compute(EventModel event, String myUserId) {
+    final net = <String, double>{};
+    for (final expense in event.expenses) {
+      net[expense.payerId] = (net[expense.payerId] ?? 0) + expense.amount;
+      for (final split in expense.splits) {
+        net[split.participantId] = (net[split.participantId] ?? 0) - split.amount;
+      }
+    }
+    return net.entries.map((entry) {
+      final p = event.participants.firstWhere(
+        (p) => p.id == entry.key,
+        orElse: () => ParticipantModel(id: '', eventId: '', userId: '', displayName: 'Thành viên'),
+      );
+      final name = p.user?.name ?? p.displayName;
+      return BalanceItem(name: name, amount: entry.value);
+    }).toList();
+  }
 }
 
 class EventDetailMock {
@@ -114,29 +156,7 @@ class EventDetailMock {
     expenses: expenses,
   );
 
-  static String formatDate(DateTime dt) {
-    const months = [
-      'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4',
-      'tháng 5', 'tháng 6', 'tháng 7', 'tháng 8',
-      'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12',
-    ];
-    return '${dt.day} ${months[dt.month - 1]}, ${dt.year}';
-  }
-
-  static List<ExpenseGroup> get expenseGroups {
-    final map = <DateTime, List<ExpenseModel>>{};
-    for (final e in expenses) {
-      final day = DateTime(e.dayPaid.year, e.dayPaid.month, e.dayPaid.day);
-      map.putIfAbsent(day, () => []);
-      map[day]!.add(e);
-    }
-    final sortedDays = map.keys.toList()..sort((a, b) => b.compareTo(a));
-    return sortedDays.map((day) => ExpenseGroup(
-          date: day,
-          formattedDate: formatDate(day),
-          expenses: map[day]!,
-        )).toList();
-  }
+  static List<ExpenseGroup> get expenseGroups => ExpenseGroup.fromExpenses(expenses);
 
   static double get myTotalExpense {
     double total = 0;
@@ -153,12 +173,7 @@ class EventDetailMock {
 
   static double get totalExpense => expenses.fold(0, (sum, e) => sum + e.amount);
 
-  static List<BalanceItem> get balances => [
-        BalanceItem(name: 'Minh Tuấn', amount: 200000),
-        BalanceItem(name: 'Lan', amount: 90000),
-        BalanceItem(name: 'Huy', amount: -19000),
-        BalanceItem(name: 'Trang', amount: 40000),
-      ];
+  static List<BalanceItem> get balances => BalanceItem.compute(event, myUserId);
 
   static double get totalOwed =>
       balances.where((b) => b.amount > 0).fold(0, (sum, b) => sum + b.amount);

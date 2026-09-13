@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import '../../../config/app_theme.dart';
 import '../../../home_dashboard/presentation/pages/home_dashboard_page.dart';
 import '../../../home_dashboard/presentation/widgets/custom_bottom_nav_bar.dart';
-import '../../../auth/data/auth_service.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/pages/login_pages.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/theme_mode_card.dart';
@@ -84,8 +84,8 @@ class ProfilePage extends GetView<ProfileController> {
             const SizedBox(height: 24),
             LogoutButton(
               onTap: () async {
-                final authService = AuthService();
-                await authService.logout();
+                final authRepository = Get.find<AuthRepository>();
+                await authRepository.logout();
                 Get.offAll(
                   () => const LoginPages(),
                   transition: Transition.fadeIn,

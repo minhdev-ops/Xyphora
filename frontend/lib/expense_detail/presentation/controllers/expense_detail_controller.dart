@@ -1,14 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import '../../data/repositories/expense_detail_repository.dart';
-import '../../domain/models/expense_detail.dart';
+import 'package:xyphora_frontend/expense_detail/data/repositories/expense_detail_repository.dart';
+import 'package:xyphora_frontend/expense_detail/domain/models/expense_detail.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
 class ExpenseDetailController extends GetxController {
-  final ExpenseDetailRepository _repository = ExpenseDetailRepository();
+  final ExpenseDetailRepository _repository;
+
+  ExpenseDetailController(this._repository, this.expenseId);
 
   final int expenseId;
-
-  ExpenseDetailController({required this.expenseId});
 
   final isLoading = true.obs;
   final errorMessage = RxnString();
@@ -23,7 +24,6 @@ class ExpenseDetailController extends GetxController {
   Future<void> loadDetail() async {
     isLoading.value = true;
     errorMessage.value = null;
-    update();
 
     try {
       final result = await _repository.fetchExpenseDetail(expenseId);
@@ -37,7 +37,6 @@ class ExpenseDetailController extends GetxController {
     }
 
     isLoading.value = false;
-    update();
   }
 
   String formatCurrency(double amount) {

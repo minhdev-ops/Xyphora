@@ -1,9 +1,11 @@
-import '../datasources/add_expense_datasource.dart';
+import 'package:injectable/injectable.dart';
+import 'package:xyphora_frontend/add_expense/data/datasources/add_expense_datasource.dart';
 
+@lazySingleton
 class AddExpenseRepository {
-  final AddExpenseDatasource _datasource = AddExpenseDatasource();
+  final AddExpenseDatasource _datasource;
 
-
+  AddExpenseRepository(this._datasource);
 
   Future<Map<String, dynamic>> fetchCategories() {
     return _datasource.fetchCategories();

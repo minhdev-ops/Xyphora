@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../bindings/event_binding.dart';
-import '../controllers/edit_event_controller.dart';
+import '../controllers/event_controller.dart';
 import '../../domain/models/event_model.dart';
 
 class EditEventPage extends StatefulWidget {
@@ -17,21 +17,18 @@ class EditEventPage extends StatefulWidget {
 class _EditEventPageState extends State<EditEventPage> {
   static const Color _green = Color(0xFF0C3D2B);
 
-  late final EditEventController _controller;
+  late final EventController _controller;
 
   @override
   void initState() {
     super.initState();
     EventBinding().dependencies();
-    _controller = EditEventController(
-      Get.find(),
-      event: widget.event,
-    );
+    _controller = Get.find<EventController>();
+    _controller.resetCreateEditState(event: widget.event);
   }
 
   @override
   void dispose() {
-    _controller.onClose();
     super.dispose();
   }
 
@@ -94,7 +91,7 @@ class _EditEventPageState extends State<EditEventPage> {
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
-                          children: controller.emojis.map((emoji) {
+                          children: EventController.emojis.map((emoji) {
                             final isSelected =
                                 emoji == controller.selectedEmoji.value;
                             return Padding(
@@ -222,7 +219,7 @@ class _EditEventPageState extends State<EditEventPage> {
                       () => ElevatedButton(
                         onPressed: controller.isSaving.value
                             ? null
-                            : controller.save,
+                            : () => controller.saveEvent(widget.event),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _green,
                           foregroundColor: Colors.white,
@@ -408,7 +405,7 @@ class _EditEventPageState extends State<EditEventPage> {
               controller: _controller.participantController,
               autofocus: true,
               textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _controller.confirmAddParticipant(),
+              onSubmitted: (_) => _controller.confirmAddParticipant(eventId: widget.event.id),
               style: GoogleFonts.nunito(
                 color: _green,
                 fontSize: 15,
@@ -436,7 +433,7 @@ class _EditEventPageState extends State<EditEventPage> {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: _controller.confirmAddParticipant,
+            onTap: () => _controller.confirmAddParticipant(eventId: widget.event.id),
             child: Container(
               width: 40,
               height: 40,

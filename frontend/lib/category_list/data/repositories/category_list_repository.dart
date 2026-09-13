@@ -1,8 +1,12 @@
-import '../datasources/category_list_datasource.dart';
-import '../../domain/models/category_stat_item.dart';
+import 'package:injectable/injectable.dart';
+import 'package:xyphora_frontend/category_list/data/datasources/category_list_datasource.dart';
+import 'package:xyphora_frontend/category_list/domain/models/category_stat_item.dart';
 
+@lazySingleton
 class CategoryListRepository {
-  final CategoryListDatasource _datasource = CategoryListDatasource();
+  final CategoryListDatasource _datasource;
+
+  CategoryListRepository(this._datasource);
 
   Future<List<CategoryStatItem>> fetchCategories() {
     return _datasource.fetchCategories();

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../data/repositories/expense_history_repository.dart';
-import '../../domain/models/expense_history_item.dart';
+import 'package:xyphora_frontend/expense_history/data/repositories/expense_history_repository.dart';
+import 'package:xyphora_frontend/expense_history/domain/models/expense_history_item.dart';
+import 'package:xyphora_frontend/core/exceptions.dart';
 
 class ExpenseHistoryController extends GetxController {
-  final ExpenseHistoryRepository _repository = ExpenseHistoryRepository();
+  final ExpenseHistoryRepository _repository;
+
+  ExpenseHistoryController(this._repository);
 
   final items = <ExpenseHistoryItem>[].obs;
   final categories = <Map<String, dynamic>>[].obs;
