@@ -52,9 +52,9 @@ class AddExpenseController extends GetxController {
   final TextEditingController descriptionController = TextEditingController();
 
   List<String> get sortedCurrencies => [
-        selectedCurrency.value,
-        ...currencies.where((c) => c != selectedCurrency.value),
-      ];
+    selectedCurrency.value,
+    ...currencies.where((c) => c != selectedCurrency.value),
+  ];
 
   TextEditingController splitControllerFor(String memberId) =>
       _splitControllers.putIfAbsent(memberId, () => TextEditingController());
@@ -80,17 +80,28 @@ class AddExpenseController extends GetxController {
 
     final result = await _repository.fetchEvents();
 
-    if (result['success'] == true) {
-      events.assignAll(
-        (result['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>(),
-      );
-    } else {
+    try {
+      if (result['success'] == true) {
+        events.assignAll(
+          (result['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>(),
+        );
+      } else {
+        Get.snackbar(
+          'Lỗi',
+          result['message'] ?? 'Không thể tải danh sách sự kiện',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
       Get.snackbar(
         'Lỗi',
-        result['message'] ?? 'Không thể tải danh sách sự kiện',
+        'Đã xảy ra lỗi: ${e.toString()}',
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
+    } finally {
+      isLoadingEvents.value = false;
     }
 
     final id = selectedEventId.value;
@@ -138,9 +149,7 @@ class AddExpenseController extends GetxController {
       final data = result['data'] as Map<String, dynamic>? ?? const {};
       final participants = (data['participants'] as List<dynamic>? ?? [])
           .cast<Map<String, dynamic>>();
-      members.assignAll(
-        participants.map(GroupMember.fromParticipant).toList(),
-      );
+      members.assignAll(participants.map(GroupMember.fromParticipant).toList());
 
       // Mac dinh nguoi tra = nguoi dang dang nhap (is_me), neu khong co thi nguoi dau tien
       final me = members.firstWhereOrNull((m) => m.isMe);
@@ -171,8 +180,8 @@ class AddExpenseController extends GetxController {
     if (result['success'] == true) {
       categories.assignAll(result['data'] as List<Map<String, dynamic>>);
       if (selectedCategoryId.value == null && categories.isNotEmpty) {
-        selectedCategoryId.value =
-            (categories.first['category_id'] as num).toInt();
+        selectedCategoryId.value = (categories.first['category_id'] as num)
+            .toInt();
       }
     } else {
       Get.snackbar(
@@ -256,10 +265,7 @@ class AddExpenseController extends GetxController {
           splitControllerFor(member.id).text.replaceAll(',', '.'),
         );
         if (value == null || value < 0) return const [];
-        splits.add({
-          'participant_id': int.parse(member.id),
-          'amount': value,
-        });
+        splits.add({'participant_id': int.parse(member.id), 'amount': value});
       }
     }
 
@@ -482,13 +488,9 @@ class AddExpenseController extends GetxController {
     final rawTitle = description.value.isEmpty
         ? (eventId != null ? 'Chi tiêu nhóm' : 'Chi tiêu mới')
         : description.value;
-    final title =
-        rawTitle.length > 150 ? rawTitle.substring(0, 150) : rawTitle;
+    final title = rawTitle.length > 150 ? rawTitle.substring(0, 150) : rawTitle;
 
-    final payerIds = selectedPayers
-        .map(int.tryParse)
-        .whereType<int>()
-        .toList();
+    final payerIds = selectedPayers.map(int.tryParse).whereType<int>().toList();
 
     final result = await _repository.saveExpense(
       eventId: eventId,
@@ -513,12 +515,20 @@ class AddExpenseController extends GetxController {
         Get.find<EventController>().loadEvents();
       }
       Get.back(result: true);
-      Get.snackbar('Thành công', result['message'] ?? 'Đã thêm chi tiêu',
-          backgroundColor: Colors.green, colorText: Colors.white);
+      Get.snackbar(
+        'Thành công',
+        result['message'] ?? 'Đã thêm chi tiêu',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
       clearAll();
     } else {
-      Get.snackbar('Thất bại', result['message'] ?? 'Không thể thêm chi tiêu',
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+      Get.snackbar(
+        'Thất bại',
+        result['message'] ?? 'Không thể thêm chi tiêu',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -559,8 +569,9 @@ class AddExpenseController extends GetxController {
     description.value = '';
     descriptionController.clear();
     selectedDate.value = DateTime.now();
-    selectedCategoryId.value =
-        categories.isEmpty ? null : (categories.first['category_id'] as num).toInt();
+    selectedCategoryId.value = categories.isEmpty
+        ? null
+        : (categories.first['category_id'] as num).toInt();
     selectedEventId.value = null;
     eventTitle.value = null;
     members.clear();
